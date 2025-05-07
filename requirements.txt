@@ -1,2 +1,2 @@
-pyarrow
+pyarrow==19.0.0
 fastapi
