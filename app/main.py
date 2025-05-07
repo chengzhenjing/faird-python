@@ -1,7 +1,7 @@
 import asyncio
 import threading
 from fastapi import FastAPI
-from app.services.rpc import get_flight_server
+from app.services import get_flight_server
 from app.api import endpoints
 
 app = FastAPI()
