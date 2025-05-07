@@ -31,5 +31,5 @@ conda config --set show_channel_urls yes
 
 **2.3 安装依赖**
 
-```conda install requirements.txt```
+```conda install --file requirements.txt```
 
