@@ -1,6 +1,6 @@
+faird重构版本(2025-05-07)
 
-
-## 配置开发环境
+## 环境配置
 ### 1.安装conda
 
 **1.1 下载Miniconda（Python3 版本，可参考[这里](https://blog.csdn.net/weixin_43651674/article/details/134880766)）**
@@ -33,3 +33,7 @@ conda config --set show_channel_urls yes
 
 ```conda install --file requirements.txt```
 
+
+### 3.启动服务
+
+```fastapi dev app/main.py```

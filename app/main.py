@@ -1,7 +1,14 @@
+import os, sys
 import asyncio
 import threading
 from fastapi import FastAPI
-from app.services import get_flight_server
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# 将父目录添加到 sys.path
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+
+from app.services.faird_service import get_flight_server
 from app.api import endpoints
 
 app = FastAPI()
