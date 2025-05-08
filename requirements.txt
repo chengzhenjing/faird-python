@@ -1,2 +1,2 @@
+python==3.12
 pyarrow==19.0.0
-fastapi

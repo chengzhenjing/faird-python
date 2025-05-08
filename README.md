@@ -36,4 +36,4 @@ conda config --set show_channel_urls yes
 
 ### 3.启动服务
 
-```fastapi dev app/main.py```
+```python app/main.py```
