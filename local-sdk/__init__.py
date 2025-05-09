@@ -1,0 +1,1 @@
+from .faird import open
