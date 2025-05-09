@@ -1,16 +1,16 @@
 from core.models.dataframe import DataFrame
-import pyarrow as pa
+from parser import csv_parser
 
-def open(file_path: str) -> DataFrame:
+
+def open(dataframe_id: str) -> DataFrame:
     """
-    打开指定文件并返回一个 DataFrame 对象
-    :param file_path: 文件路径
-    :return: DataFrame 对象
+    打开指定dataframe并返回一个 DataFrame 对象
+
+    Args:
+        dataframe_id (str): dataframe 的唯一标识符
+    Returns:
+        DataFrame: 返回一个 DataFrame 对象
     """
-    # 模拟从文件加载数据
-    # 这里可以根据实际需求替换为从文件或其他数据源加载 pyarrow.Table
-    data = pa.Table.from_pydict({
-        "name": ["Alice", "Bob", "Charlie"],
-        "age": [25, 30, 35]
-    })
-    return DataFrame(id="example", data=data)
+
+    arrow_table = csv_parser.parse_csv_to_arrow(dataframe_id)
+    return DataFrame(id=dataframe_id, data=arrow_table)
