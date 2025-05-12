@@ -4,6 +4,7 @@ from typing import Optional, Dict, List
 from datetime import datetime
 from pydantic import ValidationError
 
+from core.config import FairdConfig, FairdConfigManager
 from core.models.dataset import DataSet
 from core.models.dataset_meta import DatasetMetadata
 from services.datasource.interfaces.datasource_interface import FairdDatasourceInterface
@@ -19,9 +20,9 @@ class MetaCatService(FairdDatasourceInterface):
 
     def __init__(self):
         super().__init__()
-        ## todo: 改成从配置文件读取
-        self.metacat_url = "http://metacat.example.com"
-        self.metacat_token = "your_metacat_token"
+        self.config = FairdConfigManager.get_config()
+        self.metacat_url = self.config.metacat_url
+        self.metacat_token = self.config.metacat_token
 
     def list_dataset(self, page: int = 1, limit: int = 10) -> List[str]:
         url = f"{self.metacat_url}/metacat/listDatasets"
