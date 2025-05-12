@@ -1,3 +1,4 @@
+import re
 from datetime import date
 from typing import List, Dict, Optional, Union
 from pydantic import BaseModel, HttpUrl, Field, field_validator
@@ -5,13 +6,13 @@ from pydantic import BaseModel, HttpUrl, Field, field_validator
 class Identifier(BaseModel):
     """唯一标识符（多值字典结构）"""
     id: HttpUrl  # 符合URI格式的标识，如DOI或CSTR
-    type: str = Field(..., regex="^(DOI|CSTR|InternalID)$")  # 标识类型约束
+    type: str = Field(..., pattern="^(DOI|CSTR|InternalID)$")  # 标识类型约束
 
 class BasicInfo(BaseModel):
     """基本信息"""
     name: str = Field(..., min_length=10)
     identifier: List[Identifier]  # 多值字典
-    description: str = Field(..., min_length=[50])
+    description: str = Field(..., min_length=50)
     keywords: List[str] = Field(..., min_items=3)
     url: HttpUrl
     datePublished: date
@@ -32,9 +33,19 @@ class RightsInfo(BaseModel):
     creator: List[str]
     publisher: str
     contactPoint: List[str]
-    email: List[str] = Field(..., regex=r"^[\w\.-]+@[\w\.-]+\.\w+$")  # 邮箱格式验证
+    email: List[str]
     copyrightHolder: Optional[List[str]] = None
     references: Optional[List[HttpUrl]] = None
+
+    # 邮箱格式验证
+    @field_validator('email')
+    @classmethod
+    def validate_emails(cls, v):
+        email_pattern = re.compile(r"^[\w\.-]+@[\w\.-]+\.\w+$")
+        for email in v:
+            if not email_pattern.match(email):
+                raise ValueError(f"Invalid email format: {email}")
+        return v
 
 class InstrumentInfo(BaseModel):
     """装置信息"""
@@ -46,7 +57,17 @@ class InstrumentInfo(BaseModel):
     manufacturer: str
     accountablePerson: str
     contactPoint: str
-    email: List[str] = Field(..., regex=r"^[\w\.-]+@[\w\.-]+\.\w+$")
+    email: List[str]
+
+    # 邮箱格式验证
+    @field_validator('email')
+    @classmethod
+    def validate_emails(cls, v):
+        email_pattern = re.compile(r"^[\w\.-]+@[\w\.-]+\.\w+$")
+        for email in v:
+            if not email_pattern.match(email):
+                raise ValueError(f"Invalid email format: {email}")
+        return v
 
 # -------------------元数据模型 -------------------
 class DatasetMetadata(BaseModel):
@@ -62,7 +83,7 @@ class DatasetMetadata(BaseModel):
 #         basic=BasicInfo(
 #             name="2020-2023年青藏高原冰川监测数据集",
 #             identifier=[Identifier(id="http://doi.org/10.1234/example", type="DOI")],
-#             description="本数据集包含青藏高原主要冰川的年度厚度变化监测数据...（不少于50字）",
+#             description="本数据集包含青藏高原主要冰川的年度厚度变化监测数据本数据集包含青藏高原主要冰川的年度厚度变化监测数据本数据集包含青藏高原主要冰川的年度厚度变化监测数据本数据集包含青藏高原主要冰川的年度厚度变化监测数据本数据集包含青藏高原主要冰川的年度厚度变化监测数据...（不少于50字）",
 #             keywords=["冰川学", "遥感监测", "气候变化"],
 #             url="https://example.com/dataset/123",
 #             datePublished=date(2023, 5, 1),
@@ -89,4 +110,4 @@ class DatasetMetadata(BaseModel):
 #             email=["support@example.com"]
 #         )
 #     )
-#     print(example.json(indent=2))
+#     print(example.model_dump_json(indent=2))
