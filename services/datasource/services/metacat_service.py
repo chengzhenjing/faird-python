@@ -61,11 +61,7 @@ class MetaCatService(FairdDatasourceInterface):
         
         return None
 
-    def fetch_dataset_details(self, username: str, identifier: str) -> Optional[DataSet]:
-
-        metadata_obj: Optional[Dict] = None
-        dataframeIds_obj: Optional[List[str]] = None
-        accessInfo_obj: Optional[Dict] = None
+    def fetch_dataset_details(self, username: str, dataset_name: str) -> Optional[DataSet]:
 
         url = f"{self.metacat_url}/metacat/getDatasetById"
 
@@ -74,8 +70,14 @@ class MetaCatService(FairdDatasourceInterface):
             "Content-Type": "application/json"
         }
 
+        # 获取数据集ID
+        dataset_id = get_key(self.datasets, dataset_name)
+        if dataset_id is None:
+            print(f"dataset {dataset_name} not found in the dataset list.")
+            return None
+
         params = {
-            "datasetId": identifier
+            "datasetId": dataset_id
         }
 
         try:
@@ -85,7 +87,7 @@ class MetaCatService(FairdDatasourceInterface):
             dataframeIds_obj = response.json().get("dataframeIds", [])
             accessInfo_obj = response.json().get("accessInfo", {})
 
-            has_permission = self._check_permission(identifier, username)  # 检查用户是否有数据集权限
+            has_permission = self._check_permission(dataset_id, username)  # 检查用户是否有数据集权限
             
             # 创建并返回DataSet对象
             dataset = DataSet(
@@ -156,3 +158,10 @@ def parse_metadata(raw_data: dict) -> Optional[DatasetMetadata]:
         print(f"元数据解析失败:\n{e.json()}")
         return None
 
+def get_key(dictionary, value):
+    """根据值获取字典的键"""
+    try:
+        return {val: key for key, val in dictionary.items()}[value]
+    except KeyError:
+        print(f"Value {value} not found in dictionary.")
+        return None

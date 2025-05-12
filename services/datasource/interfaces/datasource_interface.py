@@ -15,10 +15,10 @@ class FairdDatasourceInterface(ABC):
 
     """
     加载给定的数据集Details(包括metadata、dataframeIds、访问权限accessible、访问信息accessInfo)
-    @param identifier: 数据中心内部数据集名称
+    @param dataset_name: 数据中心内部数据集名称
     """
     @abstractmethod
-    def fetch_dataset_details(self, identifier: str) -> Optional[DataSet]:
+    def fetch_dataset_details(self, dataset_name: str) -> Optional[DataSet]:
         pass
 
 
@@ -40,14 +40,5 @@ class FairdDatasourceInterface(ABC):
     # """
     # @abstractmethod
     # def authenticate(self, username: str, password: str) -> Optional['bool']:
-    #     pass
-
-    # """
-    # 获取数据集元数据
-    # @param identifier: 数据中心内部数据集名称
-    # @return: 统一元数据结构
-    # """
-    # @abstractmethod
-    # def get_dataset_meta(self, identifier: str) -> Optional[DataSetMeta]:
     #     pass
 
