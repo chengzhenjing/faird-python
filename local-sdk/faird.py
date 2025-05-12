@@ -1,4 +1,4 @@
-from core.models.dataframe import DataFrame
+from dataframe import DataFrame
 from parser import csv_parser
 import os
 

@@ -1,7 +1,8 @@
 import faird
 import pyarrow.compute as pc
 import pandas as pd
-from core.models.dataframe import DataFrame
+
+from dataframe import DataFrame
 
 
 def test_local_sdk():
@@ -47,10 +48,6 @@ def test_local_sdk():
     limit_3 = df.limit(3)
     slice_2_5 = df.slice(2, 5)
     select_columns = df.select("OBJECTID", "start_p", "end_p")
-
-    ## 3.3 column operations
-    #df.add_column()
-    #df.drop_columns()
 
     """
     4. filter, map
