@@ -1,9 +1,6 @@
 from __future__ import annotations
 from typing import Optional, List
 from enum import Enum
-from sdk.dataframe import DataFrame
-from parser import csv_parser
-import os
 from urllib.parse import urlparse
 import pyarrow as pa
 import pyarrow.flight
@@ -23,6 +20,7 @@ class DacpClient:
         parsed = urlparse(url)
         host = f"grpc://{parsed.hostname}:{parsed.port}"
         client.connection =  pa.flight.connect(host)
+        ConnectionManager.set_connection(client.connection)
         connect_request = {
             'principal': principal
         }
@@ -33,39 +31,20 @@ class DacpClient:
         return client
 
     def list_datasets(self) -> List[str]:
+        results = self.connection.do_action(pa.flight.Action("list_datasets", self.token.encode('utf-8')))
         return ["dataset1", "dataset2", "dataset3"]
 
     def list_dataframes(self, dataset_name: str) -> List[str]:
+        results = self.connection.do_action(pa.flight.Action("list_dataframes", self.token.encode('utf-8')))
         return ["/Users/yaxuan/Documents/2024/工作/faird/2024-03-快速发版/测试文件/common/2019年中国榆林市沟道信息.csv", "dataframe2"]
 
-    def open(self, dataframe_id: str) -> DataFrame:
-        """
-        Open the specified dataframe and return a DataFrame object.
-
-        Args:
-            dataframe_id (str): The unique identifier of the dataframe.
-        Returns:
-            DataFrame: A DataFrame object containing the parsed data.
-        """
-        # Determine the file extension
-        file_extension = os.path.splitext(dataframe_id)[1].lower()
-
-        # Use a dictionary to simulate a switch case for parser selection
-        parser_switch = {
-            ".csv": csv_parser.CSVParser,
-            ".json": None,
-            ".xml": None,
-        }
-
-        # Get the corresponding parser class
-        parser_class = parser_switch.get(file_extension)
-        if not parser_class:
-            raise ValueError(f"Unsupported file extension: {file_extension}")
-
-        # Instantiate the parser and parse the file
-        parser = parser_class()
-        arrow_table = parser.parse(dataframe_id)
-        return DataFrame(id=dataframe_id, data=arrow_table)
+    def open(self, dataframe_id: str):
+        from sdk.dataframe import DataFrame
+        results = self.connection.do_action(pa.flight.Action("open", self.token.encode('utf-8')))
+        for res in results:
+            res_json: dict = json.loads(res.body.to_pybytes().decode('utf-8'))
+            dataframe = res_json.get("dataframe_id")
+        return DataFrame(id=dataframe_id)
 
 class AuthType(Enum):
     OAUTH = "oauth"
@@ -86,3 +65,16 @@ class Principal:
 
     def __repr__(self):
         return f"Principal(auth_type={self.auth_type}, params={self.params})"
+
+class ConnectionManager:
+    _connection: Optional[pyarrow.flight.FlightClient] = None
+
+    @staticmethod
+    def set_connection(connection: pyarrow.flight.FlightClient):
+        ConnectionManager._connection = connection
+
+    @staticmethod
+    def get_connection() -> pyarrow.flight.FlightClient:
+        if ConnectionManager._connection is None:
+            raise RuntimeError("Connection has not been initialized.")
+        return ConnectionManager._connection

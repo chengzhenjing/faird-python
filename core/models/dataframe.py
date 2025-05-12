@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas
 import pyarrow as pa
 from abc import ABC, abstractmethod
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 
 class DataFrame(ABC):

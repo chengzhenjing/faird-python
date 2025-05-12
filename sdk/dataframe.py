@@ -1,13 +1,15 @@
+import json
 from typing import List, Optional, Dict, Any
 import pandas
 import pyarrow as pa
 from core.models.dataframe import DataFrame
+from sdk.dacp_client import ConnectionManager
+
 
 class DataFrame(DataFrame):
 
-    def __init__(self, id: str, client):
+    def __init__(self, id: str):
         self.id = id
-        self.client = client
         self.data = None # 初始状态下 data 为空
         self.actions = [] # 用于记录操作的列表
 
@@ -19,16 +21,18 @@ class DataFrame(DataFrame):
 
     def collect(self) -> DataFrame:
         if self.data is None:
-            self.data = self.client.execute_actions(self.remote_data_ref, self.actions)
+            reader = ConnectionManager.get_connection().do_get(pa.flight.Ticket(json.dumps(self, default=vars).encode('utf-8')))
+            self.data = reader.read_all()
             self.actions = []
-        return self.data
+        return self
 
 
     def get_stream(self, max_chunksize: Optional[int] = None) -> List[pa.RecordBatch]:
         if self.data is None:
-            self.data = self.client.execute_actions(self.remote_data_ref, self.actions)
+            reader = ConnectionManager.get_connection().do_get(pa.flight.Ticket(json.dumps(self, default=vars).encode('utf-8')))
+            self.data = reader.read_all()
             self.actions = []
-
+        return self.data.to_batches(max_chunksize)
 
     def limit(self, rowNum: int) -> DataFrame:
         self.actions.append(("limit", {"rowNum": rowNum}))
@@ -55,15 +59,18 @@ class DataFrame(DataFrame):
 
     def to_pandas(self, **kwargs) -> pandas.DataFrame:
         if self.data is None:
-            self.data = self.client.execute_actions(self.remote_data_ref, self.actions)
+            reader = ConnectionManager.get_connection().do_get(pa.flight.Ticket(json.dumps(self, default=vars).encode('utf-8')))
+            self.data = reader.read_all()
             self.actions = []
+        return self.data.to_pandas(**kwargs)
 
     def to_pydict(self) -> Dict[str, List[Any]]:
         if self.data is None:
-            self.data = self.client.execute_actions(self.remote_data_ref, self.actions)
+            reader = ConnectionManager.get_connection().do_get(
+                pa.flight.Ticket(json.dumps(self, default=vars).encode('utf-8')))
+            self.data = reader.read_all()
             self.actions = []
+        return self.data.to_pydict()
 
     def to_string(self, head_rows: int = 5, tail_rows: int = 5, first_cols: int = 3, last_cols: int = 3) -> str:
-        if self.data is None:
-            self.data = self.client.execute_actions(self.remote_data_ref, self.actions)
-            self.actions = []
+        pass
