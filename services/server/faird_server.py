@@ -12,11 +12,9 @@ class FairdServer:
     def create(host: str = "localhost", port: int = 8815):
         location = flight.Location.for_grpc_tcp(host, port)
         try:
-            producer = FairdServiceProducer(host, port)
-            server = flight.FlightServerBase(location, producer)
-            FairdServer(producer)
+            server = FairdServiceProducer(location)
+            print(f"S: Listening on {host}:{port}")
             server.serve()
-            print(f"S: Listening on port {port}")
             server.wait_for_termination()
         except Exception as e:
             print(e)

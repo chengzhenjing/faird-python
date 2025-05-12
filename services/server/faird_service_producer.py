@@ -2,11 +2,9 @@ import pyarrow as pa
 import pyarrow.flight as flight
 
 class FairdServiceProducer(flight.FlightServerBase):
-    def __init__(self, allocator: pa.Allocator):
-        super(FairdServiceProducer, self).__init__()
+    def __init__(self, location: flight.Location):
+        super(FairdServiceProducer, self).__init__(location)
         # 初始化其他必要的资源
-        # self.allocator = allocator
-
 
     def list_flights(self, context, criteria):
         # 实现列出可用的 Flight 数据集
