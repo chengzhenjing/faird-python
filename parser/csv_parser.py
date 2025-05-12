@@ -3,33 +3,40 @@ import pyarrow.csv as csv
 import pyarrow.ipc as ipc
 import os
 
-DEFAULT_ARROW_CACHE_PATH = os.path.expanduser("~/.cache/faird/dataframe/csv/")
+from parser.abstract_parser import BaseParser
 
-def parse_csv_to_arrow(dataframe_id) -> pa.Table:
+
+class CSVParser(BaseParser):
     """
-    将 CSV 文件保存为 .arrow 文件，并以零拷贝方式加载为内存中的 pyarrow Table
-
-    Args:
-        dataframe_id (str): 输入 CSV 文件路径
-    Returns:
-        pa.Table: 返回一个 pyarrow 表对象
+    CSV file parser implementing the BaseParser interface.
     """
 
-    # 确保缓存目录存在
-    os.makedirs(os.path.dirname(DEFAULT_ARROW_CACHE_PATH), exist_ok=True)
+    def parse(self, file_path: str) -> pa.Table:
+        """
+        Save the CSV file as a .arrow file and load it into memory as a pyarrow Table using zero-copy.
 
-    # 提取文件名并拼接 .arrow 后缀
-    arrow_file_name = os.path.basename(dataframe_id).rsplit(".", 1)[0] + ".arrow"
-    arrow_file_path = os.path.join(DEFAULT_ARROW_CACHE_PATH, arrow_file_name)
+        Args:
+            file_path (str): Path to the input CSV file.
+        Returns:
+            pa.Table: A pyarrow Table object.
+        """
 
-    # 读取 CSV 文件为 pyarrow Table
-    table = csv.read_csv(dataframe_id)
+        # Ensure the cache directory exists
+        DEFAULT_ARROW_CACHE_PATH = os.path.expanduser("~/.cache/faird/dataframe/csv/")
+        os.makedirs(os.path.dirname(DEFAULT_ARROW_CACHE_PATH), exist_ok=True)
 
-    # 保存为 .arrow 文件
-    with ipc.new_file(arrow_file_path, table.schema) as writer:
-        writer.write_table(table)
-    print(f"成功将 {dataframe_id} 保存为 {arrow_file_path}")
+        # Extract the file name and append the .arrow suffix
+        arrow_file_name = os.path.basename(file_path).rsplit(".", 1)[0] + ".arrow"
+        arrow_file_path = os.path.join(DEFAULT_ARROW_CACHE_PATH, arrow_file_name)
 
-    # 使用 pa.memory_map 零拷贝方式加载 .arrow 文件为 pyarrow Table
-    with pa.memory_map(arrow_file_path, "r") as source:
-        return ipc.open_file(source).read_all()
+        # Read the CSV file into a pyarrow Table
+        table = csv.read_csv(file_path)
+
+        # Save the table as a .arrow file
+        with ipc.new_file(arrow_file_path, table.schema) as writer:
+            writer.write_table(table)
+        print(f"成功将 {file_path} 保存为 {arrow_file_path}")
+
+        # Load the .arrow file into a pyarrow Table using zero-copy
+        with pa.memory_map(arrow_file_path, "r") as source:
+            return ipc.open_file(source).read_all()

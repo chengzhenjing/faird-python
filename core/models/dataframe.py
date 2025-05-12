@@ -1,10 +1,12 @@
 import pyarrow as pa
 import pyarrow.compute as pc
+from tabulate import tabulate
+
 
 class DataFrame:
     def __init__(self, id: str, data: pa.Table):
         self.id = id
-        self.data = data
+        self.data = data.combine_chunks()
         self.schema = data.schema
         self.column_names = data.column_names
         self.columns = data.columns
@@ -32,7 +34,7 @@ class DataFrame:
         Returns:
             str: The string representation of the table.
         """
-        return self.to_string(preview_cols=5)
+        return self.to_string(head_rows=5, tail_rows=5, first_cols=3, last_cols=3)
 
     def collect(self):
         """
@@ -174,14 +176,68 @@ class DataFrame:
         """
         return self.data.to_pydict()
 
-    def to_string(self, preview_cols=0):
+    def to_string(self, head_rows=5, tail_rows=5, first_cols=3, last_cols=3):
         """
         Args:
             preview_cols (int, default 0): Number of columns to preview in the string representation.
         Returns:
             str: The string representation of the table.
         """
-        return self.data.to_string(preview_cols=preview_cols)
+        #return self.data.to_string(preview_cols=preview_cols)
+        # 获取所有列名
+        all_columns = self.data.column_names
+        total_columns = len(all_columns)
+
+        # 确定要显示的列
+        if total_columns <= (first_cols + last_cols):
+            display_columns = all_columns
+        else:
+            display_columns = all_columns[:first_cols] + ['...'] + all_columns[-last_cols:]
+
+        # 获取行数
+        total_rows = self.data.num_rows
+
+        # 确保 head_rows 和 tail_rows 不超过总行数
+        head_rows = min(head_rows, total_rows)
+        tail_rows = min(tail_rows, total_rows)
+
+        # 获取头部和尾部数据
+        head_data = self.data.slice(0, head_rows)
+        tail_data = self.data.slice(total_rows - tail_rows, tail_rows)
+
+        # 准备表格数据
+        table_data = []
+
+        # 添加头部数据
+        for i in range(head_rows):
+            row = []
+            for col in display_columns:
+                if col == '...':
+                    row.append('...')
+                else:
+                    col_index = all_columns.index(col)
+                    row.append(str(head_data.column(col_index)[i].as_py()))
+            table_data.append(row)
+
+        # 添加省略行
+        if total_rows > (head_rows + tail_rows):
+            table_data.append(['...' for _ in display_columns])
+
+        # 添加尾部数据
+        for i in range(tail_rows):
+            row = []
+            for col in display_columns:
+                if col == '...':
+                    row.append('...')
+                else:
+                    col_index = all_columns.index(col)
+                    row.append(str(tail_data.column(col_index)[i].as_py()))
+            table_data.append(row)
+
+        # 使用 tabulate 打印
+        table_str = tabulate(table_data, headers=display_columns, tablefmt="plain")
+        table_str += f"\n\n[{total_rows} rows x {total_columns} columns]"
+        return table_str
 
     @staticmethod
     def from_pandas(df, schema=None):
