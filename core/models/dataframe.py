@@ -8,6 +8,11 @@ from typing import Optional, List, Dict, Any
 
 class DataFrame(ABC):
 
+    def __init__(self, id: str):
+        self.id = id
+        self.data = None
+        self.actions = []
+
     @abstractmethod
     def __getitem__(self, index):
         pass
@@ -21,7 +26,7 @@ class DataFrame(ABC):
         pass
 
     @abstractmethod
-    def get_stream(self, max_chunksize: Optional[int] = None) -> List[pa.RecordBatch]:
+    def get_stream(self, max_chunksize: Optional[int] = None):
         pass
 
     @abstractmethod
@@ -63,6 +68,7 @@ class DataFrame(ABC):
             tail_rows: int = 5,
             first_cols: int = 3,
             last_cols: int = 3,
+            display_all: bool = False
     ) -> str:
         pass
 

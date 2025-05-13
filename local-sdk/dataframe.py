@@ -36,10 +36,10 @@ class DataFrame(DataFrame):
         Returns:
             str: The string representation of the table.
         """
-        return self.to_string(head_rows=5, tail_rows=5, first_cols=3, last_cols=3)
+        return self.to_string(head_rows=5, tail_rows=5, first_cols=3, last_cols=3, display_all=False)
 
     def collect(self):
-        pass
+        return self
 
     def get_stream(self, max_chunksize=None):
         """
@@ -152,26 +152,24 @@ class DataFrame(DataFrame):
         """
         return self.data.to_pydict()
 
-    def to_string(self, head_rows=5, tail_rows=5, first_cols=3, last_cols=3):
+    def to_string(self, head_rows=5, tail_rows=5, first_cols=3, last_cols=3, display_all=False):
         """
         Args:
-            preview_cols (int, default 0): Number of columns to preview in the string representation.
         Returns:
             str: The string representation of the table.
         """
-        #return self.data.to_string(preview_cols=preview_cols)
-        # 获取所有列名
+        if display_all:
+            return self.data.to_pandas().to_string()
+
         all_columns = self.data.column_names
         total_columns = len(all_columns)
+        total_rows = self.data.num_rows
 
         # 确定要显示的列
         if total_columns <= (first_cols + last_cols):
             display_columns = all_columns
         else:
             display_columns = all_columns[:first_cols] + ['...'] + all_columns[-last_cols:]
-
-        # 获取行数
-        total_rows = self.data.num_rows
 
         # 确保 head_rows 和 tail_rows 不超过总行数
         head_rows = min(head_rows, total_rows)

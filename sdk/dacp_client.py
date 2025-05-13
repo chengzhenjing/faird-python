@@ -21,29 +21,47 @@ class DacpClient:
         host = f"grpc://{parsed.hostname}:{parsed.port}"
         client.connection =  pa.flight.connect(host)
         ConnectionManager.set_connection(client.connection)
-        connect_request = {
-            'principal': principal
-        }
-        results = client.connection.do_action(pa.flight.Action("connect_server", json.dumps(connect_request).encode('utf-8')))
-        for res in results:
-            res_json: dict = json.loads(res.body.to_pybytes().decode('utf-8'))
-            client.token = res_json.get("token")
+        # connect_request = {
+        #     'principal': principal
+        # }
+        # results = client.connection.do_action(pa.flight.Action("connect_server", json.dumps(connect_request).encode('utf-8')))
+        # for res in results:
+        #     res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
+        #     client.token = res_json.get("token")
         return client
 
     def list_datasets(self) -> List[str]:
-        results = self.connection.do_action(pa.flight.Action("list_datasets", self.token.encode('utf-8')))
-        return ["dataset1", "dataset2", "dataset3"]
+        list_datasets_request = {
+            'token': self.token
+        }
+        results = self.connection.do_action(pa.flight.Action("list_datasets", json.dumps(list_datasets_request).encode('utf-8')))
+        datasets = []
+        for res in results:
+            res_json: dict = json.loads(res.body.to_pybytes().decode('utf-8'))
+            datasets.append(res_json.get("datasets", []))
+        return datasets
 
     def list_dataframes(self, dataset_name: str) -> List[str]:
-        results = self.connection.do_action(pa.flight.Action("list_dataframes", self.token.encode('utf-8')))
-        return ["/Users/yaxuan/Documents/2024/工作/faird/2024-03-快速发版/测试文件/common/2019年中国榆林市沟道信息.csv", "dataframe2"]
+        list_dataframes_request = {
+            'token': self.token
+        }
+        results = self.connection.do_action(pa.flight.Action("list_dataframes", json.dumps(list_dataframes_request).encode('utf-8')))
+        dataframes = []
+        for res in results:
+            res_json: dict = json.loads(res.body.to_pybytes().decode('utf-8'))
+            dataframes.append(res_json.get("dataframes", []))
+        return dataframes
 
     def open(self, dataframe_id: str):
         from sdk.dataframe import DataFrame
-        results = self.connection.do_action(pa.flight.Action("open", self.token.encode('utf-8')))
+        open_request = {
+            'token': self.token,
+            'dataframe_id': dataframe_id
+        }
+        results = self.connection.do_action(pa.flight.Action("open", json.dumps(open_request).encode('utf-8')))
         for res in results:
             res_json: dict = json.loads(res.body.to_pybytes().decode('utf-8'))
-            dataframe = res_json.get("dataframe_id")
+            dataframe_id = res_json.get("dataframe_id")
         return DataFrame(id=dataframe_id)
 
 class AuthType(Enum):
