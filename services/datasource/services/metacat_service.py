@@ -15,7 +15,7 @@ class MetaCatService(FairdDatasourceInterface):
     """
     metacat_url = "http://metacat.example.com"  # MetaCat服务的URL
     metacat_token = "your_metacat_token"  # MetaCat服务的访问令牌
-    datasets = Dict[str, str]  # 数据集ID和名称的映射
+    datasets = {}  # 数据集ID和名称的映射
     dataset_count = 0  # 数据集总数量
 
     def __init__(self):
@@ -24,11 +24,11 @@ class MetaCatService(FairdDatasourceInterface):
         self.metacat_url = self.config.metacat_url
         self.metacat_token = self.config.metacat_token
 
-    def list_dataset(self, page: int = 1, limit: int = 10) -> List[str]:
+    def list_dataset(self, token: str, page: int = 1, limit: int = 10) -> List[str]:
         url = f"{self.metacat_url}/metacat/listDatasets"
 
         headers = {
-            "Authorization": f"Bearer {self.metacat_token}",
+            "Authorization": f"Bearer {token}",
             "Content-Type": "application/json"
         }
 
@@ -38,13 +38,13 @@ class MetaCatService(FairdDatasourceInterface):
         }
 
         try:
-            response = requests.post(url, headers=headers, params=params)
+            response = requests.get(url, headers=headers, params=params)
             response.raise_for_status()  # 检查请求是否成功
             data = response.json()
             
             # 解析JSON字符串
-            dataset_list = json.loads(data.get("data", {}).get("datasetIds", "[]"))
-            self.dataset_count = data.get("data", {}).get("count", 0)
+            dataset_list = json.loads(data.get("datasetIds", "[]"))
+            self.dataset_count = data.get("count", 0)
 
             # 更新全局的datasets字典
             for dataset in dataset_list:
@@ -62,12 +62,12 @@ class MetaCatService(FairdDatasourceInterface):
         
         return None
 
-    def fetch_dataset_details(self, username: str, dataset_name: str) -> Optional[DataSet]:
+    def fetch_dataset_details(self, token: str, username: str, dataset_name: str) -> Optional[DataSet]:
 
         url = f"{self.metacat_url}/metacat/getDatasetById"
 
         headers = {
-            "Authorization": f"Bearer {self.metacat_token}",
+            "Authorization": f"Bearer {token}",
             "Content-Type": "application/json"
         }
 
@@ -82,13 +82,13 @@ class MetaCatService(FairdDatasourceInterface):
         }
 
         try:
-            response = requests.post(url, headers=headers, params=params)
+            response = requests.get(url, headers=headers, params=params)
             response.raise_for_status() # 检查请求是否成功
             metadata_obj = response.json().get("metadata", {})
             dataframeIds_obj = response.json().get("dataframeIds", [])
             accessInfo_obj = response.json().get("accessInfo", {})
 
-            has_permission = self._check_permission(dataset_id, username)  # 检查用户是否有数据集权限
+            has_permission = self._check_permission(token, dataset_id, username)  # 检查用户是否有数据集权限
             
             # 创建并返回DataSet对象
             dataset = DataSet(
@@ -108,7 +108,7 @@ class MetaCatService(FairdDatasourceInterface):
             print(f"Error parsing response: {e}")
             return None
     
-    def _check_permission(self, dataset_id: str, username: str) -> bool:
+    def _check_permission(self, token: str, dataset_id: str, username: str) -> bool:
         """
         检查用户对数据集的访问权限(默认为无)
         @param dataset_id: 数据集ID
@@ -118,7 +118,7 @@ class MetaCatService(FairdDatasourceInterface):
         url = f"{self.metacat_url}/metacat/checkPermission"
         
         headers = {
-            "Authorization": f"Bearer {self.metacat_token}",
+            "Authorization": f"Bearer {token}",
             "Content-Type": "application/json"
         }
         
@@ -128,7 +128,7 @@ class MetaCatService(FairdDatasourceInterface):
         }
         
         try:
-            response = requests.post(url, headers=headers, params=params)
+            response = requests.get(url, headers=headers, params=params)
             response.raise_for_status()
             return response.json().get("data", {}).get("result", False)
         except Exception as e:
@@ -152,7 +152,7 @@ def parse_metadata(raw_data: dict) -> Optional[DatasetMetadata]:
     
     # 解析为DatasetMetadata对象
     try:
-        dataset_metadata = DatasetMetadata.parse_obj(processed_data)
+        dataset_metadata = DatasetMetadata.model_validate(processed_data)
         print("元数据解析成功:", dataset_metadata)
         return dataset_metadata
     except ValidationError as e:
