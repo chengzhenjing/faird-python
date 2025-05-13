@@ -10,7 +10,7 @@ class FairdDatasourceInterface(ABC):
     @return: 数据集名称列表
     """
     @abstractmethod
-    def list_dataset(self, page: int = 1, limit: int = 10) -> List[str]:
+    def list_dataset(self, token: str, page: int = 1, limit: int = 10) -> List[str]:
         pass
 
     """
@@ -18,7 +18,7 @@ class FairdDatasourceInterface(ABC):
     @param dataset_name: 数据中心内部数据集名称
     """
     @abstractmethod
-    def fetch_dataset_details(self, dataset_name: str) -> Optional[DataSet]:
+    def fetch_dataset_details(self, token: str, dataset_name: str) -> Optional[DataSet]:
         pass
 
 
