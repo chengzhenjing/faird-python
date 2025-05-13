@@ -25,6 +25,15 @@ class MetaCatService(FairdDatasourceInterface):
         self.metacat_token = self.config.metacat_token
 
     def list_dataset(self, token: str, page: int = 1, limit: int = 10) -> List[str]:
+        """
+        todo：暂时return
+        """
+        dataset_list = [
+            '{"name": "数据集01", "id": "ds001"}',
+            '{"name": "数据集02", "id": "ds002"}'
+        ]
+        return dataset_list
+
         url = f"{self.metacat_url}/metacat/listDatasets"
 
         headers = {

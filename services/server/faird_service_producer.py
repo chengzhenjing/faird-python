@@ -1,15 +1,15 @@
 import json
 
 import pyarrow as pa
-import pyarrow.flight as flight
+import pyarrow.flight
 from tabulate import tabulate
 
 
 from services.datasource.services.metacat_service import MetaCatService
 from services.types.thread_safe_dict import ThreadSafeDict
 
-class FairdServiceProducer(flight.FlightServerBase):
-    def __init__(self, location: flight.Location):
+class FairdServiceProducer(pa.flight.FlightServerBase):
+    def __init__(self, location: pa.flight.Location):
         super(FairdServiceProducer, self).__init__(location)
 
         # 线程安全的字典，用于存储连接信息
@@ -52,21 +52,29 @@ class FairdServiceProducer(flight.FlightServerBase):
         action_type = action.type
         # 处理不同的操作
         if action_type == "list_datasets":
-            list_req = json.loads(action.body.decode())
+            list_req = json.loads(action.body.to_pybytes().decode("utf-8"))
             token = list_req.get("token")
-            return flight.Result(json.dumps(self.data_source_sevice.list_dataset(token)).encode())
+            result = pa.flight.Result(json.dumps(self.data_source_sevice.list_dataset(token)).encode())
+            return iter([result])
+
         elif action_type == "list_dataframes":
-            list_req = json.loads(action.body.decode())
+            list_req = json.loads(action.body.to_pybytes().decode("utf-8"))
             token = list_req.get("token")
             username = list_req.get("username")
             dataset_name = list_req.get("dataset_name")
+
+            # todo: 暂时直接return
+            dataframe_ids = ["/Users/yaxuan/Documents/2024/工作/faird/2024-03-快速发版/测试文件/common/2019年中国榆林市沟道信息.csv", "/path/to/file.nc"]
+            return iter([pa.flight.Result(json.dumps(dataframe_ids).encode())])
+
             dataset = (self.datasets.get(dataset_name)
                        or self.data_source_sevice.fetch_dataset_details(token, username, dataset_name))
             if dataset:
                 self.datasets[dataset_name] = dataset
-                return flight.Result(json.dumps(dataset.dataframeIds).encode())
+                return pa.flight.Result(json.dumps(dataset.dataframeIds).encode())
             else:
-                return flight.FlightError(f"Dataset {dataset_name} not found.")
+                return pa.flight.FlightError(f"Dataset {dataset_name} not found.")
+
         elif action_type == "to_string":
             return self.to_string_action(context, action)
         else:
@@ -134,7 +142,7 @@ class FairdServiceProducer(flight.FlightServerBase):
         # 使用 tabulate 打印
         table_str = tabulate(table_data, headers=display_columns, tablefmt="plain")
         table_str += f"\n\n[{total_rows} rows x {total_columns} columns]"
-        return [flight.Result(table_str.encode("utf-8"))]
+        return [pa.flight.Result(table_str.encode("utf-8"))]
 
     def get_dataframe_data(self, dataframe_id: str) -> pa.Table:
         import pandas as pd

@@ -35,22 +35,18 @@ class DacpClient:
             'token': self.token
         }
         results = self.connection.do_action(pa.flight.Action("list_datasets", json.dumps(list_datasets_request).encode('utf-8')))
-        datasets = []
         for res in results:
             res_json: dict = json.loads(res.body.to_pybytes().decode('utf-8'))
-            datasets.append(res_json.get("datasets", []))
-        return datasets
+            return res_json
 
     def list_dataframes(self, dataset_name: str) -> List[str]:
         list_dataframes_request = {
             'token': self.token
         }
         results = self.connection.do_action(pa.flight.Action("list_dataframes", json.dumps(list_dataframes_request).encode('utf-8')))
-        dataframes = []
         for res in results:
             res_json: dict = json.loads(res.body.to_pybytes().decode('utf-8'))
-            dataframes.append(res_json.get("dataframes", []))
-        return dataframes
+            return res_json
 
     def open(self, dataframe_id: str):
         from sdk.dataframe import DataFrame

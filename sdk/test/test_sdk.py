@@ -3,13 +3,28 @@ from sdk.dataframe import DataFrame
 
 
 def test_sdk():
-    conn = DacpClient.connect("dacp://cern.ac.cn:3101", Principal.oauth("conet", "username", "password"))
-    conn = DacpClient.connect("dacp://cern.ac.cn:3101", Principal.anonymous())
+    conn = DacpClient.connect("dacp://localhost:3101", Principal.oauth("conet", "username", "password"))
+    #conn = DacpClient.connect("dacp://cern.ac.cn:3101", Principal.anonymous())
 
     dataset_ids = conn.list_datasets()
     dataframe_ids = conn.list_dataframes(dataset_ids[0])
 
-    df = conn.open(dataframe_ids[0])
+    #df = conn.open(dataframe_ids[0])
+    df = DataFrame(id=dataframe_ids[0])
+
+    #print_str = df.to_string()
+
+    #df.collect()
+
+    for chunk in df.get_stream():
+        print(chunk)
+        print(f"Chunk size: {chunk.num_rows}")
+
+    for chunk in df.get_stream(max_chunksize=100):
+        print(chunk)
+        print(f"Chunk size: {chunk.num_rows}")
+
+    print(df.collect().limit(3))
 
     # compute on server
     print(df.limit(3).select("column1", "column2"))
@@ -43,5 +58,5 @@ def test_sdk_dataframe():
 
 
 if __name__ == "__main__":
-    #test_sdk()
-    test_sdk_dataframe()
+    test_sdk()
+    #test_sdk_dataframe()
