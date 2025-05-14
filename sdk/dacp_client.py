@@ -14,6 +14,7 @@ class DacpClient:
         self.connection = None
         self.token = None
         self.username = None
+        self.connection_id = None
 
     @staticmethod
     def connect(url: str, principal: Principal) -> DacpClient:
@@ -33,6 +34,7 @@ class DacpClient:
         for res in results:
             res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
             client.token = res_json.get("token")
+            client.connection_id = res_json.get("connectionID")
             client.username = principal.params.get('username')
         return client
 
@@ -45,27 +47,24 @@ class DacpClient:
             res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
             return res_json
 
-    def list_dataframes(self, dataset: str) -> List[str]:
+    def list_dataframes(self, dataset_name: str) -> List[str]:
         ticket = {
             'token': self.token,
             'username': self.username,
-            'dataset_name': dataset.get('id')
+            'dataset_name': dataset_name
         }
         results = self.connection.do_action(pa.flight.Action("list_dataframes", json.dumps(ticket).encode('utf-8')))
         for res in results:
-            res_json: dict = json.loads(res.body.to_pybytes().decode('utf-8'))
+            res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
             return res_json
 
     def open(self, dataframe_id: str):
         from sdk.dataframe import DataFrame
-        open_request = {
-            'token': self.token,
-            'dataframe_id': dataframe_id
+        ticket = {
+            'dataframe_id': dataframe_id,
+            'connection_id': self.connection_id
         }
-        results = self.connection.do_action(pa.flight.Action("open", json.dumps(open_request).encode('utf-8')))
-        for res in results:
-            res_json: dict = json.loads(res.body.to_pybytes().decode('utf-8'))
-            dataframe_id = res_json.get("dataframe_id")
+        results = self.connection.do_action(pa.flight.Action("open", json.dumps(ticket).encode('utf-8')))
         return DataFrame(id=dataframe_id)
 
 class AuthType(Enum):

@@ -1,13 +1,16 @@
 import json
-
+import os
 import pyarrow as pa
 import pyarrow.flight
-
 from services.connection.faird_connection import FairdConnection
 from utils.format_utils import format_arrow_table
 from services.datasource.services.metacat_service import MetaCatService
 from services.types.thread_safe_dict import ThreadSafeDict
 from services.connection.connection_service import connect_server
+from parser import csv_parser
+from parser import  nc_parser
+from parser import  tif_parser
+from dataframe import DataFrame
 
 class FairdServiceProducer(pa.flight.FlightServerBase):
     def __init__(self, location: pa.flight.Location):
@@ -74,7 +77,7 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             token = connect_server(ticket_data.get('username'), ticket_data.get('password'))
             conn = FairdConnection(clientIp=ticket_data.get('clientIp'), username=ticket_data.get('username'), token=token)
             self.connections[conn.connectionID] = conn
-            return iter([pa.flight.Result(json.dumps({"token": token}).encode("utf-8"))])
+            return iter([pa.flight.Result(json.dumps({"token": token, "connectionID": conn.connectionID}).encode("utf-8"))])
 
         elif action_type == "list_datasets":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
@@ -85,20 +88,47 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         elif action_type == "list_dataframes":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
             token = ticket_data.get("token")
-            username = list_req.get("username")
-            dataset_id = list_req.get("dataset_id")
-            dataset = (self.datasets.get(dataset_id)
+            username = ticket_data.get("username")
+            dataset_name = ticket_data.get("dataset_name")
+            dataset = (self.datasets.get(dataset_name)
                        or self.data_source_sevice.fetch_dataset_details(token, username, dataset_name))
             if dataset:
                 self.datasets[dataset_name] = dataset
-                return pa.flight.Result(json.dumps(dataset.dataframeIds).encode())
-            else:
-                return pa.flight.FlightError(f"Dataset {dataset_name} not found.")
+                return iter([pa.flight.Result(json.dumps(dataset.dataframeIds).encode())])
+
+        elif action_type == "open":
+            ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
+            dataframe_id = ticket_data.get("dataframe_id")
+            connection_id = ticket_data.get('connection_id')
+            # open with parser
+            df = self.open_action(dataframe_id)
+            # put dataframe to connection memory
+            conn = self.connections.get(connection_id)
+            conn.dataframes[dataframe_id] = df
+            return
 
         elif action_type == "to_string":
             return self.to_string_action(context, action)
         else:
             pass
+
+    def open_action(self, dataframe_id):
+        file_extension = os.path.splitext(dataframe_id)[1].lower()
+        parser_switch = {
+            ".csv": csv_parser.CSVParser,
+            ".json": None,
+            ".xml": None,
+            ".nc": nc_parser.NCParser,
+            ".tiff": tif_parser.TIFParser,
+            ".tif": tif_parser.TIFParser,
+
+        }
+        parser_class = parser_switch.get(file_extension)
+        if not parser_class:
+            raise ValueError(f"Unsupported file extension: {file_extension}")
+        parser = parser_class()
+        arrow_table = parser.parse(dataframe_id)
+        return DataFrame(id=dataframe_id, data=arrow_table)
 
     def to_string_action(self, context, action):
         params = json.loads(action.body.to_pybytes().decode("utf-8"))

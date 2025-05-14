@@ -67,10 +67,10 @@ class MetaCatService(FairdDatasourceInterface):
 
     def fetch_dataset_details(self, token: str, username: str, dataset_name: str) -> Optional[DataSet]:
 
-        url = f"{self.metacat_url}/metacat/getDatasetById"
+        url = f"{self.metacat_url}/api/fair/getDatasetById"
 
         headers = {
-            "Authorization": f"Bearer {token}",
+            "Authorization": token,
             "Content-Type": "application/json"
         }
 
@@ -123,10 +123,10 @@ class MetaCatService(FairdDatasourceInterface):
         @param username: 用户名
         @return: 是否有权限访问
         """
-        url = f"{self.metacat_url}/metacat/checkPermission"
+        url = f"{self.metacat_url}/api/fair/checkPermission"
         
         headers = {
-            "Authorization": f"Bearer {token}",
+            "Authorization": token,
             "Content-Type": "application/json"
         }
         
