@@ -22,17 +22,20 @@ def test_sdk():
     print(df.schema)
     print(df.num_rows)
     print(df)
-    print(df.limit(5).select("OBJECTID", "start_p", "end_p"))
+    #print(df.limit(5).select("OBJECTID", "start_p", "end_p"))
+    print(df.limit(5).select("lat", "lon", "temperature"))
 
     """
     2. compute locally
     """
-    print(df.collect().limit(3).select("from_node"))
+    #print(df.collect().limit(3).select("from_node"))
+    print(df.collect().limit(3).select("temperature"))
 
     """
     2. compute remote & local
     """
-    print(df.limit(3).collect().select("OBJECTID", "start_p", "end_p"))
+    #print(df.limit(3).collect().select("OBJECTID", "start_p", "end_p"))
+    print(df.limit(3).collect().select("lat", "lon", "temperature"))
 
     # streaming
     for chunk in df.get_stream(): # 默认1000行

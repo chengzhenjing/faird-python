@@ -10,10 +10,11 @@ from utils.format_utils import format_arrow_table
 
 class DataFrame(DataFrame):
 
-    def __init__(self, id: str, data: Optional[pa.Table] = None, actions: Optional[List[tuple]] = []):
+    def __init__(self, id: str, data: Optional[pa.Table] = None, actions: Optional[List[tuple]] = [], connection_id: Optional[str] = None):
         self.id = id
         self.data = data # 初始状态下 data 为空
         self.actions = actions # 用于记录操作的列表，延迟执行
+        self.connection_id = connection_id
 
     def __getitem__(self, index):
         pass
@@ -68,22 +69,22 @@ class DataFrame(DataFrame):
                 yield batch
 
     def limit(self, rowNum: int) -> DataFrame:
-        new_df = DataFrame(self.id, self.data, self.actions[:])
+        new_df = DataFrame(self.id, self.data, self.actions[:], self.connection_id)
         new_df.actions.append(("limit", {"rowNum": rowNum}))
         return new_df
 
     def slice(self, offset: int = 0, length: Optional[int] = None) -> DataFrame:
-        new_df = DataFrame(self.id, self.data, self.actions[:])
+        new_df = DataFrame(self.id, self.data, self.actions[:], self.connection_id)
         new_df.actions.append(("slice", {"offset": offset, "length": length}))
         return new_df
 
     def select(self, *columns):
-        new_df = DataFrame(self.id, self.data, self.actions[:])
+        new_df = DataFrame(self.id, self.data, self.actions[:], self.connection_id)
         new_df.actions.append(("select", {"columns": columns}))
         return new_df
 
     def filter(self, mask: pa.Array) -> DataFrame:
-        new_df = DataFrame(self.id, self.data, self.actions[:])
+        new_df = DataFrame(self.id, self.data, self.actions[:], self.connection_id)
         new_df.actions.append(("filter", {"mask": mask}))
         return new_df
 
@@ -91,7 +92,7 @@ class DataFrame(DataFrame):
         pass
 
     def map(self, column: str, func: Any, new_column_name: Optional[str] = None) -> DataFrame:
-        new_df = DataFrame(self.id, self.data, self.actions[:])
+        new_df = DataFrame(self.id, self.data, self.actions[:], self.connection_id)
         new_df.actions.append(("map", {"column": column, "func": func, "new_column_name": new_column_name}))
         return new_df
 

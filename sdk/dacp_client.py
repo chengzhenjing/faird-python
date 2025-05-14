@@ -65,7 +65,7 @@ class DacpClient:
             'connection_id': self.connection_id
         }
         results = self.connection.do_action(pa.flight.Action("open", json.dumps(ticket).encode('utf-8')))
-        return DataFrame(id=dataframe_id)
+        return DataFrame(id=dataframe_id, connection_id=self.connection_id)
 
 class AuthType(Enum):
     OAUTH = "oauth"

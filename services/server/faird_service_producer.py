@@ -32,9 +32,11 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         dataframe = json.loads(descriptor.command.decode("utf-8")).get("dataframe")
         dataframe_id = json.loads(dataframe).get("id")
         actions = json.loads(dataframe).get("actions")
+        connection_id = json.loads(dataframe).get("connection_id")
 
         # 获取 Arrow Table 的 schema
-        arrow_table = self.get_dataframe_data(dataframe_id)
+        conn = self.connections[connection_id]
+        arrow_table = conn.dataframes[dataframe_id].data
         arrow_table = self.handle_prev_actions(arrow_table, actions)
         schema = arrow_table.schema
 
@@ -54,10 +56,12 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         ticket_data = json.loads(ticket.ticket.decode('utf-8'))
         dataframe_id = json.loads(ticket_data.get('dataframe')).get('id')
         actions = json.loads(ticket_data.get('dataframe')).get('actions')
+        connection_id = json.loads(ticket_data.get('dataframe')).get("connection_id")
         max_chunksize = ticket_data.get('max_chunksize')
 
         # 从conn中获取dataframe.data
-        arrow_table = self.get_dataframe_data(dataframe_id)
+        conn = self.connections[connection_id]
+        arrow_table = conn.dataframes[dataframe_id].data
         arrow_table = self.handle_prev_actions(arrow_table, actions)
 
         if max_chunksize:
@@ -134,22 +138,19 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         params = json.loads(action.body.to_pybytes().decode("utf-8"))
         dataframe_id = json.loads(params.get("dataframe")).get("id")
         actions = json.loads(params.get("dataframe")).get("actions")
+        connection_id = json.loads(params.get("dataframe")).get("connection_id")
         head_rows = params.get("head_rows", 5)
         tail_rows = params.get("tail_rows", 5)
         first_cols = params.get("first_cols", 3)
         last_cols = params.get("last_cols", 3)
         display_all = params.get("display_all", False)
 
-        arrow_table = self.get_dataframe_data(dataframe_id)
+        conn = self.connections[connection_id]
+        arrow_table = conn.dataframes[dataframe_id].data
         arrow_table = self.handle_prev_actions(arrow_table, actions)
 
         table_str = format_arrow_table(arrow_table, head_rows, tail_rows, first_cols, last_cols, display_all)
         return iter([pa.flight.Result(table_str.encode("utf-8"))])
-
-    def get_dataframe_data(self, dataframe_id: str) -> pa.Table:
-        import pandas as pd
-        df = pd.read_csv(dataframe_id)
-        return pa.Table.from_pandas(df)
 
     def handle_prev_actions(self, arrow_table, prev_actions):
         for action in prev_actions:
