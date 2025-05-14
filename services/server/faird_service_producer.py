@@ -2,9 +2,12 @@ import json
 
 import pyarrow as pa
 import pyarrow.flight
+
+from services.connection.faird_connection import FairdConnection
 from utils.format_utils import format_arrow_table
 from services.datasource.services.metacat_service import MetaCatService
 from services.types.thread_safe_dict import ThreadSafeDict
+from services.connection.connection_service import connect_server
 
 class FairdServiceProducer(pa.flight.FlightServerBase):
     def __init__(self, location: pa.flight.Location):
@@ -66,24 +69,25 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
 
     def do_action(self, context, action):
         action_type = action.type
-        # 处理不同的操作
-        if action_type == "list_datasets":
-            list_req = json.loads(action.body.to_pybytes().decode("utf-8"))
-            token = list_req.get("token")
+        if action_type == "connect_server":
+            ticket_data = json.loads(action.body.to_pybytes().decode('utf-8'))
+            token = connect_server(ticket_data.get('username'), ticket_data.get('password'))
+            conn = FairdConnection(clientIp=ticket_data.get('clientIp'), username=ticket_data.get('username'), token=token)
+            self.connections[conn.connectionID] = conn
+            return iter([pa.flight.Result(json.dumps({"token": token}).encode("utf-8"))])
+
+        elif action_type == "list_datasets":
+            ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
+            token = ticket_data.get("token")
             result = pa.flight.Result(json.dumps(self.data_source_sevice.list_dataset(token)).encode())
             return iter([result])
 
         elif action_type == "list_dataframes":
-            list_req = json.loads(action.body.to_pybytes().decode("utf-8"))
-            token = list_req.get("token")
+            ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
+            token = ticket_data.get("token")
             username = list_req.get("username")
-            dataset_name = list_req.get("dataset_name")
-
-            # todo: 暂时直接return
-            dataframe_ids = ["/Users/yaxuan/Documents/2024/工作/faird/2024-03-快速发版/测试文件/common/2019年中国榆林市沟道信息.csv", "/path/to/file.nc"]
-            return iter([pa.flight.Result(json.dumps(dataframe_ids).encode())])
-
-            dataset = (self.datasets.get(dataset_name)
+            dataset_id = list_req.get("dataset_id")
+            dataset = (self.datasets.get(dataset_id)
                        or self.data_source_sevice.fetch_dataset_details(token, username, dataset_name))
             if dataset:
                 self.datasets[dataset_name] = dataset

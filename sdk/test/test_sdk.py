@@ -3,11 +3,11 @@ from sdk.dataframe import DataFrame
 
 
 def test_sdk():
-    conn = DacpClient.connect("dacp://localhost:3101", Principal.oauth("conet", "username", "password"))
+    conn = DacpClient.connect("dacp://localhost:3101", Principal.oauth("conet", "faird-user1", "user1@cnic.cn"))
     #conn = DacpClient.connect("dacp://cern.ac.cn:3101", Principal.anonymous())
 
-    dataset_ids = conn.list_datasets()
-    dataframe_ids = conn.list_dataframes(dataset_ids[0])
+    datasets = conn.list_datasets()
+    dataframe_ids = conn.list_dataframes(datasets[0].get('name'))
 
     #df = conn.open(dataframe_ids[0])
     df = DataFrame(id=dataframe_ids[0])

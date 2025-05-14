@@ -13,7 +13,7 @@ class MetaCatService(FairdDatasourceInterface):
     """
     读取MetaCat数据目录服务
     """
-    metacat_url = "http://metacat.example.com"  # MetaCat服务的URL
+    metacat_url = "http://10.0.82.71:8080"  # MetaCat服务的URL
     metacat_token = "your_metacat_token"  # MetaCat服务的访问令牌
     datasets = {}  # 数据集ID和名称的映射
     dataset_count = 0  # 数据集总数量
@@ -25,19 +25,10 @@ class MetaCatService(FairdDatasourceInterface):
         self.metacat_token = self.config.metacat_token
 
     def list_dataset(self, token: str, page: int = 1, limit: int = 10) -> List[str]:
-        """
-        todo：暂时return
-        """
-        dataset_list = [
-            '{"name": "数据集01", "id": "ds001"}',
-            '{"name": "数据集02", "id": "ds002"}'
-        ]
-        return dataset_list
-
-        url = f"{self.metacat_url.strip('"')}/api/fair/listDatasets"
+        url = f"{self.metacat_url}/api/fair/listDatasets"
 
         headers = {
-            "Authorization": f"{token}",
+            "Authorization": token,
             "Content-Type": "application/json"
         }
 
@@ -52,11 +43,11 @@ class MetaCatService(FairdDatasourceInterface):
             if response.status_code != 200:
                 print(f"Error fetching dataset list: {response.status_code}")
                 return None
+            data = response.json().get("data")
 
-            data = response.json()
             # 解析JSON字符串
-            dataset_list = data.get("data", "{}").get("datasetIds", "[]")
-            self.dataset_count = data.get("data", "{}").get("count", 0)
+            dataset_list = data.get("datasetIds", [])
+            self.dataset_count = data.get("count", 0)
 
             # 更新全局的datasets字典
             for dataset in dataset_list:
@@ -76,10 +67,10 @@ class MetaCatService(FairdDatasourceInterface):
 
     def fetch_dataset_details(self, token: str, username: str, dataset_name: str) -> Optional[DataSet]:
 
-        url = f"{self.metacat_url.strip('"')}/api/fair/getDatasetById"
+        url = f"{self.metacat_url}/metacat/getDatasetById"
 
         headers = {
-            "Authorization": f"{token}",
+            "Authorization": f"Bearer {token}",
             "Content-Type": "application/json"
         }
 
@@ -132,10 +123,10 @@ class MetaCatService(FairdDatasourceInterface):
         @param username: 用户名
         @return: 是否有权限访问
         """
-        url = f"{self.metacat_url.strip('"')}/api/fair/checkPermission"
+        url = f"{self.metacat_url}/metacat/checkPermission"
         
         headers = {
-            "Authorization": f"{token}",
+            "Authorization": f"Bearer {token}",
             "Content-Type": "application/json"
         }
         

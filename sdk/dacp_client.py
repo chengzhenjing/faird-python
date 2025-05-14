@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 import pyarrow as pa
 import pyarrow.flight
 import json
+import socket
 
 class DacpClient:
     def __init__(self, url: str, principal: Principal):
@@ -12,6 +13,7 @@ class DacpClient:
         self.principal = principal
         self.connection = None
         self.token = None
+        self.username = None
 
     @staticmethod
     def connect(url: str, principal: Principal) -> DacpClient:
@@ -21,29 +23,35 @@ class DacpClient:
         host = f"grpc://{parsed.hostname}:{parsed.port}"
         client.connection =  pa.flight.connect(host)
         ConnectionManager.set_connection(client.connection)
-        # connect_request = {
-        #     'principal': principal
-        # }
-        # results = client.connection.do_action(pa.flight.Action("connect_server", json.dumps(connect_request).encode('utf-8')))
-        # for res in results:
-        #     res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
-        #     client.token = res_json.get("token")
+        ticket = {
+            'clientIp': socket.gethostbyname(socket.gethostname()),
+            'type': principal.params.get('type'),
+            'username': principal.params.get('username'),
+            'password': principal.params.get('password')
+        }
+        results = client.connection.do_action(pa.flight.Action("connect_server", json.dumps(ticket).encode('utf-8')))
+        for res in results:
+            res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
+            client.token = res_json.get("token")
+            client.username = principal.params.get('username')
         return client
 
     def list_datasets(self) -> List[str]:
-        list_datasets_request = {
+        ticket = {
             'token': self.token
         }
-        results = self.connection.do_action(pa.flight.Action("list_datasets", json.dumps(list_datasets_request).encode('utf-8')))
+        results = self.connection.do_action(pa.flight.Action("list_datasets", json.dumps(ticket).encode('utf-8')))
         for res in results:
-            res_json: dict = json.loads(res.body.to_pybytes().decode('utf-8'))
+            res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
             return res_json
 
-    def list_dataframes(self, dataset_name: str) -> List[str]:
-        list_dataframes_request = {
-            'token': self.token
+    def list_dataframes(self, dataset: str) -> List[str]:
+        ticket = {
+            'token': self.token,
+            'username': self.username,
+            'dataset_name': dataset.get('id')
         }
-        results = self.connection.do_action(pa.flight.Action("list_dataframes", json.dumps(list_dataframes_request).encode('utf-8')))
+        results = self.connection.do_action(pa.flight.Action("list_dataframes", json.dumps(ticket).encode('utf-8')))
         for res in results:
             res_json: dict = json.loads(res.body.to_pybytes().decode('utf-8'))
             return res_json
