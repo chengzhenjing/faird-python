@@ -40,3 +40,16 @@ class CSVParser(BaseParser):
         # Load the .arrow file into a pyarrow Table using zero-copy
         with pa.memory_map(arrow_file_path, "r") as source:
             return ipc.open_file(source).read_all()
+
+    def write(self, table: pa.Table, output_path: str):
+        """
+        占位 write 方法，用于满足 BaseParser 接口要求。
+        当前尚未实现写入功能。
+
+        Args:
+            table (pa.Table): 要写入的数据（当前不处理）
+            output_path (str): 目标输出路径（当前不处理）
+        Raises:
+            NotImplementedError: 始终抛出未实现异常
+        """
+        raise NotImplementedError("CSVParser.write() 尚未实现：当前不支持写回 CSV 文件")
