@@ -7,7 +7,7 @@ from dataframe import DataFrame
 
 def test_local_sdk():
 
-    dataframe_id = "/Users/yaxuan/Documents/2024/工作/faird/2024-03-快速发版/测试文件/common/2019年中国榆林市沟道信息.csv"
+    dataframe_id = "/Users/zhouziang/Documents/2019年中国榆林市沟道信息.csv"
 
     """
     0. open dataframe

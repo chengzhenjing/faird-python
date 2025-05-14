@@ -1,5 +1,7 @@
 from dataframe import DataFrame
 from parser import csv_parser
+from parser import  nc_parser
+from parser import  tif_parser
 import os
 
 
@@ -21,6 +23,10 @@ def open(dataframe_id: str) -> DataFrame:
         ".csv": csv_parser.CSVParser,
         ".json": None,
         ".xml": None,
+        ".nc": nc_parser.NCParser,
+        ".tiff": tif_parser.TIFParser,
+        ".tif": tif_parser.TIFParser,
+
     }
 
     # Get the corresponding parser class

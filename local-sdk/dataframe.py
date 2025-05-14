@@ -3,7 +3,8 @@ import pyarrow.compute as pc
 from tabulate import tabulate
 
 from core.models.dataframe import DataFrame
-
+from parser.nc_parser import NCParser
+import os
 
 class DataFrame(DataFrame):
     def __init__(self, id: str, data: pa.Table):
@@ -224,3 +225,38 @@ class DataFrame(DataFrame):
         """从字典转换为 Arrow Table"""
         data = pa.Table.from_pydict(mapping, schema=schema, metadata=metadata)
         return DataFrame(id="from_pydict", data=data)
+
+    def write(self, output_path: str, format: str = None):
+        """
+        将 DataFrame 写入文件，支持多种格式（netcdf, csv 等）
+
+        Args:
+            output_path (str): 输出文件路径。
+            format (str, optional): 文件格式，如 'netcdf', 'csv'。默认自动根据扩展名推断。
+        """
+        if format is None:
+            ext = os.path.splitext(output_path)[-1].lower()
+            if ext in ('.nc', '.netcdf'):
+                format = 'netcdf'
+            elif ext in ('.csv',):
+                format = 'csv'
+            elif ext in ('.arrow', '.ipc'):
+                format = 'arrow'
+            else:
+                raise ValueError(f"无法识别文件格式，请指定 format 参数，例如 'netcdf', 'csv'")
+
+        if format == 'netcdf':
+            from parser.nc_parser import NCParser
+            NCParser().write(self.data, output_path)
+        elif format == 'csv':
+            import pyarrow.csv as csv
+            csv.write_csv(self.data, output_path)
+        elif format == 'arrow':
+            with pa.OSFile(output_path, 'wb') as sink:
+                with pa.ipc.new_file(sink, self.data.schema) as writer:
+                    writer.write_table(self.data)
+        else:
+            supported = ['netcdf', 'csv', 'arrow']
+            raise NotImplementedError(f"不支持的输出格式: {format}。当前支持: {', '.join(supported)}")
+
+
