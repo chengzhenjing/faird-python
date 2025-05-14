@@ -12,7 +12,7 @@ class BasicInfo(BaseModel):
     """基本信息"""
     name: str = Field(..., min_length=10)
     identifier: List[Identifier]  # 多值字典
-    description: str = Field(..., min_length=50)
+    description: str = Field(..., min_length=20)
     keywords: List[str] = Field(..., min_items=3)
     url: HttpUrl
     datePublished: date
@@ -20,10 +20,16 @@ class BasicInfo(BaseModel):
     format: Optional[List[str]] = None  # 可选字段
     image: Optional[HttpUrl] = None     # 可选字段
 
+class AccessRights(BaseModel):
+    """访问权限信息"""
+    type: str  # 如 "open"
+    openDate: Optional[date] = None
+    condition: Optional[str] = None
+
 class DistributionInfo(BaseModel):
     """分发信息"""
-    accessRights: Optional[str] = None
-    license: HttpUrl
+    accessRights: Optional[AccessRights] = None
+    license: str
     byteSize: Optional[float] = Field(None, description="存储量（单位：KB）")
     fileNumber: Optional[int] = None
     downloadURL: Optional[HttpUrl] = None
@@ -54,7 +60,7 @@ class InstrumentInfo(BaseModel):
     name: str
     description: str
     supportingInstitution: str
-    manufacturer: str
+    manufacuturer: str
     accountablePerson: str
     contactPoint: str
     email: List[str]

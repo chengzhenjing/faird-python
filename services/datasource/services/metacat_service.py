@@ -34,10 +34,10 @@ class MetaCatService(FairdDatasourceInterface):
         ]
         return dataset_list
 
-        url = f"{self.metacat_url}/metacat/listDatasets"
+        url = f"{self.metacat_url.strip('"')}/api/fair/listDatasets"
 
         headers = {
-            "Authorization": f"Bearer {token}",
+            "Authorization": f"{token}",
             "Content-Type": "application/json"
         }
 
@@ -49,11 +49,14 @@ class MetaCatService(FairdDatasourceInterface):
         try:
             response = requests.get(url, headers=headers, params=params)
             response.raise_for_status()  # 检查请求是否成功
+            if response.status_code != 200:
+                print(f"Error fetching dataset list: {response.status_code}")
+                return None
+
             data = response.json()
-            
             # 解析JSON字符串
-            dataset_list = json.loads(data.get("datasetIds", "[]"))
-            self.dataset_count = data.get("count", 0)
+            dataset_list = data.get("data", "{}").get("datasetIds", "[]")
+            self.dataset_count = data.get("data", "{}").get("count", 0)
 
             # 更新全局的datasets字典
             for dataset in dataset_list:
@@ -73,10 +76,10 @@ class MetaCatService(FairdDatasourceInterface):
 
     def fetch_dataset_details(self, token: str, username: str, dataset_name: str) -> Optional[DataSet]:
 
-        url = f"{self.metacat_url}/metacat/getDatasetById"
+        url = f"{self.metacat_url.strip('"')}/api/fair/getDatasetById"
 
         headers = {
-            "Authorization": f"Bearer {token}",
+            "Authorization": f"{token}",
             "Content-Type": "application/json"
         }
 
@@ -93,9 +96,14 @@ class MetaCatService(FairdDatasourceInterface):
         try:
             response = requests.get(url, headers=headers, params=params)
             response.raise_for_status() # 检查请求是否成功
-            metadata_obj = response.json().get("metadata", {})
-            dataframeIds_obj = response.json().get("dataframeIds", [])
-            accessInfo_obj = response.json().get("accessInfo", {})
+            if response.status_code != 200:
+                print(f"Error fetching dataset details: {response.status_code}")
+                return None
+
+            data = response.json()
+            metadata_obj = data.get("data", "{}").get("metadata", {})
+            dataframeIds_obj = data.get("data", "{}").get("dataframeIds", [])
+            accessInfo_obj = data.get("data", "{}").get("access_info", {})
 
             has_permission = self._check_permission(token, dataset_id, username)  # 检查用户是否有数据集权限
             
@@ -124,10 +132,10 @@ class MetaCatService(FairdDatasourceInterface):
         @param username: 用户名
         @return: 是否有权限访问
         """
-        url = f"{self.metacat_url}/metacat/checkPermission"
+        url = f"{self.metacat_url.strip('"')}/api/fair/checkPermission"
         
         headers = {
-            "Authorization": f"Bearer {token}",
+            "Authorization": f"{token}",
             "Content-Type": "application/json"
         }
         
@@ -157,7 +165,7 @@ def parse_metadata(raw_data: dict) -> Optional[DatasetMetadata]:
         # 转换日期字符串
         if "datePublished" in basic:
             date_str = basic["datePublished"]
-            basic["datePublished"] = datetime.strptime(date_str, "%Y/%m/%d").date()
+            basic["datePublished"] = datetime.strptime(date_str, "%Y-%m-%d").date()
     
     # 解析为DatasetMetadata对象
     try:
