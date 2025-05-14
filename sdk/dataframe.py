@@ -2,24 +2,46 @@ import json
 from typing import List, Optional, Dict, Any
 import pandas
 import pyarrow as pa
-from tabulate import tabulate
 
 from core.models.dataframe import DataFrame
 from sdk.dacp_client import ConnectionManager
+from utils.format_utils import format_arrow_table
 
 
 class DataFrame(DataFrame):
 
-    def __init__(self, id: str):
+    def __init__(self, id: str, data: Optional[pa.Table] = None, actions: Optional[List[tuple]] = []):
         self.id = id
-        self.data = None # 初始状态下 data 为空
-        self.actions = [] # 用于记录操作的列表，延迟执行
+        self.data = data # 初始状态下 data 为空
+        self.actions = actions # 用于记录操作的列表，延迟执行
 
     def __getitem__(self, index):
         pass
 
     def __str__(self) -> str:
         return self.to_string(head_rows=5, tail_rows=5, first_cols=3, last_cols=3)
+
+    @property
+    def schema(self):
+        if self.data is None:
+            ticket = {
+                "dataframe": json.dumps(self, default=vars)
+            }
+            descriptor = pa.flight.FlightDescriptor.for_command(json.dumps(ticket))
+            flight_info = ConnectionManager.get_connection().get_flight_info(descriptor)
+            return flight_info.schema
+        return self.data.schema
+
+    @property
+    def num_rows(self):
+        if self.data is None:
+            ticket = {
+                "dataframe": json.dumps(self, default=vars)
+            }
+            descriptor = pa.flight.FlightDescriptor.for_command(json.dumps(ticket))
+            flight_info = ConnectionManager.get_connection().get_flight_info(descriptor)
+            return flight_info.total_records
+        return self.data.num_rows
 
     def collect(self) -> DataFrame:
         if self.data is None:
@@ -31,7 +53,7 @@ class DataFrame(DataFrame):
             self.actions = []
         return self
 
-    def get_stream(self, max_chunksize: Optional[int] = None):
+    def get_stream(self, max_chunksize: Optional[int] = 1000):
         if self.data is None:
             ticket = {
                 "dataframe": json.dumps(self, default=vars),
@@ -46,27 +68,32 @@ class DataFrame(DataFrame):
                 yield batch
 
     def limit(self, rowNum: int) -> DataFrame:
-        self.actions.append(("limit", {"rowNum": rowNum}))
-        return self
+        new_df = DataFrame(self.id, self.data, self.actions[:])
+        new_df.actions.append(("limit", {"rowNum": rowNum}))
+        return new_df
 
     def slice(self, offset: int = 0, length: Optional[int] = None) -> DataFrame:
-        self.actions.append(("slice", {"offset": offset, "length": length}))
-        return self
+        new_df = DataFrame(self.id, self.data, self.actions[:])
+        new_df.actions.append(("slice", {"offset": offset, "length": length}))
+        return new_df
 
     def select(self, *columns):
-        self.actions.append(("select", {"columns": columns}))
-        return self
+        new_df = DataFrame(self.id, self.data, self.actions[:])
+        new_df.actions.append(("select", {"columns": columns}))
+        return new_df
 
     def filter(self, mask: pa.Array) -> DataFrame:
-        self.actions.append(("filter", {"mask": mask}))
-        return self
+        new_df = DataFrame(self.id, self.data, self.actions[:])
+        new_df.actions.append(("filter", {"mask": mask}))
+        return new_df
 
     def sum(self, column: str):
         pass
 
     def map(self, column: str, func: Any, new_column_name: Optional[str] = None) -> DataFrame:
-        self.actions.append(("map", {"column": column, "func": func, "new_column_name": new_column_name}))
-        return self
+        new_df = DataFrame(self.id, self.data, self.actions[:])
+        new_df.actions.append(("map", {"column": column, "func": func, "new_column_name": new_column_name}))
+        return new_df
 
     def to_pandas(self, **kwargs) -> pandas.DataFrame:
         if self.data is None:
@@ -92,61 +119,36 @@ class DataFrame(DataFrame):
                 "first_cols": first_cols,
                 "last_cols": last_cols
             }
-            response = ConnectionManager.get_connection().do_action(pa.flight.Action("to_string", json.dumps(ticket).encode("utf-8")))
-            return response[0].body.decode("utf-8")
+            results = ConnectionManager.get_connection().do_action(pa.flight.Action("to_string", json.dumps(ticket).encode("utf-8")))
+            for res in results:
+                return res.body.to_pybytes().decode('utf-8')
         else:
-            if display_all:
-                return self.data.to_pandas().to_string()
+            arrow_table = self.handle_prev_actions(self.data, self.actions)
+            return format_arrow_table(arrow_table, head_rows, tail_rows, first_cols, last_cols, display_all)
 
-            all_columns = self.data.column_names
-            total_columns = len(all_columns)
-            total_rows = self.data.num_rows
-
-            # 确定要显示的列
-            if total_columns <= (first_cols + last_cols):
-                display_columns = all_columns
+    def handle_prev_actions(self, arrow_table, prev_actions):
+        for action in prev_actions:
+            action_type, params = action
+            if action_type == "limit":
+                row_num = params.get("rowNum")
+                arrow_table = arrow_table.slice(0, row_num)
+            elif action_type == "slice":
+                offset = params.get("offset", 0)
+                length = params.get("length")
+                arrow_table = arrow_table.slice(offset, length)
+            elif action_type == "select":
+                columns = params.get("columns")
+                arrow_table = arrow_table.select(columns)
+            elif action_type == "filter":
+                mask = params.get("mask")
+                arrow_table = arrow_table.filter(mask)
+            elif action_type == "map":
+                column = params.get("column")
+                func = params.get("func")
+                new_column_name = params.get("new_column_name", f"{column}_mapped")
+                column_data = arrow_table[column].to_pylist()
+                mapped_data = [func(value) for value in column_data]
+                arrow_table = arrow_table.append_column(new_column_name, pa.array(mapped_data))
             else:
-                display_columns = all_columns[:first_cols] + ['...'] + all_columns[-last_cols:]
-
-            # 确保 head_rows 和 tail_rows 不超过总行数
-            head_rows = min(head_rows, total_rows)
-            tail_rows = min(tail_rows, total_rows)
-
-            # 获取头部和尾部数据
-            head_data = self.data.slice(0, head_rows)
-            tail_data = self.data.slice(total_rows - tail_rows, tail_rows)
-
-            # 准备表格数据
-            table_data = []
-
-            # 添加头部数据
-            for i in range(head_rows):
-                row = []
-                for col in display_columns:
-                    if col == '...':
-                        row.append('...')
-                    else:
-                        col_index = all_columns.index(col)
-                        row.append(str(head_data.column(col_index)[i].as_py()))
-                table_data.append(row)
-
-            # 添加省略行
-            if total_rows > (head_rows + tail_rows):
-                table_data.append(['...' for _ in display_columns])
-
-            # 添加尾部数据
-            for i in range(tail_rows):
-                row = []
-                for col in display_columns:
-                    if col == '...':
-                        row.append('...')
-                    else:
-                        col_index = all_columns.index(col)
-                        row.append(str(tail_data.column(col_index)[i].as_py()))
-                table_data.append(row)
-
-            # 使用 tabulate 打印
-            table_str = tabulate(table_data, headers=display_columns, tablefmt="plain")
-            table_str += f"\n\n[{total_rows} rows x {total_columns} columns]"
-            return table_str
-
+                raise ValueError(f"Unsupported action type: {action_type}")
+        return arrow_table

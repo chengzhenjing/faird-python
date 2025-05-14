@@ -2,9 +2,7 @@ import json
 
 import pyarrow as pa
 import pyarrow.flight
-from tabulate import tabulate
-
-
+from utils.format_utils import format_arrow_table
 from services.datasource.services.metacat_service import MetaCatService
 from services.types.thread_safe_dict import ThreadSafeDict
 
@@ -25,18 +23,36 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         pass
 
     def get_flight_info(self, context, descriptor):
-        # 返回特定 Flight 的元数据
-        pass
+        dataframe = json.loads(descriptor.command.decode("utf-8")).get("dataframe")
+        dataframe_id = json.loads(dataframe).get("id")
+        actions = json.loads(dataframe).get("actions")
+
+        # 获取 Arrow Table 的 schema
+        arrow_table = self.get_dataframe_data(dataframe_id)
+        arrow_table = self.handle_prev_actions(arrow_table, actions)
+        schema = arrow_table.schema
+
+        # 构造 FlightInfo
+        ticket = pa.flight.Ticket(json.dumps({"dataframe_id": dataframe_id}).encode("utf-8"))
+        endpoints = [pa.flight.FlightEndpoint(ticket, [])]
+        flight_info = pa.flight.FlightInfo(
+            schema,
+            descriptor,
+            endpoints,
+            total_records=arrow_table.num_rows,
+            total_bytes=arrow_table.nbytes
+        )
+        return flight_info
 
     def do_get(self, context, ticket):
         ticket_data = json.loads(ticket.ticket.decode('utf-8'))
         dataframe_id = json.loads(ticket_data.get('dataframe')).get('id')
+        actions = json.loads(ticket_data.get('dataframe')).get('actions')
         max_chunksize = ticket_data.get('max_chunksize')
 
         # 从conn中获取dataframe.data
         arrow_table = self.get_dataframe_data(dataframe_id)
-
-        # todo: handle previous actions
+        arrow_table = self.handle_prev_actions(arrow_table, actions)
 
         if max_chunksize:
             batches = arrow_table.to_batches(max_chunksize)
@@ -83,6 +99,7 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
     def to_string_action(self, context, action):
         params = json.loads(action.body.to_pybytes().decode("utf-8"))
         dataframe_id = json.loads(params.get("dataframe")).get("id")
+        actions = json.loads(params.get("dataframe")).get("actions")
         head_rows = params.get("head_rows", 5)
         tail_rows = params.get("tail_rows", 5)
         first_cols = params.get("first_cols", 3)
@@ -90,61 +107,40 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         display_all = params.get("display_all", False)
 
         arrow_table = self.get_dataframe_data(dataframe_id)
-        if display_all:
-            return arrow_table.to_pandas().to_string()
-        all_columns = arrow_table.column_names
-        total_columns = len(all_columns)
-        total_rows = arrow_table.num_rows
+        arrow_table = self.handle_prev_actions(arrow_table, actions)
 
-        # 确定要显示的列
-        if total_columns <= (first_cols + last_cols):
-            display_columns = all_columns
-        else:
-            display_columns = all_columns[:first_cols] + ['...'] + all_columns[-last_cols:]
-
-        # 确保 head_rows 和 tail_rows 不超过总行数
-        head_rows = min(head_rows, total_rows)
-        tail_rows = min(tail_rows, total_rows)
-
-        # 获取头部和尾部数据
-        head_data = arrow_table.slice(0, head_rows)
-        tail_data = arrow_table.slice(total_rows - tail_rows, tail_rows)
-
-        # 准备表格数据
-        table_data = []
-
-        # 添加头部数据
-        for i in range(head_rows):
-            row = []
-            for col in display_columns:
-                if col == '...':
-                    row.append('...')
-                else:
-                    col_index = all_columns.index(col)
-                    row.append(str(head_data.column(col_index)[i].as_py()))
-            table_data.append(row)
-
-        # 添加省略行
-        if total_rows > (head_rows + tail_rows):
-            table_data.append(['...' for _ in display_columns])
-
-        # 添加尾部数据
-        for i in range(tail_rows):
-            row = []
-            for col in display_columns:
-                if col == '...':
-                    row.append('...')
-                else:
-                    col_index = all_columns.index(col)
-                    row.append(str(tail_data.column(col_index)[i].as_py()))
-            table_data.append(row)
-
-        # 使用 tabulate 打印
-        table_str = tabulate(table_data, headers=display_columns, tablefmt="plain")
-        table_str += f"\n\n[{total_rows} rows x {total_columns} columns]"
-        return [pa.flight.Result(table_str.encode("utf-8"))]
+        table_str = format_arrow_table(arrow_table, head_rows, tail_rows, first_cols, last_cols, display_all)
+        return iter([pa.flight.Result(table_str.encode("utf-8"))])
 
     def get_dataframe_data(self, dataframe_id: str) -> pa.Table:
         import pandas as pd
         df = pd.read_csv(dataframe_id)
         return pa.Table.from_pandas(df)
+
+    def handle_prev_actions(self, arrow_table, prev_actions):
+        for action in prev_actions:
+            action_type, params = action
+            if action_type == "limit":
+                row_num = params.get("rowNum")
+                arrow_table = arrow_table.slice(0, row_num)
+            elif action_type == "slice":
+                offset = params.get("offset", 0)
+                length = params.get("length")
+                arrow_table = arrow_table.slice(offset, length)
+            elif action_type == "select":
+                columns = params.get("columns")
+                arrow_table = arrow_table.select(columns)
+            elif action_type == "filter":
+                mask = params.get("mask")
+                arrow_table = arrow_table.filter(mask)
+            elif action_type == "map":
+                column = params.get("column")
+                func = params.get("func")
+                new_column_name = params.get("new_column_name", f"{column}_mapped")
+                column_data = arrow_table[column].to_pylist()
+                mapped_data = [func(value) for value in column_data]
+                arrow_table = arrow_table.append_column(new_column_name, pa.array(mapped_data))
+            else:
+                raise ValueError(f"Unsupported action type: {action_type}")
+        return arrow_table
+
