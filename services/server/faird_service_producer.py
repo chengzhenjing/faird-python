@@ -2,6 +2,8 @@ import json
 import os
 import pyarrow as pa
 import pyarrow.flight
+
+from sdk.dataframe import DataFrame
 from services.connection.faird_connection import FairdConnection
 from utils.format_utils import format_arrow_table
 from services.datasource.services.metacat_service import MetaCatService
@@ -10,7 +12,6 @@ from services.connection.connection_service import connect_server
 from parser import csv_parser
 from parser import  nc_parser
 from parser import  tif_parser
-from dataframe import DataFrame
 
 class FairdServiceProducer(pa.flight.FlightServerBase):
     def __init__(self, location: pa.flight.Location):

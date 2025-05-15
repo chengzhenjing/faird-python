@@ -1,0 +1,9 @@
+README.md
+setup.py
+faird_local.egg-info/PKG-INFO
+faird_local.egg-info/SOURCES.txt
+faird_local.egg-info/dependency_links.txt
+faird_local.egg-info/requires.txt
+faird_local.egg-info/top_level.txt
+test/test_local_sdk.py
+test/test_netcdf.py

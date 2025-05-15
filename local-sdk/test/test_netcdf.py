@@ -1,6 +1,6 @@
 
 import faird
-from dataframe import DataFrame
+import pyarrow.compute as pc
 
 
 def test_netcdf_file():
@@ -9,11 +9,13 @@ def test_netcdf_file():
     现在通过 df.write(...) 接口完成，不再依赖 NCParser 实例。
     """
 
-    input_path = "/Users/zhouziang/Documents/project/faird_new_2/faird/test_data.nc"
-    output_path = "/Users/zhouziang/Documents/project/faird_new_2/faird/output_test.nc"
+    #input_path = "/Users/zhouziang/Documents/project/faird_new_2/faird/test_data.nc"
+    #output_path = "/Users/zhouziang/Documents/project/faird_new_2/faird/output_test.nc"
+
+    dataframe_id = "/Users/yaxuan/Desktop/测试用/test_data.nc"
 
     print("🔍 正在加载 DataFrame...")
-    df = faird.open(input_path)
+    df = faird.open(dataframe_id)
 
     if df is None:
         print("加载失败：faird.open 返回 None。请检查 parser 或文件路径。")
@@ -25,6 +27,9 @@ def test_netcdf_file():
     print(f"Number of rows: {df.num_rows}")
     print(f"Memory usage: {df.nbytes} bytes")
 
+    print(f"Filter temperature < 0.08: {df.filter(pc.less(df["temperature"], 0.08))}")
+
+    output_path = "/Users/yaxuan/Desktop/测试用/output/test_data.nc"
     print(f"正在使用 df.write(...) 写回文件到: {output_path}")
 
     try:

@@ -14,7 +14,7 @@ def test_sdk():
         "/Users/yaxuan/Desktop/测试用/test_data.nc"
     ]
 
-    df = conn.open(dataframe_ids[2])
+    df = conn.open(dataframe_ids[0])
 
     """
     1. compute remotely
