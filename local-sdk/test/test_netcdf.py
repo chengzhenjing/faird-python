@@ -1,6 +1,7 @@
 
 import faird
 from dataframe import DataFrame
+import  pyarrow.compute as pc
 
 
 def test_netcdf_file():
@@ -24,6 +25,17 @@ def test_netcdf_file():
     print(f"Columns: {df.column_names}")
     print(f"Number of rows: {df.num_rows}")
     print(f"Memory usage: {df.nbytes} bytes")
+
+    # 🔍 1. 查看前几行数据（自动触发 data 加载）
+    print("\n查看前几行数据预览:")
+    print(df.to_string(head_rows=5, tail_rows=0))
+
+    mask = pc.less(df["temperature"], 0.80)
+    filtered_data = df.filter(mask)
+    print("\n查看温度低于0.80")
+
+    print(filtered_data)
+
 
     print(f"正在使用 df.write(...) 写回文件到: {output_path}")
 

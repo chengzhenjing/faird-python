@@ -1,0 +1,7 @@
+# dev-requirements.txt
+pytest
+ipdb
+black
+isort
+mypy
+jupyter

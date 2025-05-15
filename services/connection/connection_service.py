@@ -2,7 +2,7 @@ import base64
 import json
 import requests
 
-oauth_url = "http://10.0.90.79:8000"
+oauth_url = "https://api.opendatachain.cn/auth/"
 client_id = "faird-client1"
 client_secret = "tcqi54cnp3cewj94nd9uop2q"
 
