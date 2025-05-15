@@ -1,6 +1,6 @@
 
 import faird
-import pyarrow.compute as pc
+import  pyarrow.compute as pc
 
 
 def test_netcdf_file():
@@ -28,6 +28,10 @@ def test_netcdf_file():
     print(f"Memory usage: {df.nbytes} bytes")
 
     print(f"Filter temperature < 0.08: {df.filter(pc.less(df["temperature"], 0.08))}")
+
+    # 🔍 1. 查看前几行数据（自动触发 data 加载）
+    print("\n查看前几行数据预览:")
+    print(df.to_string(head_rows=5, tail_rows=0))
 
     output_path = "/Users/yaxuan/Desktop/测试用/output/test_data.nc"
     print(f"正在使用 df.write(...) 写回文件到: {output_path}")
