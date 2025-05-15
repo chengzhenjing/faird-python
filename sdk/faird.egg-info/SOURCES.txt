@@ -1,0 +1,8 @@
+README.md
+setup.py
+faird.egg-info/PKG-INFO
+faird.egg-info/SOURCES.txt
+faird.egg-info/dependency_links.txt
+faird.egg-info/requires.txt
+faird.egg-info/top_level.txt
+test/test_sdk.py

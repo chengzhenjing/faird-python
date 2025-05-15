@@ -1,1 +1,1 @@
-from .faird import open
+from .faird_local import open

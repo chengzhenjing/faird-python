@@ -4,8 +4,8 @@ setup(
     name="faird",
     version="1.0.0",
     description="A SDK for working with DataFrame",
-    author="yxzhang",
-    author_email="yxzhang@cnic.com",
+    author="rdcn",
+    author_email="rdcn@cnic.com",
     packages=find_packages(include=["core*", "parser", "sdk*", "utils*"]),  # 自动发现包含的所有包
     install_requires=[
         "pyarrow==19.0.0",  # 指定依赖的 pyarrow 版本

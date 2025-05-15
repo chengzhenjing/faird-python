@@ -1,0 +1,6 @@
+pyarrow==19.0.0
+tabulate
+pandas
+netCDF4
+rasterio
+requests

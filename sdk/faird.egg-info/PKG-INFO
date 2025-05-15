@@ -1,7 +1,7 @@
 Metadata-Version: 2.4
-Name: faird-local
-Version: 1.0.2
-Summary: A local SDK for working with DataFrame
+Name: faird
+Version: 1.0.0
+Summary: A SDK for working with DataFrame
 Author: rdcn
 Author-email: rdcn@cnic.com
 Classifier: Programming Language :: Python :: 3
@@ -13,6 +13,7 @@ Requires-Dist: tabulate
 Requires-Dist: pandas
 Requires-Dist: netCDF4
 Requires-Dist: rasterio
+Requires-Dist: requests
 Dynamic: author
 Dynamic: author-email
 Dynamic: classifier

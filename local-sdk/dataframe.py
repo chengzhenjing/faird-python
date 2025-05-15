@@ -3,7 +3,6 @@ import pyarrow.compute as pc
 from tabulate import tabulate
 
 from core.models.dataframe import DataFrame
-from parser.nc_parser import NCParser
 import os
 
 class DataFrame(DataFrame):
