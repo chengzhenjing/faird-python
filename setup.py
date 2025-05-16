@@ -2,11 +2,11 @@ from setuptools import setup, find_packages
 
 setup(
     name="faird",
-    version="1.0.0",
+    version="1.0.1",
     description="A SDK for working with DataFrame",
     author="rdcn",
     author_email="rdcn@cnic.com",
-    packages=find_packages(include=["core*", "parser", "sdk*", "utils*"]),  # 自动发现包含的所有包
+    packages=find_packages(include=["core*", "parser*", "sdk*", "utils*"]),  # 自动发现包含的所有包
     install_requires=[
         "pyarrow==19.0.0",  # 指定依赖的 pyarrow 版本
         "tabulate",
@@ -26,4 +26,5 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    include_package_data=True
 )

@@ -1,3 +1,5 @@
+import os
+
 import requests
 import json
 from typing import Optional, Dict, List
@@ -94,8 +96,14 @@ class MetaCatService(FairdDatasourceInterface):
             data = response.json()
             metadata_obj = data.get("data", "{}").get("metadata", {})
             dataframeIds_obj = data.get("data", "{}").get("dataframeIds", [])
-            # 遍历文件路径，获取文件列表
-
+            dataframe_ids = []
+            # 遍历文件夹中的所有文件路径
+            for folder_path in dataframeIds_obj:
+                if os.path.isdir(folder_path):
+                    for root, _, files in os.walk(folder_path):
+                        for file in files:
+                            file_path = os.path.join(root, file)
+                            dataframe_ids.append(file_path)
             accessInfo_obj = data.get("data", "{}").get("access_info", {})
 
             has_permission = self._check_permission(token, dataset_id, username)  # 检查用户是否有数据集权限
@@ -103,7 +111,7 @@ class MetaCatService(FairdDatasourceInterface):
             # 创建并返回DataSet对象
             dataset = DataSet(
                 meta=parse_metadata(metadata_obj),
-                dataframeIds=dataframeIds_obj,
+                dataframeIds=dataframe_ids,
                 accessible=has_permission,
                 accessInfo=accessInfo_obj if has_permission else None
             )

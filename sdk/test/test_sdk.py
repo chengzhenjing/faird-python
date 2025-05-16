@@ -3,18 +3,19 @@ from sdk.dataframe import DataFrame
 
 
 def test_sdk():
+    #conn = DacpClient.connect("dacp://localhost:3101", Principal.oauth("conet", "faird-user1", "user1@cnic.cn"))
     conn = DacpClient.connect("dacp://10.0.89.38:3101", Principal.oauth("conet", "faird-user1", "user1@cnic.cn"))
 
     datasets = conn.list_datasets()
     dataframe_ids = conn.list_dataframes(datasets[0].get('name'))
 
-    dataframe_ids = [
-        "/Users/yaxuan/Desktop/测试用/2019年中国榆林市沟道信息.csv",
-        "/Users/yaxuan/Desktop/测试用/sample.tiff",
-        "/Users/yaxuan/Desktop/测试用/test_data.nc"
-    ]
+    # dataframe_ids = [
+    #     "/Users/yaxuan/Desktop/测试用/2019年中国榆林市沟道信息.csv",
+    #     "/Users/yaxuan/Desktop/测试用/sample.tiff",
+    #     "/Users/yaxuan/Desktop/测试用/test_data.nc"
+    # ]
 
-    df = conn.open(dataframe_ids[0])
+    df = conn.open(dataframe_ids[2])
 
     """
     1. compute remotely
