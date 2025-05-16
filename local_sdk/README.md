@@ -8,12 +8,12 @@ pip install faird-local
 ## 2. 使用
 ### 2.1 引入依赖
 ```python
-import faird_local
+from local_sdk import faird
 ```
 
 ### 2.2 打开 DataFrame
 ```python
-df = faird_local.open("{dataframe_id}")
+df = faird.open("{dataframe_id}")
 ```
 
 ### 2.3 操作DataFrame

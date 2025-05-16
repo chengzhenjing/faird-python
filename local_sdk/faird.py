@@ -1,4 +1,4 @@
-from dataframe import DataFrame
+from local_sdk.dataframe import DataFrame
 from parser import csv_parser
 from parser import  nc_parser
 from parser import  tif_parser

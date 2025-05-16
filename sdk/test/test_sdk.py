@@ -3,7 +3,7 @@ from sdk.dataframe import DataFrame
 
 
 def test_sdk():
-    conn = DacpClient.connect("dacp://localhost:3101", Principal.oauth("conet", "faird-user1", "user1@cnic.cn"))
+    conn = DacpClient.connect("dacp://10.0.89.38:3101", Principal.oauth("conet", "faird-user1", "user1@cnic.cn"))
 
     datasets = conn.list_datasets()
     dataframe_ids = conn.list_dataframes(datasets[0].get('name'))

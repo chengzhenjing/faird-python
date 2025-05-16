@@ -1,4 +1,4 @@
-import faird_local
+import faird
 import pyarrow.compute as pc
 import pandas as pd
 
@@ -12,7 +12,7 @@ def test_local_sdk():
     """
     0. open dataframe
     """
-    df = faird_local.open(dataframe_id)
+    df = faird.open(dataframe_id)
 
     """
     1. basic attributes

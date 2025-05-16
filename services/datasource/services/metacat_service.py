@@ -94,6 +94,8 @@ class MetaCatService(FairdDatasourceInterface):
             data = response.json()
             metadata_obj = data.get("data", "{}").get("metadata", {})
             dataframeIds_obj = data.get("data", "{}").get("dataframeIds", [])
+            # 遍历文件路径，获取文件列表
+
             accessInfo_obj = data.get("data", "{}").get("access_info", {})
 
             has_permission = self._check_permission(token, dataset_id, username)  # 检查用户是否有数据集权限
