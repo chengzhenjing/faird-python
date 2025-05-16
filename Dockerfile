@@ -30,7 +30,7 @@ COPY . /app
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 安装本地 SDK 模块（重点！）
-RUN pip install -e /app/local-sdk
+RUN pip install -e .
 
 # 暴露服务端口
 EXPOSE 3101
