@@ -1,4 +1,22 @@
-# Local SDK
+# Local SDK 使用方式
+
+## 0. 配置环境变量
+### 0.1 配置环境变量
+```bash
+export FAIRD_HOME=/path/to/your/faird
+```
+### 0.1 faird.conf
+`faird.conf`位于`$FAIRD_HOME`目录下，配置文件的内容如下：
+```text
+[storage]
+storage.type=local
+storage.local.path=/path/to/storage
+
+[ftp]
+storage.ftp.url=ftp://example.com
+storage.ftp.username=ftp_user
+storage.ftp.password=ftp_password
+```
 
 ## 1. 安装
 ```bash
@@ -11,12 +29,18 @@ pip install faird-local
 from local_sdk import faird
 ```
 
-### 2.2 打开 DataFrame
+### 2.2 获取数据目录
+```python
+dataset_ids = faird.list_datasets()
+dataframe_ids = faird.list_dataframes("{dataset_id}")
+```
+
+### 2.3 打开DataFrame
 ```python
 df = faird.open("{dataframe_id}")
 ```
 
-### 2.3 操作DataFrame
+### 2.4 操作DataFrame
 ```python
 """
 1. basic attributes

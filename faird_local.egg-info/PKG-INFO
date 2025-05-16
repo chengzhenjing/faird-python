@@ -1,6 +1,6 @@
-Metadata-Version: 2.4
+Metadata-Version: 2.1
 Name: faird-local
-Version: 1.0.13
+Version: 1.0.14
 Summary: A local SDK for working with DataFrame
 Author: rdcn
 Author-email: rdcn@cnic.com
@@ -13,9 +13,3 @@ Requires-Dist: tabulate
 Requires-Dist: pandas
 Requires-Dist: netCDF4
 Requires-Dist: rasterio
-Dynamic: author
-Dynamic: author-email
-Dynamic: classifier
-Dynamic: requires-dist
-Dynamic: requires-python
-Dynamic: summary
