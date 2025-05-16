@@ -41,7 +41,7 @@ class DataFrame(DataFrame):
     def collect(self):
         return self
 
-    def get_stream(self, max_chunksize=None):
+    def get_stream(self, max_chunksize=1000):
         """
         Args:
             max_chunksize (int, default None) – Maximum size for RecordBatch chunks.
