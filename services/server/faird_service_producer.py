@@ -87,7 +87,9 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         elif action_type == "list_datasets":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
             token = ticket_data.get("token")
-            result = pa.flight.Result(json.dumps(self.data_source_sevice.list_dataset(token)).encode())
+            page = int(ticket_data.get("page"))
+            limit = int(ticket_data.get("limit"))
+            result = pa.flight.Result(json.dumps(self.data_source_sevice.list_dataset(token=token, page=page, limit=limit)).encode())
             return iter([result])
 
         elif action_type == "list_dataframes":
@@ -95,8 +97,10 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             token = ticket_data.get("token")
             username = ticket_data.get("username")
             dataset_name = ticket_data.get("dataset_name")
-            dataset = (self.datasets.get(dataset_name)
-                       or self.data_source_sevice.fetch_dataset_details(token, username, dataset_name))
+            # todo: 暂时不走缓存
+            #dataset = (self.datasets.get(dataset_name)
+            #         or self.data_source_sevice.fetch_dataset_details(token, username, dataset_name))
+            dataset = self.data_source_sevice.fetch_dataset_details(token, username, dataset_name)
             if dataset:
                 self.datasets[dataset_name] = dataset
                 return iter([pa.flight.Result(json.dumps(dataset.dataframeIds).encode())])
