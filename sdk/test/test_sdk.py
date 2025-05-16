@@ -3,6 +3,7 @@ from sdk.dataframe import DataFrame
 
 
 def test_sdk():
+
     conn = DacpClient.connect("dacp://localhost:3101", Principal.oauth("conet", "faird-user1", "user1@cnic.cn"))
     #conn = DacpClient.connect("dacp://10.0.89.38:3101", Principal.oauth("conet", "faird-user1", "user1@cnic.cn"))
 
@@ -10,13 +11,13 @@ def test_sdk():
     datasets = conn.list_datasets(page=1, limit=100)
     dataframe_ids = conn.list_dataframes(datasets[0].get('name'))
 
-    # dataframe_ids = [
-    #     "/Users/yaxuan/Desktop/测试用/2019年中国榆林市沟道信息.csv",
-    #     "/Users/yaxuan/Desktop/测试用/sample.tiff",
-    #     "/Users/yaxuan/Desktop/测试用/test_data.nc"
-    # ]
+    dataframe_ids = [
+        "/data/2019年中国榆林市沟道信息.csv",
+        "/data/sample.tiff",
+        "/data/test_data.nc"
+    ]
 
-    df = conn.open(dataframe_ids[2])
+    df = conn.open(dataframe_ids[1])
 
     """
     1. compute remotely
@@ -24,8 +25,8 @@ def test_sdk():
     print(df.schema)
     print(df.num_rows)
     print(df)
-    #print(df.limit(5).select("OBJECTID", "start_p", "end_p"))
-    print(df.limit(5).select("lat", "lon", "temperature"))
+    print(df.limit(5).select("OBJECTID", "start_p", "end_p"))
+    #print(df.limit(5).select("lat", "lon", "temperature"))
 
     """
     2. compute locally
