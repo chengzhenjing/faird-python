@@ -1,5 +1,6 @@
 README.md
 setup-local.py
+setup.py
 core/__init__.py
 core/config.py
 core/models/__init__.py

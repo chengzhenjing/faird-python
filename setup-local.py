@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="faird-local",
-    version="1.0.12",
+    version="1.0.13",
     description="A local SDK for working with DataFrame",
     author="rdcn",
     author_email="rdcn@cnic.com",

@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: faird-local
-Version: 1.0.12
+Version: 1.0.13
 Summary: A local SDK for working with DataFrame
 Author: rdcn
 Author-email: rdcn@cnic.com

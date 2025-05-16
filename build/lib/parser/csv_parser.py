@@ -35,7 +35,6 @@ class CSVParser(BaseParser):
         # Save the table as a .arrow file
         with ipc.new_file(arrow_file_path, table.schema) as writer:
             writer.write_table(table)
-        print(f"成功将 {file_path} 保存为 {arrow_file_path}")
 
         # Load the .arrow file into a pyarrow Table using zero-copy
         with pa.memory_map(arrow_file_path, "r") as source:

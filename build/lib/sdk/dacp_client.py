@@ -38,9 +38,11 @@ class DacpClient:
             client.username = principal.params.get('username')
         return client
 
-    def list_datasets(self) -> List[str]:
+    def list_datasets(self, page: Optional[int] = 1, limit: Optional[int] = 10) -> List[str]:
         ticket = {
-            'token': self.token
+            'token': self.token,
+            'page': page,
+            'limit': limit
         }
         results = self.connection.do_action(pa.flight.Action("list_datasets", json.dumps(ticket).encode('utf-8')))
         for res in results:

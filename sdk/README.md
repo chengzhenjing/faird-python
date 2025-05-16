@@ -19,6 +19,8 @@ conn = DacpClient.connect("dacp://{host}:{port}", Principal.oauth("conet", "{use
 ### 2.3 获取数据目录
 ```python
 datasets = conn.list_datasets()
+datasets = conn.list_datasets(page=1, limit=1000)
+
 dataframe_ids = conn.list_dataframes(datasets[0].get('name'))
 ```
 
