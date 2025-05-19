@@ -1,6 +1,4 @@
-import json
 import os
-import pyarrow as pa
 import pyarrow.flight
 
 from sdk.dataframe import DataFrame
@@ -9,9 +7,9 @@ from utils.format_utils import format_arrow_table
 from services.datasource.services.metacat_service import MetaCatService
 from services.types.thread_safe_dict import ThreadSafeDict
 from services.connection.connection_service import connect_server
-from parser import csv_parser
-from parser import  nc_parser
-from parser import  tif_parser
+from parser import *
+from compute.interactive.interactive import *
+
 
 class FairdServiceProducer(pa.flight.FlightServerBase):
     def __init__(self, location: pa.flight.Location):
@@ -38,7 +36,7 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         # 获取 Arrow Table 的 schema
         conn = self.connections[connection_id]
         arrow_table = conn.dataframes[dataframe_id].data
-        arrow_table = self.handle_prev_actions(arrow_table, actions)
+        arrow_table = handle_prev_actions(arrow_table, actions)
         schema = arrow_table.schema
 
         # 构造 FlightInfo
@@ -63,7 +61,7 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         # 从conn中获取dataframe.data
         conn = self.connections[connection_id]
         arrow_table = conn.dataframes[dataframe_id].data
-        arrow_table = self.handle_prev_actions(arrow_table, actions)
+        arrow_table = handle_prev_actions(arrow_table, actions)
 
         if max_chunksize:
             batches = arrow_table.to_batches(max_chunksize)
@@ -97,13 +95,12 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             token = ticket_data.get("token")
             username = ticket_data.get("username")
             dataset_name = ticket_data.get("dataset_name")
-            # todo: 暂时不走缓存
-            #dataset = (self.datasets.get(dataset_name)
-            #         or self.data_source_sevice.fetch_dataset_details(token, username, dataset_name))
-            dataset = self.data_source_sevice.fetch_dataset_details(token, username, dataset_name)
+            dataset = (self.datasets.get(dataset_name)
+                    or self.data_source_sevice.fetch_dataset_details(token, username, dataset_name))
             if dataset:
                 self.datasets[dataset_name] = dataset
                 return iter([pa.flight.Result(json.dumps(dataset.dataframeIds).encode())])
+            return None
 
         elif action_type == "open":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
@@ -114,12 +111,16 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             # put dataframe to connection memory
             conn = self.connections.get(connection_id)
             conn.dataframes[dataframe_id] = df
-            return
+            return None
 
         elif action_type == "to_string":
             return self.to_string_action(context, action)
+
+        elif action_type.startswith("compute_"):
+            return handle_compute_actions(self.connections, action)
+
         else:
-            pass
+            return None
 
     def open_action(self, dataframe_id):
         file_extension = os.path.splitext(dataframe_id)[1].lower()
@@ -152,35 +153,7 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
 
         conn = self.connections[connection_id]
         arrow_table = conn.dataframes[dataframe_id].data
-        arrow_table = self.handle_prev_actions(arrow_table, actions)
+        arrow_table = handle_prev_actions(arrow_table, actions)
 
         table_str = format_arrow_table(arrow_table, head_rows, tail_rows, first_cols, last_cols, display_all)
         return iter([pa.flight.Result(table_str.encode("utf-8"))])
-
-    def handle_prev_actions(self, arrow_table, prev_actions):
-        for action in prev_actions:
-            action_type, params = action
-            if action_type == "limit":
-                row_num = params.get("rowNum")
-                arrow_table = arrow_table.slice(0, row_num)
-            elif action_type == "slice":
-                offset = params.get("offset", 0)
-                length = params.get("length")
-                arrow_table = arrow_table.slice(offset, length)
-            elif action_type == "select":
-                columns = params.get("columns")
-                arrow_table = arrow_table.select(columns)
-            elif action_type == "filter":
-                mask = params.get("mask")
-                arrow_table = arrow_table.filter(mask)
-            elif action_type == "map":
-                column = params.get("column")
-                func = params.get("func")
-                new_column_name = params.get("new_column_name", f"{column}_mapped")
-                column_data = arrow_table[column].to_pylist()
-                mapped_data = [func(value) for value in column_data]
-                arrow_table = arrow_table.append_column(new_column_name, pa.array(mapped_data))
-            else:
-                raise ValueError(f"Unsupported action type: {action_type}")
-        return arrow_table
-

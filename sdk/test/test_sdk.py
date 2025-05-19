@@ -4,15 +4,42 @@ from sdk.dataframe import DataFrame
 
 def test_sdk():
 
-    #conn = DacpClient.connect("dacp://localhost:3101", Principal.oauth("conet", "faird-user1", "user1@cnic.cn"))
-    conn = DacpClient.connect("dacp://10.0.89.38:3101", Principal.oauth("conet", "faird-user1", "user1@cnic.cn"))
+    conn = DacpClient.connect("dacp://localhost:3101", Principal.oauth("conet", "faird-user1", "user1@cnic.cn"))
+    #conn = DacpClient.connect("dacp://10.0.89.38:3101", Principal.oauth("conet", "faird-user1", "user1@cnic.cn"))
     #conn = DacpClient.connect("dacp://47.111.98.226:3101", Principal.oauth("conet", "faird-user1", "user1@cnic.cn"))
 
-    datasets = conn.list_datasets()
-    datasets = conn.list_datasets(page=1, limit=1000)
-    dataframe_ids = conn.list_dataframes(datasets[0].get('name'))
+    #datasets = conn.list_datasets()
+    #datasets = conn.list_datasets(page=1, limit=1000)
+    #dataframe_ids = conn.list_dataframes(datasets[0].get('name'))
 
-    df = conn.open(dataframe_ids[1])
+    #df = conn.open(dataframe_ids[1])
+
+    df = conn.open("/Users/yaxuan/Desktop/测试用/2019年中国榆林市沟道信息.csv")
+
+    df.collect()
+    # 1. filter
+    print(df.filter("OBJECTID <= 30"))
+
+    # 2. sum
+    print(df.sum("OBJECTID"))
+
+    # mean
+    print(df.mean("OBJECTID"))
+    print(df.min("start_l"))
+    print(df.max("start_l"))
+
+    # 3. sort
+    print(df.limit(3).sort('OBJECTID', order='descending'))
+
+    # 4. sql
+    print(df.sql("select OBJECTID, start_l, end_l "
+                 "from dataframe "
+                 "where OBJECTID <= 30 "
+                 "order by OBJECTID desc "))
+
+
+
+
 
     """
     1. compute remotely

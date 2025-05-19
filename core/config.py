@@ -11,7 +11,7 @@ class FairdConfig:
         with open(config_file, 'r', encoding='utf-8') as file:
             for line in file:
                 line = line.strip()
-                if line and not line.startswith('#'):
+                if line and not line.startswith('#') and not line.startswith('['):
                     key, value = line.split('=', 1)
                     self.config[key.strip()] = value.strip()
 

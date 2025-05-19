@@ -1,7 +1,10 @@
 import json
 from typing import List, Optional, Dict, Any
+
+import duckdb
 import pandas
 import pyarrow as pa
+import pyarrow.compute as pc
 
 from core.models.dataframe import DataFrame
 from sdk.dacp_client import ConnectionManager
@@ -83,13 +86,76 @@ class DataFrame(DataFrame):
         new_df.actions.append(("select", {"columns": columns}))
         return new_df
 
-    def filter(self, mask: pa.Array) -> DataFrame:
+    def filter(self, expression: str) -> DataFrame:
         new_df = DataFrame(self.id, self.data, self.actions[:], self.connection_id)
-        new_df.actions.append(("filter", {"mask": mask}))
+        new_df.actions.append(("filter", {"expression": expression}))
         return new_df
 
     def sum(self, column: str):
-        pass
+        if self.data is None:
+            ticket = {
+                "dataframe": json.dumps(self, default=vars),
+                "column": column
+            }
+            results = ConnectionManager.get_connection().do_action(
+                pa.flight.Action("compute_sum", json.dumps(ticket).encode("utf-8")))
+            for res in results:
+                return json.loads(res.body.to_pybytes().decode("utf-8"))["result"]
+        else:
+            arrow_table = self.handle_prev_actions(self.data, self.actions)
+            return pc.sum(arrow_table[column]).as_py()
+
+    def mean(self, column):
+        if self.data is None:
+            ticket = {
+                "dataframe": json.dumps(self, default=vars),
+                "column": column
+            }
+            results = ConnectionManager.get_connection().do_action(
+                pa.flight.Action("compute_mean", json.dumps(ticket).encode("utf-8")))
+            for res in results:
+                return json.loads(res.body.to_pybytes().decode("utf-8"))["result"]
+        else:
+            arrow_table = self.handle_prev_actions(self.data, self.actions)
+            return pc.mean(arrow_table[column]).as_py()
+
+    def min(self, column):
+        if self.data is None:
+            ticket = {
+                "dataframe": json.dumps(self, default=vars),
+                "column": column
+            }
+            results = ConnectionManager.get_connection().do_action(
+                pa.flight.Action("compute_min", json.dumps(ticket).encode("utf-8")))
+            for res in results:
+                return json.loads(res.body.to_pybytes().decode("utf-8"))["result"]
+        else:
+            arrow_table = self.handle_prev_actions(self.data, self.actions)
+            return pc.min(arrow_table[column]).as_py()
+
+    def max(self, column):
+        if self.data is None:
+            ticket = {
+                "dataframe": json.dumps(self, default=vars),
+                "column": column
+            }
+            results = ConnectionManager.get_connection().do_action(
+                pa.flight.Action("compute_max", json.dumps(ticket).encode("utf-8")))
+            for res in results:
+                return json.loads(res.body.to_pybytes().decode("utf-8"))["result"]
+        else:
+            arrow_table = self.handle_prev_actions(self.data, self.actions)
+            return pc.max(arrow_table[column]).as_py()
+
+    def sort(self, column: str, order: str = "ascending") -> DataFrame:
+        new_df = DataFrame(self.id, self.data, self.actions[:], self.connection_id)
+        new_df.actions.append(("sort", {"column": column, "order": order}))
+        return new_df
+
+    def sql(self, sql_str: str) -> DataFrame:
+        new_df = DataFrame(self.id, self.data, self.actions[:], self.connection_id)
+        new_df.actions.append(("sql", {"sql_str": sql_str}))
+        return new_df
 
     def map(self, column: str, func: Any, new_column_name: Optional[str] = None) -> DataFrame:
         new_df = DataFrame(self.id, self.data, self.actions[:], self.connection_id)
@@ -127,6 +193,7 @@ class DataFrame(DataFrame):
             arrow_table = self.handle_prev_actions(self.data, self.actions)
             return format_arrow_table(arrow_table, head_rows, tail_rows, first_cols, last_cols, display_all)
 
+    # todo: 补充
     def handle_prev_actions(self, arrow_table, prev_actions):
         for action in prev_actions:
             action_type, params = action
@@ -141,8 +208,10 @@ class DataFrame(DataFrame):
                 columns = params.get("columns")
                 arrow_table = arrow_table.select(columns)
             elif action_type == "filter":
-                mask = params.get("mask")
-                arrow_table = arrow_table.filter(mask)
+                column_names = arrow_table.column_names
+                locals_dict = {col: arrow_table[col].to_pandas() for col in column_names}
+                mask = eval(params.get("expression"), {"__builtins__": None}, locals_dict)
+                arrow_table = arrow_table.filter(pa.array(mask))
             elif action_type == "map":
                 column = params.get("column")
                 func = params.get("func")
@@ -150,6 +219,16 @@ class DataFrame(DataFrame):
                 column_data = arrow_table[column].to_pylist()
                 mapped_data = [func(value) for value in column_data]
                 arrow_table = arrow_table.append_column(new_column_name, pa.array(mapped_data))
+            elif action_type == "sort":
+                column = params.get("column")
+                order = params.get("order", "ascending")
+                if order == "ascending":
+                    arrow_table = arrow_table.sort_by(column)
+                else:
+                    arrow_table = arrow_table.sort_by([(column, "descending")])
+            elif action_type == "sql":
+                dataframe = arrow_table
+                arrow_table = duckdb.sql(params.get("sql_str")).arrow()
             else:
                 raise ValueError(f"Unsupported action type: {action_type}")
         return arrow_table
