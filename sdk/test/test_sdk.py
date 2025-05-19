@@ -12,18 +12,6 @@ def test_sdk():
     datasets = conn.list_datasets(page=1, limit=1000)
     dataframe_ids = conn.list_dataframes(datasets[0].get('name'))
 
-    # dataframe_ids = ['不同压力下SiO2在水中的临界溶解温度与电输运行为'
-    #     "/Users/yaxuan/Desktop/测试用/2019年中国榆林市沟道信息.csv",
-    #     "/Users/yaxuan/Desktop/测试用/sample.tiff",
-    #     "/Users/yaxuan/Desktop/测试用/est_data.nc"
-    # ]
-
-    # dataframe_ids = [
-    #     "/data/faird/test-data/1922948968594051072/2019-yulin-channel-data.csv",
-    #     "/data/faird/test-data/1922948968594051072/nc/test_data.nc",
-    #     "/data/faird/test-data/1922948968594051072/tiff/sample.tiff"
-    # ]
-
     df = conn.open(dataframe_ids[1])
 
     """
