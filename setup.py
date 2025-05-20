@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="faird",
-    version="1.0.2",
+    version="1.0.3",
     description="A SDK for working with DataFrame",
     author="rdcn",
     author_email="rdcn@cnic.com",
@@ -13,7 +13,8 @@ setup(
         "pandas",
         "netCDF4",
         "rasterio",
-        "requests"
+        "requests",
+        "duckdb"
     ],
     python_requires=">=3.9",
     entry_points={

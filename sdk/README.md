@@ -104,7 +104,7 @@ print(f"打印第0行、指定列的值: \n {df[0]["col1"]} \n")
 print(f"筛选前10行: \n {df.limit(10)} \n")
 print(f"筛选第2-4行: \n {df.slice(2, 4)} \n")
 ```
-### 3.5.3 条件筛选
+#### 3.5.3 条件筛选
 - __*filter(expression: str) -> DataFrame*__: 选择符合条件的行，返回一个新的 DataFrame 对象。
 
 ```python
@@ -129,5 +129,28 @@ expression = "((col1 < 10) | (col2 == 'example')) & (col3 != 0)"
 print(f"条件筛选后的结果: \n {df.filter(expression)} \n")
 ```
 
+### 3.6 数据聚合与统计
+- **聚合操作**: `sum`, `mean`, `min`, `max`, `count`, `std`, `var`
+- **分组聚合**: `groupby`, `aggregate`
+- **唯一值**: `unique`, `nunique`
 
-### 3.6 数据转换与存储
+### 3.7 数据排序
+
+### 3.8 数据变换与计算
+- **列运算**: `apply`, `map`, `transform`
+- **新增列**: `assign`, `append_column`
+- **删除列**: `drop`
+- **数据类型转换**: `astype`
+
+### 3.9 数据合并与连接
+- **表连接**: `merge`, `join`
+- **表拼接**: `concat`, `append`
+
+### 3.10 数据格式转换与导出
+- **转换**: `to_nc`, `to_pandas`
+- **导出**: `write`
+
+### 3.11 高级操作
+- **SQL 查询**: `sql`
+- **重塑数据**: `pivot`, `melt`
+- **缺失值处理**: `fillna`, `dropna`

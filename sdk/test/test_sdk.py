@@ -36,10 +36,10 @@ def test_sdk():
     for chunk in df.get_stream(max_chunksize=100):
         print(chunk)
         print(f"Chunk size: {chunk.num_rows}")
-
-    print(f"=== 01.limit, select 在本地计算: === \n {df.collect().limit(3).select("start_p")} \n")
-    print(f"=== 02.limit, select 在远程计算，仅将处理结果加载到本地: === \n {df.limit(3).select("start_p").collect()} \n")
-    print(f"=== 03.limit 在远程计算，select 在本地计算: === \n {df.limit(3).collect().select("start_p")} \n")
+    #
+    # print(f"=== 01.limit, select 在本地计算: === \n {df.collect().limit(3).select("start_p")} \n")
+    # print(f"=== 02.limit, select 在远程计算，仅将处理结果加载到本地: === \n {df.limit(3).select("start_p").collect()} \n")
+    # print(f"=== 03.limit 在远程计算，select 在本地计算: === \n {df.limit(3).collect().select("start_p")} \n")
 
     print(f"打印指定列的值: \n {df["start_p"]} \n")
     print(f"筛选某几列: \n {df.select("start_p", "start_l", "end_l")} \n")
