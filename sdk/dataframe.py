@@ -19,11 +19,36 @@ class DataFrame(DataFrame):
         self.actions = actions # 用于记录操作的列表，延迟执行
         self.connection_id = connection_id
 
-    def __getitem__(self, index):
-        pass
-
     def __str__(self) -> str:
         return self.to_string(head_rows=5, tail_rows=5, first_cols=3, last_cols=3)
+
+    def __len__(self) -> int:
+        return self.num_rows
+
+    def __getitem__(self, index):
+        if isinstance(index, int):  # 行选择
+            if self.data is None:
+                ticket = {
+                    "dataframe": json.dumps(self, default=vars),
+                    "row_index": index
+                }
+                reader = ConnectionManager.get_connection().do_get(pa.flight.Ticket(json.dumps(ticket).encode('utf-8')))
+                row_data = reader.read_all().to_pydict()
+                return {col: row_data[col][0] for col in row_data}
+            return {col: self.data[col][index].as_py() for col in self.data.column_names}
+        elif isinstance(index, str):  # 列选择
+            if self.data is None:
+                ticket = {
+                    "dataframe": json.dumps(self, default=vars),
+                    "column_name": index
+                }
+                reader = ConnectionManager.get_connection().do_get(pa.flight.Ticket(json.dumps(ticket).encode('utf-8')))
+                column_data = reader.read_all()
+                return column_data.column(0).combine_chunks().to_pylist()  # 转换为列表
+            return self.data[index].combine_chunks().to_pylist()
+        else:
+            raise TypeError("Index must be an integer (row) or string (column).")
+
 
     @property
     def schema(self):
@@ -37,7 +62,7 @@ class DataFrame(DataFrame):
         return self.data.schema
 
     @property
-    def num_rows(self):
+    def num_rows(self) -> int:
         if self.data is None:
             ticket = {
                 "dataframe": json.dumps(self, default=vars)
@@ -46,6 +71,52 @@ class DataFrame(DataFrame):
             flight_info = ConnectionManager.get_connection().get_flight_info(descriptor)
             return flight_info.total_records
         return self.data.num_rows
+
+    @property
+    def num_cols(self):
+        if self.data is None:
+            ticket = {
+                "dataframe": json.dumps(self, default=vars)
+            }
+            descriptor = pa.flight.FlightDescriptor.for_command(json.dumps(ticket))
+            flight_info = ConnectionManager.get_connection().get_flight_info(descriptor)
+            return len(flight_info.schema)
+        return len(self.data.column_names)
+
+    @property
+    def shape(self):
+        if self.data is None:
+            ticket = {
+                "dataframe": json.dumps(self, default=vars)
+            }
+            descriptor = pa.flight.FlightDescriptor.for_command(json.dumps(ticket))
+            flight_info = ConnectionManager.get_connection().get_flight_info(descriptor)
+            num_rows = flight_info.total_records
+            num_cols = len(flight_info.schema)
+            return (num_rows, num_cols)
+        return self.data.shape
+
+    @property
+    def column_names(self):
+        if self.data is None:
+            ticket = {
+                "dataframe": json.dumps(self, default=vars)
+            }
+            descriptor = pa.flight.FlightDescriptor.for_command(json.dumps(ticket))
+            flight_info = ConnectionManager.get_connection().get_flight_info(descriptor)
+            return flight_info.schema.names
+        return self.data.column_names
+
+    @property
+    def total_bytes(self):
+        if self.data is None:
+            ticket = {
+                "dataframe": json.dumps(self, default=vars)
+            }
+            descriptor = pa.flight.FlightDescriptor.for_command(json.dumps(ticket))
+            flight_info = ConnectionManager.get_connection().get_flight_info(descriptor)
+            return flight_info.total_bytes
+        return self.data.nbytes
 
     def collect(self) -> DataFrame:
         if self.data is None:

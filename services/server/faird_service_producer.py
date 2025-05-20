@@ -57,17 +57,32 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         actions = json.loads(ticket_data.get('dataframe')).get('actions')
         connection_id = json.loads(ticket_data.get('dataframe')).get("connection_id")
         max_chunksize = ticket_data.get('max_chunksize')
+        row_index = ticket_data.get('row_index')  # 获取行索引
+        column_name = ticket_data.get('column_name')  # 获取列名
 
         # 从conn中获取dataframe.data
         conn = self.connections[connection_id]
         arrow_table = conn.dataframes[dataframe_id].data
         arrow_table = handle_prev_actions(arrow_table, actions)
 
-        if max_chunksize:
-            batches = arrow_table.to_batches(max_chunksize)
-        else:
-            batches = arrow_table.to_batches()
-        return pa.flight.GeneratorStream(arrow_table.schema, iter(batches))
+        if row_index is not None:  # 如果请求某行
+            row_data = arrow_table.slice(row_index, 1).to_pydict()
+            return pa.flight.GeneratorStream(
+                pa.schema([(col, arrow_table.schema.field(col).type) for col in row_data.keys()]),
+                iter([pa.RecordBatch.from_pydict(row_data)])
+            )
+        elif column_name is not None:  # 如果请求某列
+            column_data = arrow_table[column_name].combine_chunks()
+            return pa.flight.GeneratorStream(
+                pa.schema([(column_name, column_data.type)]),
+                iter([pa.RecordBatch.from_arrays([column_data], [column_name])])
+            )
+        else: # 如果没有指定行或列，则返回整个表
+            if max_chunksize:
+                batches = arrow_table.to_batches(max_chunksize)
+            else:
+                batches = arrow_table.to_batches()
+            return pa.flight.GeneratorStream(arrow_table.schema, iter(batches))
 
     def do_put(self, context, descriptor, reader, writer):
         # 实现数据写入逻辑

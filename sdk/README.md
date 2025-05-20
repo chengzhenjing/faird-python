@@ -7,16 +7,20 @@ pip install faird
 ```
 
 ## 2. 使用
-### 2.1 引入依赖
+### 2.1. 引入依赖
 ```python
 from sdk import DataFrame, DacpClient, Principal
 ```
-### 2.2 连接faird服务
+### 2.2. 连接faird服务
 ```python
-conn = DacpClient.connect("dacp://{host}:{port}", Principal.oauth("conet", "{username}", "{password}"))
+url = "dacp://localhost:3101"
+username = "faird-user1"
+password = "user1@cnic.cn"
+
+conn = DacpClient.connect(url, Principal.oauth("conet", username, password))
 ```
 
-### 2.3 获取数据目录
+### 2.3. 获取数据目录
 ```python
 datasets = conn.list_datasets()
 datasets = conn.list_datasets(page=1, limit=1000)
@@ -24,41 +28,106 @@ datasets = conn.list_datasets(page=1, limit=1000)
 dataframe_ids = conn.list_dataframes(datasets[0].get('name'))
 ```
 
-### 2.4 打开dataframe
+### 2.4. 打开dataframe
 ```python
 df = conn.open(dataframe_ids[0])
 ```
 
-### 2.5 操作dataframe
+## 3. DataFrame API
+### 3.1. 数据结构信息
+查看 dataframe 表结构、行数、数据大小等基本信息，不需要实际加载数据。
 ```python
-"""
-1. compute remotely
-"""
-print(df.schema)
-print(df.num_rows)
-print(df)
-print(df.limit(5).select("OBJECTID", "start_p", "end_p"))
+print(f"表结构: {df.schema} \n")
+print(f"表大小: {df.shape} \n")
+print(f"行数: {df.num_rows} \n") # 或者len(dataframe)
+print(f"列数: {df.num_cols} \n")
+print(f"列名: {df.column_names} \n")
+print(f"数据大小: {df.total_bytes} \n")
+```
 
-"""
-2. compute locally
-"""
-print(df.collect().limit(3).select("from_node"))
+### 3.2 数据预览与打印
+预览（部分或全部）数据、打印数据。 
+> 注：这一步并不会将全部数据加载到本地，仅返回需要展示的数据）
+- __*to_string(head_rows: int = 5, tail_rows: int = 5, first_cols: int = 3, last_cols: int = 3, display_all: bool = False) -> str*__: 
+  - `head_rows` `tail_rows` `first_cols` `last_cols`: 选择查看的行数和列数，默认前5行和后5行、前3列和后3列。
+  - `display_all`: 是否查看所有行和列，默认False
+- __*print(df)*__: 默认打印前5行和后5行、前3列和后3列。
 
-"""
-3. compute remote & local
-"""
-print(df.limit(3).collect().select("OBJECTID", "start_p", "end_p"))
+```python
+data_str = df.to_string(head_rows=5, tail_rows=5, first_cols=3, last_cols=3, display_all=False)
+print(f"打印dataframe：\n {data_str}\n") # 或者直接用print(df)
+```
 
-
-"""
-4. streaming
-"""
-for chunk in df.get_stream(): # 默认1000行
+### 3.3 数据流式读取
+- __*get_stream()*__：流式读取数据，每次返回一个数据分块。
+  - `max_chunksize`：每次读取的行数，默认 max_chunksize = 1000。
+```python
+# 默认1000行
+for chunk in df.get_stream(): 
     print(chunk)
     print(f"Chunk size: {chunk.num_rows}")
 
+# 设置每次读取100行
 for chunk in df.get_stream(max_chunksize=100):
     print(chunk)
     print(f"Chunk size: {chunk.num_rows}")
 ```
 
+### 3.4 加载数据到本地
+- __*collect() -> DataFrame*__: 将全部数据加载到本地，后续的所有计算将在本地进行。
+> 注：连续操作时，collect()调用位置将影响计算方式。
+```python
+print(f"=== 01.limit, select 在本地计算: === \n {df.collect().limit(3).select("col1")} \n")
+print(f"=== 02.limit, select 在远程计算，仅将处理结果加载到本地: === \n {df.limit(3).select("col1").collect()} \n")
+print(f"=== 03.limit 在远程计算，select 在本地计算: === \n {df.limit(3).collect().select("col1")} \n")
+```
+
+### 3.5 数据选择与过滤
+#### 3.5.1 列过滤
+- __*df['{column_name}'] -> list*__ : 选择某一列，返回该列类型的值列表。
+- __*select(\*columns: str) -> DataFrame*__：选择指定的一列或多列，返回一个新的 DataFrame 对象。
+
+```python
+print(f"打印指定列的值: \n {df["col1"]} \n")
+print(f"筛选某几列: \n {df.select("col1", "col2", "col3")} \n")
+```
+
+#### 3.5.2 行过滤
+- __*df[{row_index}] -> dict*__: 选择某一行，返回dict类型，key为列名，value为该行对应列的值。
+- __*df[{row_index}]['{column_name}']*__: 选择某一行的某一列，返回该列类型的值。
+- __*limit(rowNum: int) -> DataFrame*__: 限制返回的行数，返回一个新的 DataFrame 对象。
+- __*slice(offset: int = 0, length: Optional[int] = None) -> DataFrame*__: 进行行切片操作，返回一个新的 DataFrame 对象。
+
+```python
+print(f"打印第0行的值: \n {df[0]} \n")
+print(f"打印第0行、指定列的值: \n {df[0]["col1"]} \n")
+print(f"筛选前10行: \n {df.limit(10)} \n")
+print(f"筛选第2-4行: \n {df.slice(2, 4)} \n")
+```
+### 3.5.3 条件筛选
+- __*filter(expression: str) -> DataFrame*__: 选择符合条件的行，返回一个新的 DataFrame 对象。
+
+```python
+# 示例 1: 筛选某列值小于等于 30 的行
+expression = "col1 <= 30"
+
+# 示例 2: 筛选某列值等于特定字符串的行
+expression = "col2 == 'example'"
+
+# 示例 3: 筛选多列满足条件的行
+expression = "(col1 > 10) & (col3 < 50)"
+
+# 示例 4: 筛选某列值在特定列表中的行
+expression = "col4.isin([1, 2, 3])"
+
+# 示例 5: 筛选某列值不为空的行
+expression = "col5.notnull()"
+
+# 示例 6: 复杂条件组合
+expression = "((col1 < 10) | (col2 == 'example')) & (col3 != 0)"
+
+print(f"条件筛选后的结果: \n {df.filter(expression)} \n")
+```
+
+
+### 3.6 数据转换与存储
