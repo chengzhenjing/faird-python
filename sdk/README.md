@@ -37,22 +37,12 @@ df = conn.open(dataframe_ids[0])
 ### 3.1. 数据结构信息
 查看 dataframe 表结构、行数、数据大小等基本信息，不需要实际加载数据。
 ```python
-print("表结构: " + df.schema + "\n")
-print("表大小: " + df.shape + "\n")
-print("行数: " + df.num_rows + "\n") # 或者len(dataframe)
-print("列数: " + df.num_cols + "\n")
-print("列名: " + df.column_names + "\n")
-print("数据大小: " + df.total_bytes + "\n")
-```
-```python
-print(f"""
-表结构: {df.schema}
-表大小: {df.shape}
-行数: {df.num_rows}  # 或者 len(dataframe)
-列数: {df.num_cols}
-列名: {df.column_names}
-数据大小: {df.total_bytes}
-""")
+print(f"表结构: {df.schema} \n")
+print(f"表大小: {df.shape} \n")
+print(f"行数: {df.num_rows} \n")  # 或者len(dataframe)
+print(f"列数: {df.num_cols} \n")
+print(f"列名: {df.column_names} \n")
+print(f"数据大小: {df.total_bytes} \n")
 ```
 
 ### 3.2 数据预览与打印
