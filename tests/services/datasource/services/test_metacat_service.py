@@ -103,7 +103,7 @@ class TestMetaCatService(unittest.TestCase):
 
         service = MetaCatService()
         service.datasets = {"1": "Dataset1"}  # 模拟已有数据集
-        result = service.fetch_dataset_details(token="", username="test_user", dataset_name="Dataset1")
+        result = service.list_dataset_files(token="", username="test_user", dataset_name="Dataset1")
 
         # 验证结果
         self.assertIsNotNone(result)

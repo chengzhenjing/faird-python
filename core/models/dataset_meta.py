@@ -14,8 +14,8 @@ class BasicInfo(BaseModel):
     identifier: List[Identifier]  # 多值字典
     description: str = Field(..., min_length=20)
     keywords: List[str] = Field(..., min_items=3)
-    url: HttpUrl
-    datePublished: date
+    url: Optional[HttpUrl] = None
+    datePublished: Optional[date] = None
     subject: List[str] = Field(..., max_items=3)
     format: Optional[List[str]] = None  # 可选字段
     image: Optional[HttpUrl] = None     # 可选字段

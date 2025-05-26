@@ -1,61 +1,78 @@
 from __future__ import annotations
-from typing import Optional, List
+
 from enum import Enum
+from typing import Optional, List
 from urllib.parse import urlparse
 import pyarrow as pa
 import pyarrow.flight
 import json
 import socket
 
+
 class DacpClient:
-    def __init__(self, url: str, principal: Principal):
-        self.url = url
-        self.principal = principal
-        self.connection = None
-        self.token = None
-        self.username = None
-        self.connection_id = None
+    def __init__(self, url: str, principal: Optional[Principal] = None):
+        self.__url = url
+        self.__principal = principal
+        self.__connection = None
+        self.__token = None
+        self.__connection_id = None
 
     @staticmethod
-    def connect(url: str, principal: Principal) -> DacpClient:
+    def connect(url: str, principal: Optional[Principal] = None) -> DacpClient:
         client = DacpClient(url, principal)
         print(f"Connecting to {url} with principal {principal}...")
         parsed = urlparse(url)
         host = f"grpc://{parsed.hostname}:{parsed.port}"
-        client.connection =  pa.flight.connect(host)
-        ConnectionManager.set_connection(client.connection)
-        ticket = {
-            'clientIp': socket.gethostbyname(socket.gethostname()),
-            'type': principal.params.get('type'),
-            'username': principal.params.get('username'),
-            'password': principal.params.get('password')
-        }
-        results = client.connection.do_action(pa.flight.Action("connect_server", json.dumps(ticket).encode('utf-8')))
+        client.__connection =  pa.flight.connect(host)
+        ConnectionManager.set_connection(client.__connection)
+
+        # 构建ticket
+        ticket = {'clientIp': socket.gethostbyname(socket.gethostname())}
+        if principal and principal.auth_type != AuthType.ANONYMOUS:
+            ticket.update({
+                'type': principal.params.get('type'),
+                'username': principal.params.get('username'),
+                'password': principal.params.get('password'),
+                'controld_domain_name': principal.params.get('controld_domain_name'),
+                'signature': principal.params.get('signature')
+            })
+
+        # 发送连接请求
+        results = client.__connection.do_action(pa.flight.Action("connect_server", json.dumps(ticket).encode('utf-8')))
         for res in results:
             res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
-            client.token = res_json.get("token")
-            client.connection_id = res_json.get("connectionID")
-            client.username = principal.params.get('username')
+            client.__token = res_json.get("token")
+            client.__connection_id = res_json.get("connectionID")
         return client
 
-    def list_datasets(self, page: Optional[int] = 1, limit: Optional[int] = 10) -> List[str]:
+    def list_datasets(self) -> List[str]:
         ticket = {
-            'token': self.token,
-            'page': page,
-            'limit': limit
+            'token': self.__token,
+            'page': 1,
+            'limit': 999999
         }
-        results = self.connection.do_action(pa.flight.Action("list_datasets", json.dumps(ticket).encode('utf-8')))
+        results = self.__connection.do_action(pa.flight.Action("list_datasets", json.dumps(ticket).encode('utf-8')))
+        for res in results:
+            res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
+            return res_json
+
+    def get_dataset(self, dataset_name: str):
+        ticket = {
+            'token': self.__token,
+            'dataset_name': dataset_name
+        }
+        results = self.__connection.do_action(pa.flight.Action("get_dataset", json.dumps(ticket).encode('utf-8')))
         for res in results:
             res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
             return res_json
 
     def list_dataframes(self, dataset_name: str) -> List[str]:
         ticket = {
-            'token': self.token,
-            'username': self.username,
+            'token': self.__token,
+            'username': self.__principal.params.get('username') if self.__principal and self.__principal.params else None,
             'dataset_name': dataset_name
         }
-        results = self.connection.do_action(pa.flight.Action("list_dataframes", json.dumps(ticket).encode('utf-8')))
+        results = self.__connection.do_action(pa.flight.Action("list_dataframes", json.dumps(ticket).encode('utf-8')))
         for res in results:
             res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
             return res_json
@@ -64,16 +81,18 @@ class DacpClient:
         from sdk.dataframe import DataFrame
         ticket = {
             'dataframe_id': dataframe_id,
-            'connection_id': self.connection_id
+            'connection_id': self.__connection_id
         }
-        results = self.connection.do_action(pa.flight.Action("open", json.dumps(ticket).encode('utf-8')))
-        return DataFrame(id=dataframe_id, connection_id=self.connection_id)
+        results = self.__connection.do_action(pa.flight.Action("open", json.dumps(ticket).encode('utf-8')))
+        return DataFrame(id=dataframe_id, connection_id=self.__connection_id)
 
 class AuthType(Enum):
     OAUTH = "oauth"
     ANONYMOUS = "anonymous"
 
 class Principal:
+    ANONYMOUS = None
+
     def __init__(self, auth_type: AuthType, **kwargs):
         self.auth_type = auth_type
         self.params = kwargs
@@ -88,6 +107,7 @@ class Principal:
 
     def __repr__(self):
         return f"Principal(auth_type={self.auth_type}, params={self.params})"
+Principal.ANONYMOUS = Principal.anonymous()
 
 class ConnectionManager:
     _connection: Optional[pyarrow.flight.FlightClient] = None

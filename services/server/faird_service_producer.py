@@ -16,7 +16,7 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         super(FairdServiceProducer, self).__init__(location)
 
         # 线程安全的字典，用于存储连接信息
-        self.datasets = ThreadSafeDict() # dataset_name -> Dataset
+        self.datasetMetas = ThreadSafeDict() # dataset_name -> DatasetMetadata
         self.connections = ThreadSafeDict() # connection_id -> Connection
         self.user_compute_resources = ThreadSafeDict()  # username -> UserComputeResource
 
@@ -92,10 +92,17 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         action_type = action.type
         if action_type == "connect_server":
             ticket_data = json.loads(action.body.to_pybytes().decode('utf-8'))
-            token = connect_server(ticket_data.get('username'), ticket_data.get('password'))
-            conn = FairdConnection(clientIp=ticket_data.get('clientIp'), username=ticket_data.get('username'), token=token)
-            self.connections[conn.connectionID] = conn
-            return iter([pa.flight.Result(json.dumps({"token": token, "connectionID": conn.connectionID}).encode("utf-8"))])
+            if ticket_data.get('username'):
+                token = connect_server(ticket_data.get('username'), ticket_data.get('password'))
+                conn = FairdConnection(clientIp=ticket_data.get('clientIp'), username=ticket_data.get('username'), token=token)
+                self.connections[conn.connectionID] = conn
+                return iter([pa.flight.Result(json.dumps({"token": token, "connectionID": conn.connectionID}).encode("utf-8"))])
+            elif ticket_data.get('controld_domain_name'):
+                return None
+            else: # 匿名访问
+                conn = FairdConnection(clientIp=ticket_data.get('clientIp'))
+                self.connections[conn.connectionID] = conn
+                return iter([pa.flight.Result(json.dumps({"connectionID": conn.connectionID}).encode("utf-8"))])
 
         elif action_type == "list_datasets":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
@@ -105,17 +112,24 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             result = pa.flight.Result(json.dumps(self.data_source_sevice.list_dataset(token=token, page=page, limit=limit)).encode())
             return iter([result])
 
+        elif action_type == "get_dataset":
+            ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
+            token = ticket_data.get("token")
+            dataset_name = ticket_data.get("dataset_name")
+            meta = (self.datasetMetas.get(dataset_name)
+                    or self.data_source_sevice.get_dataset_meta(token, dataset_name))
+            if meta:
+                self.datasetMetas[dataset_name] = meta
+                return iter([pa.flight.Result(meta.model_dump_json().encode())])
+            return None
+
         elif action_type == "list_dataframes":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
             token = ticket_data.get("token")
             username = ticket_data.get("username")
             dataset_name = ticket_data.get("dataset_name")
-            dataset = (self.datasets.get(dataset_name)
-                    or self.data_source_sevice.fetch_dataset_details(token, username, dataset_name))
-            if dataset:
-                self.datasets[dataset_name] = dataset
-                return iter([pa.flight.Result(json.dumps(dataset.dataframeIds).encode())])
-            return None
+            dataframe_names = self.data_source_sevice.list_dataframes(token, username, dataset_name)
+            return iter([pa.flight.Result(json.dumps(dataframe_names).encode())])
 
         elif action_type == "open":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))

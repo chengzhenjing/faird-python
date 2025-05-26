@@ -17,7 +17,7 @@ class MetaCatService(FairdDatasourceInterface):
     """
     metacat_url = "http://10.0.82.71:8080"  # MetaCat服务的URL
     metacat_token = "your_metacat_token"  # MetaCat服务的访问令牌
-    datasets = {}  # 数据集ID和名称的映射
+    datasets = {}  # 数据集name（标识）和id的映射
     dataset_count = 0  # 数据集总数量
 
     def __init__(self):
@@ -28,6 +28,9 @@ class MetaCatService(FairdDatasourceInterface):
 
     def list_dataset(self, token: str, page: int = 1, limit: int = 10) -> List[str]:
         url = f"{self.metacat_url}/api/fair/listDatasets"
+
+        if token is None:
+            token = self.metacat_token
 
         headers = {
             "Authorization": token,
@@ -52,10 +55,13 @@ class MetaCatService(FairdDatasourceInterface):
             self.dataset_count = data.get("count", 0)
 
             # 更新全局的datasets字典
+            ds_names = []
             for dataset in dataset_list:
-                self.datasets[dataset['id']] = dataset['name']
+                name = "dacp://" + self.config.domain + ":" + str(self.config.port) + "/" + dataset['name']
+                ds_names.append(name)
+                self.datasets[name] = dataset['id']
 
-            return dataset_list
+            return ds_names
         except requests.RequestException as e:
             print(f"Error fetching dataset list: {e}")
         except json.JSONDecodeError as e:
@@ -67,55 +73,74 @@ class MetaCatService(FairdDatasourceInterface):
         
         return None
 
-    def fetch_dataset_details(self, token: str, username: str, dataset_name: str) -> Optional[DataSet]:
-
+    def get_dataset_meta(self, token: str, dataset_name: str) -> Optional[DatasetMetadata]:
         url = f"{self.metacat_url}/api/fair/getDatasetById"
-
+        if token is None:
+            token = self.metacat_token
         headers = {
             "Authorization": token,
             "Content-Type": "application/json"
         }
-
         # 获取数据集ID
-        dataset_id = get_key(self.datasets, dataset_name)
+        dataset_id = self.datasets[dataset_name]
         if dataset_id is None:
             print(f"dataset {dataset_name} not found in the dataset list.")
             return None
-
         params = {
             "datasetId": dataset_id
         }
+        try:
+            response = requests.get(url, headers=headers, params=params)
+            response.raise_for_status()  # 检查请求是否成功
+            if response.status_code != 200:
+                print(f"Error fetching dataset details: {response.status_code}")
+                return None
+            data = response.json()
+            metadata_obj = data.get("data", "{}").get("metadata", {})
+            metadata = parse_metadata(metadata_obj)
+            return metadata
+        except Exception as e:
+            print(f"Error fetching dataset info from metacat: {e}")
+            return None
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON resonse: {e}")
+            return None
+        except KeyError as e:
+            print(f"Error parsing response: {e}")
+            return None
 
+    def list_dataframes(self, token: str, username: str, dataset_name: str) -> List[str]:
+        url = f"{self.metacat_url}/api/fair/listDatasetFiles"
+        if token is None:
+            token = self.metacat_token
+        headers = {
+            "Authorization": token,
+            "Content-Type": "application/json"
+        }
+        # 获取数据集ID
+        dataset_id = self.datasets[dataset_name]
+        if dataset_id is None:
+            print(f"dataset {dataset_name} not found in the dataset list.")
+            return None
+        params = {
+            "datasetId": dataset_id,
+            "page": 1,
+            "limit": 999999
+        }
         try:
             response = requests.get(url, headers=headers, params=params)
             response.raise_for_status() # 检查请求是否成功
             if response.status_code != 200:
                 print(f"Error fetching dataset details: {response.status_code}")
                 return None
-
             data = response.json()
-            metadata_obj = data.get("data", "{}").get("metadata", {})
-            dataframe_ids = data.get("data", "{}").get("dataframeIds", [])
-            # dataframe_ids = []
-            # # 遍历文件夹中的所有文件路径
-            # for folder_path in dataframeIds_obj:
-            #     if os.path.isdir(folder_path):
-            #         for root, _, files in os.walk(folder_path):
-            #             for file in files:
-            #                 file_path = os.path.join(root, file)
-            #                 dataframe_ids.append(file_path)
-            accessInfo_obj = data.get("data", "{}").get("access_info", {})
-
-            has_permission = self._check_permission(token, dataset_id, username)  # 检查用户是否有数据集权限
-            
-            # 创建并返回DataSet对象
-            dataset = DataSet(
-                meta=parse_metadata(metadata_obj),
-                dataframeIds=dataframe_ids,
-                accessible=has_permission,
-                accessInfo=accessInfo_obj if has_permission else None
-            )
-            return dataset
+            dataframes = data.get("data", "{}").get("datasetFiles", [])
+            #has_permission = self._check_permission(token, dataset_id, username)  # 检查用户是否有数据集权限
+            df_names = []
+            for df in dataframes:
+                df_name = dataset_name + df
+                df_names.append(df_name)
+            return df_names
         except Exception as e:
             print(f"Error fetching dataset info from metacat: {e}")
             return None

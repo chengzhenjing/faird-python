@@ -5,17 +5,21 @@ from sdk.dataframe import DataFrame
 def test_sdk():
 
     url = "dacp://localhost:3101"
+    #url = "dacp://47.111.98.226:3101"
+    #url = "dacp://60.245.194.25:50201"
     username = "faird-user1"
     password = "user1@cnic.cn"
 
     conn = DacpClient.connect(url, Principal.oauth("conet", username, password))
+    #conn = DacpClient.connect(url)
+    #conn = DacpClient.connect(url, Principal.ANONYMOUS)
 
-    datasets = conn.list_datasets()
-    datasets = conn.list_datasets(page=1, limit=1000)
-    dataframe_ids = conn.list_dataframes(datasets[0].get('name'))
+    ds_names = conn.list_datasets()
+    metadata = conn.get_dataset(ds_names[0])
+    df_names = conn.list_dataframes(ds_names[0])
 
-    #df = conn.open(dataframe_ids[0])
-    df = conn.open("/Users/yaxuan/Desktop/测试用/2019年中国榆林市沟道信息.csv")
+    df = conn.open(df_names[0])
+    #df = conn.open("/Users/yaxuan/Desktop/测试用/2019年中国榆林市沟道信息.csv")
 
     print(f"表结构: {df.schema} \n")
     print(f"表大小: {df.shape} \n")
@@ -69,26 +73,24 @@ def test_sdk():
 
     print(f"条件筛选后的结果: \n {df.filter(expression)} \n")
 
+    ## 8.1 sum
+    print(f"统计某一数值列的和: {df.sum("start_l")}")
+    ## 8.2 mean
+    print(f"统计某一数值列的平均值: {df.mean("start_l")}")
+    ## 8.3 min
+    print(f"统计某一数值列的最小值: {df.min("start_l")}")
+    ## 8.4 max
+    print(f"统计某一数值列的最大值: {df.max("start_l")}")
 
+    print(f"按照某个列的值升序或者降序: \n {df.sort('start_l', order='descending')}")
 
+    ## 10.1 sql
+    sql_str = ("select OBJECTID, start_l, end_l "
+               "from dataframe "
+               "where OBJECTID <= 30 "
+               "order by OBJECTID desc ")
 
-    # 2. sum
-    print(df.sum("OBJECTID"))
-
-    # mean
-    print(df.mean("OBJECTID"))
-    print(df.min("start_l"))
-    print(df.max("start_l"))
-
-    # 3. sort
-    print(df.limit(3).sort('OBJECTID', order='descending'))
-
-    # 4. sql
-    print(df.sql("select OBJECTID, start_l, end_l "
-                 "from dataframe "
-                 "where OBJECTID <= 30 "
-                 "order by OBJECTID desc "))
-
+    print(f"sql执行结果: {df.sql(sql_str)}")
 
 
 

@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from typing import Optional, Dict, List
 # from services.datasource.types import UrlElement
 from core.models.dataset import DataSet
+from core.models.dataset_meta import DatasetMetadata
+
 
 class FairdDatasourceInterface(ABC):
     
@@ -13,12 +15,16 @@ class FairdDatasourceInterface(ABC):
     def list_dataset(self, token: str, page: int = 1, limit: int = 10) -> List[str]:
         pass
 
+    @abstractmethod
+    def get_dataset_meta(self, token: str, dataset_name: str) -> Optional[DatasetMetadata]:
+        pass
+
     """
     加载给定的数据集Details(包括metadata、dataframeIds、访问权限accessible、访问信息accessInfo)
     @param dataset_name: 数据中心内部数据集名称
     """
     @abstractmethod
-    def fetch_dataset_details(self, token: str, dataset_name: str) -> Optional[DataSet]:
+    def list_dataframes(self, token: str, dataset_name: str) -> List[str]:
         pass
 
 
