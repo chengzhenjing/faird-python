@@ -10,9 +10,10 @@ def test_sdk():
     username = "faird-user1"
     password = "user1@cnic.cn"
 
-    conn = DacpClient.connect(url, Principal.oauth("conet", username, password))
+    #conn = DacpClient.connect(url, Principal.oauth("conet", username=username, password=password))
+    #conn = DacpClient.connect(url, Principal.oauth("controld", controld_domain_name="controld_domain_name", signature="signature"))
     #conn = DacpClient.connect(url)
-    #conn = DacpClient.connect(url, Principal.ANONYMOUS)
+    conn = DacpClient.connect(url, Principal.ANONYMOUS)
 
     ds_names = conn.list_datasets()
     metadata = conn.get_dataset(ds_names[0])

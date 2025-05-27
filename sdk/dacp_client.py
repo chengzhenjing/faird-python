@@ -98,8 +98,8 @@ class Principal:
         self.params = kwargs
 
     @staticmethod
-    def oauth(type: str, username: str, password: str) -> Principal:
-        return Principal(AuthType.OAUTH, type=type, username=username, password=password)
+    def oauth(type: str,  **kwargs) -> Principal:
+        return Principal(AuthType.OAUTH, type=type, **kwargs)
 
     @staticmethod
     def anonymous() -> Principal:

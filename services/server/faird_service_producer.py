@@ -98,7 +98,9 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
                 self.connections[conn.connectionID] = conn
                 return iter([pa.flight.Result(json.dumps({"token": token, "connectionID": conn.connectionID}).encode("utf-8"))])
             elif ticket_data.get('controld_domain_name'):
-                return None
+                conn = FairdConnection(clientIp=ticket_data.get('clientIp'))
+                self.connections[conn.connectionID] = conn
+                return iter([pa.flight.Result(json.dumps({"connectionID": conn.connectionID}).encode("utf-8"))])
             else: # 匿名访问
                 conn = FairdConnection(clientIp=ticket_data.get('clientIp'))
                 self.connections[conn.connectionID] = conn

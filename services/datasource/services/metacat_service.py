@@ -29,7 +29,7 @@ class MetaCatService(FairdDatasourceInterface):
     def list_dataset(self, token: str, page: int = 1, limit: int = 10) -> List[str]:
         url = f"{self.metacat_url}/api/fair/listDatasets"
 
-        if token is None:
+        if token is None or token == "":
             token = self.metacat_token
 
         headers = {
@@ -75,7 +75,7 @@ class MetaCatService(FairdDatasourceInterface):
 
     def get_dataset_meta(self, token: str, dataset_name: str) -> Optional[DatasetMetadata]:
         url = f"{self.metacat_url}/api/fair/getDatasetById"
-        if token is None:
+        if token is None or token == "":
             token = self.metacat_token
         headers = {
             "Authorization": token,
@@ -111,7 +111,7 @@ class MetaCatService(FairdDatasourceInterface):
 
     def list_dataframes(self, token: str, username: str, dataset_name: str) -> List[str]:
         url = f"{self.metacat_url}/api/fair/listDatasetFiles"
-        if token is None:
+        if token is None or token == "":
             token = self.metacat_token
         headers = {
             "Authorization": token,
