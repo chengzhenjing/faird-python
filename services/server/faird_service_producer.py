@@ -4,11 +4,13 @@ import pyarrow.flight
 from sdk.dataframe import DataFrame
 from services.connection.faird_connection import FairdConnection
 from utils.format_utils import format_arrow_table
-from services.datasource.services.metacat_service import MetaCatService
+from services.datasource.services.metacat_mongo_service import MetaCatMongoService
 from services.types.thread_safe_dict import ThreadSafeDict
 from services.connection.connection_service import connect_server
 from parser import *
 from compute.interactive.interactive import *
+from core.config import FairdConfigManager
+
 
 
 class FairdServiceProducer(pa.flight.FlightServerBase):
@@ -21,7 +23,7 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         self.user_compute_resources = ThreadSafeDict()  # username -> UserComputeResource
 
         # 初始化datasource_service todo: 根据传入service_class_name动态加载
-        self.data_source_sevice = MetaCatService()
+        self.data_source_sevice = MetaCatMongoService()
 
     def list_flights(self, context, criteria):
         # 实现列出可用的 Flight 数据集
@@ -106,6 +108,10 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
                 self.connections[conn.connectionID] = conn
                 return iter([pa.flight.Result(json.dumps({"connectionID": conn.connectionID}).encode("utf-8"))])
 
+        elif action_type == "get_instrument_info":
+            instrument_info = FairdConfigManager.get_config().instrument_info
+            return iter([pa.flight.Result(instrument_info.encode("utf-8"))])
+
         elif action_type == "list_datasets":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
             token = ticket_data.get("token")
@@ -130,8 +136,8 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             token = ticket_data.get("token")
             username = ticket_data.get("username")
             dataset_name = ticket_data.get("dataset_name")
-            dataframe_names = self.data_source_sevice.list_dataframes(token, username, dataset_name)
-            return iter([pa.flight.Result(json.dumps(dataframe_names).encode())])
+            dataframes = self.data_source_sevice.list_dataframes(token, username, dataset_name)
+            return iter([pa.flight.Result(json.dumps(dataframes).encode())])
 
         elif action_type == "open":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))

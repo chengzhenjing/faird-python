@@ -24,7 +24,7 @@ class FairdDatasourceInterface(ABC):
     @param dataset_name: 数据中心内部数据集名称
     """
     @abstractmethod
-    def list_dataframes(self, token: str, dataset_name: str) -> List[str]:
+    def list_dataframes(self, token: str, dataset_name: str):
         pass
 
 

@@ -1,20 +1,18 @@
-import os
-
+from pymongo import MongoClient
 import requests
 import json
+import os
 from typing import Optional, Dict, List
 from datetime import datetime
 from pydantic import ValidationError
 
-from core.config import FairdConfig, FairdConfigManager
-from core.models.dataset import DataSet
+from core.config import FairdConfigManager
 from core.models.dataset_meta import DatasetMetadata
 from services.datasource.interfaces.datasource_interface import FairdDatasourceInterface
 
-class MetaCatService(FairdDatasourceInterface):
-    """
-    读取MetaCat数据目录服务
-    """
+
+class MetaCatMongoService(FairdDatasourceInterface):
+
     metacat_url = "http://10.0.82.71:8080"  # MetaCat服务的URL
     metacat_token = "your_metacat_token"  # MetaCat服务的访问令牌
     datasets = {}  # 数据集name（标识）和id的映射
@@ -25,6 +23,8 @@ class MetaCatService(FairdDatasourceInterface):
         self.config = FairdConfigManager.get_config()
         self.metacat_url = self.config.metacat_url
         self.metacat_token = self.config.metacat_token
+        ## mongoDB
+        self.mongo_client = MongoClient(self.config.mongo_db_url)
 
     def list_dataset(self, token: str, page: int = 1, limit: int = 10) -> List[str]:
         url = f"{self.metacat_url}/api/fair/listDatasets"
@@ -99,48 +99,32 @@ class MetaCatService(FairdDatasourceInterface):
             print(f"Error parsing response: {e}")
             return None
 
-    def list_dataframes(self, token: str, username: str, dataset_name: str) -> List[str]:
-        url = f"{self.metacat_url}/api/fair/listDatasetFiles"
-        if token is None or token == "":
-            token = self.metacat_token
-        headers = {
-            "Authorization": token,
-            "Content-Type": "application/json"
-        }
-        # 获取数据集ID
-        dataset_id = self.datasets[dataset_name]
-        if dataset_id is None:
-            print(f"dataset {dataset_name} not found in the dataset list.")
-            return None
-        params = {
-            "datasetId": dataset_id,
-            "page": 1,
-            "limit": 999999
-        }
+    def list_dataframes(self, token: str, username: str, dataset_name: str):
         try:
-            response = requests.get(url, headers=headers, params=params)
-            response.raise_for_status() # 检查请求是否成功
-            if response.status_code != 200:
-                print(f"Error fetching dataset details: {response.status_code}")
-                return None
-            data = response.json()
-            dataframes = data.get("data", "{}").get("datasetFiles", [])
-            #has_permission = self._check_permission(token, dataset_id, username)  # 检查用户是否有数据集权限
-            df_names = []
-            for df in dataframes:
-                df_name = dataset_name + df
-                df_names.append(df_name)
-            return df_names
+            dataset_id = self.datasets[dataset_name]
+            root_path = self.config.storage_local_path
+            dataset_file_collection = self.mongo_client['metacat']['dataset_file_2025']
+            cursor = dataset_file_collection.find({"datasetId": dataset_id})
+            dataframes = []
+            for file in cursor:
+                df = {}
+                df['id'] = file['_id']
+                df['datasetId'] = file['datasetId']
+                df['fId'] = file['fId']
+                df['name'] = file['name']
+                df['path'] = file['path']
+                if file['path'].startswith(root_path):
+                    df['path'] = "/" + os.path.relpath(file['path'], root_path)
+                df['size'] = file['size']
+                df['suffix'] = file['suffix']
+                df['type'] = file['type']
+                df['dataframeName'] = f"dataset_name{df['path']}"
+                dataframes.append(df)
+            return dataframes
         except Exception as e:
-            print(f"Error fetching dataset info from metacat: {e}")
+            print(f"Error fetching dataset files from MongoDB: {e}")
             return None
-        except json.JSONDecodeError as e:
-            print(f"Error decoding JSON resonse: {e}")
-            return None
-        except KeyError as e:
-            print(f"Error parsing response: {e}")
-            return None
-    
+
     def _check_permission(self, token: str, dataset_id: str, username: str) -> bool:
         """
         检查用户对数据集的访问权限(默认为无)
@@ -149,17 +133,14 @@ class MetaCatService(FairdDatasourceInterface):
         @return: 是否有权限访问
         """
         url = f"{self.metacat_url}/api/fair/checkPermission"
-        
         headers = {
             "Authorization": token,
             "Content-Type": "application/json"
         }
-        
         params = {
             "username": username,
             "datasetId": dataset_id
         }
-        
         try:
             response = requests.get(url, headers=headers, params=params)
             response.raise_for_status()
@@ -168,21 +149,19 @@ class MetaCatService(FairdDatasourceInterface):
             print(f"Error checking permission: {e}")
             return False
 
+
 def parse_metadata(raw_data: dict) -> Optional[DatasetMetadata]:
     """解析元数据字段"""
     processed_data = raw_data.copy()
-    
     # 转换分号分隔的字符串为列表
     if "basic" in processed_data:
         basic = processed_data["basic"]
         if "keywords" in basic and isinstance(basic["keywords"], str):
             basic["keywords"] = basic["keywords"].split(";")
-        
         # 转换日期字符串
         if "datePublished" in basic:
             date_str = basic["datePublished"]
             basic["datePublished"] = datetime.strptime(date_str, "%Y-%m-%d").date()
-    
     # 解析为DatasetMetadata对象
     try:
         dataset_metadata = DatasetMetadata.model_validate(processed_data)
@@ -190,12 +169,4 @@ def parse_metadata(raw_data: dict) -> Optional[DatasetMetadata]:
         return dataset_metadata
     except ValidationError as e:
         print(f"元数据解析失败:\n{e.json()}")
-        return None
-
-def get_key(dictionary, value):
-    """根据值获取字典的键"""
-    try:
-        return {val: key for key, val in dictionary.items()}[value]
-    except KeyError:
-        print(f"Value {value} not found in dictionary.")
         return None

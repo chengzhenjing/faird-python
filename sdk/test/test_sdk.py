@@ -10,16 +10,16 @@ def test_sdk():
     username = "faird-user1"
     password = "user1@cnic.cn"
 
-    #conn = DacpClient.connect(url, Principal.oauth("conet", username=username, password=password))
+    conn = DacpClient.connect(url, Principal.oauth("conet", username=username, password=password))
     #conn = DacpClient.connect(url, Principal.oauth("controld", controld_domain_name="controld_domain_name", signature="signature"))
     #conn = DacpClient.connect(url)
-    conn = DacpClient.connect(url, Principal.ANONYMOUS)
+    #conn = DacpClient.connect(url, Principal.ANONYMOUS)
 
-    ds_names = conn.list_datasets()
-    metadata = conn.get_dataset(ds_names[0])
-    df_names = conn.list_dataframes(ds_names[0])
+    datasets = conn.list_datasets()
+    metadata = conn.get_dataset(datasets[0])
+    dataframes = conn.list_dataframes(datasets[0])
 
-    df = conn.open(df_names[0])
+    df = conn.open(dataframes[0])
     #df = conn.open("/Users/yaxuan/Desktop/测试用/2019年中国榆林市沟道信息.csv")
 
     print(f"表结构: {df.schema} \n")

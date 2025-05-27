@@ -51,6 +51,17 @@ class FairdConfig:
     def metacat_token(self):
         return self.get('metacat_token')
 
+    @property
+    def mongo_db_url(self):
+        return self.get('mongo_db_url')
+
+    @property
+    def storage_local_path(self):
+        return self.get('storage.local.path')
+
+    @property
+    def instrument_info(self):
+        return self.get('instrument.info')
 
 class FairdConfigManager:
     _config = None
