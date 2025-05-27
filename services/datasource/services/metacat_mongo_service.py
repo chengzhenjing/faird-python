@@ -49,7 +49,7 @@ class MetaCatMongoService(FairdDatasourceInterface):
             self.dataset_count = data.get("count", 0)
             ds_names = []
             for dataset in dataset_list:
-                name = "dacp://" + self.config.domain + ":" + str(self.config.port) + "/" + dataset['name']
+                name = "dacp://" + self.config.external_domain + ":" + str(self.config.external_port) + "/" + dataset['name']
                 ds_names.append(name)
                 self.datasets[name] = dataset['id']
             return ds_names

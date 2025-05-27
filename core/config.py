@@ -40,6 +40,14 @@ class FairdConfig:
         return int(self.get('host.port', 0))
 
     @property
+    def external_domain(self):
+        return self.get('host.external.domain')
+
+    @property
+    def external_port(self):
+        return int(self.get('host.external.port', 0))
+
+    @property
     def log_path(self):
         return self.get('log.path')
 
