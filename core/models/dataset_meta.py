@@ -10,13 +10,13 @@ class Identifier(BaseModel):
 
 class BasicInfo(BaseModel):
     """基本信息"""
-    name: str = Field(..., min_length=10)
-    identifier: List[Identifier]  # 多值字典
-    description: str = Field(..., min_length=20)
-    keywords: List[str] = Field(..., min_items=3)
+    name: Optional[str] = Field(..., min_length=10)
+    identifier: Optional[List[Identifier]] = None  # 多值字典
+    description: Optional[str] = Field(..., min_length=20)
+    keywords: Optional[List[str]] = Field(..., min_items=3)
     url: Optional[HttpUrl] = None
     datePublished: Optional[date] = None
-    subject: List[str] = Field(..., max_items=3)
+    subject: Optional[List[str]] = Field(..., max_items=3)
     format: Optional[List[str]] = None  # 可选字段
     image: Optional[HttpUrl] = None     # 可选字段
 
@@ -29,17 +29,17 @@ class AccessRights(BaseModel):
 class DistributionInfo(BaseModel):
     """分发信息"""
     accessRights: Optional[AccessRights] = None
-    license: str
+    license: Optional[str] = None
     byteSize: Optional[float] = Field(None, description="存储量（单位：KB）")
     fileNumber: Optional[int] = None
     downloadURL: Optional[HttpUrl] = None
 
 class RightsInfo(BaseModel):
     """权益信息"""
-    creator: List[str]
-    publisher: str
-    contactPoint: List[str]
-    email: List[str]
+    creator: Optional[List[str]] = None
+    publisher: Optional[str] = None
+    contactPoint: Optional[List[str]] = None
+    email: Optional[List[str]] = None
     copyrightHolder: Optional[List[str]] = None
     references: Optional[List[HttpUrl]] = None
 
@@ -53,34 +53,34 @@ class RightsInfo(BaseModel):
                 raise ValueError(f"Invalid email format: {email}")
         return v
 
-class InstrumentInfo(BaseModel):
-    """装置信息"""
-    instrumentID: str
-    model: str
-    name: str
-    description: str
-    supportingInstitution: str
-    manufacuturer: str
-    accountablePerson: str
-    contactPoint: str
-    email: List[str]
-
-    # 邮箱格式验证
-    @field_validator('email')
-    @classmethod
-    def validate_emails(cls, v):
-        email_pattern = re.compile(r"^[\w\.-]+@[\w\.-]+\.\w+$")
-        for email in v:
-            if not email_pattern.match(email):
-                raise ValueError(f"Invalid email format: {email}")
-        return v
+# class InstrumentInfo(BaseModel):
+#     """装置信息"""
+#     instrumentID: str
+#     model: str
+#     name: str
+#     description: str
+#     supportingInstitution: str
+#     manufacuturer: str
+#     accountablePerson: str
+#     contactPoint: str
+#     email: List[str]
+#
+#     # 邮箱格式验证
+#     @field_validator('email')
+#     @classmethod
+#     def validate_emails(cls, v):
+#         email_pattern = re.compile(r"^[\w\.-]+@[\w\.-]+\.\w+$")
+#         for email in v:
+#             if not email_pattern.match(email):
+#                 raise ValueError(f"Invalid email format: {email}")
+#         return v
 
 # -------------------元数据模型 -------------------
 class DatasetMetadata(BaseModel):
     basic: BasicInfo
     distribution: DistributionInfo
     rights: RightsInfo
-    instrument: InstrumentInfo
+    #instrument: InstrumentInfo
 
 
 # ------------------- 使用示例 -------------------
