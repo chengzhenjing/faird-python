@@ -27,7 +27,11 @@ class DacpClient:
         ConnectionManager.set_connection(client.__connection)
 
         # 构建ticket
-        ticket = {'clientIp': socket.gethostbyname(socket.gethostname())}
+        try:
+            client_ip = socket.gethostbyname(socket.gethostname())
+        except socket.gaierror:
+            client_ip = "127.0.0.1"
+        ticket = {'clientIp': client_ip}
         if principal and principal.auth_type != AuthType.ANONYMOUS:
             ticket.update({
                 'type': principal.params.get('type'),

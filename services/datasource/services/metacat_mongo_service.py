@@ -118,7 +118,7 @@ class MetaCatMongoService(FairdDatasourceInterface):
                 df['size'] = file['size']
                 df['suffix'] = file['suffix']
                 df['type'] = file['type']
-                df['dataframeName'] = f"dataset_name{df['path']}"
+                df['dataframeName'] = f"{dataset_name}{df['path']}"
                 dataframes.append(df)
             return dataframes
         except Exception as e:

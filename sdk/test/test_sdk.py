@@ -5,7 +5,7 @@ from sdk.dataframe import DataFrame
 def test_sdk():
 
     url = "dacp://localhost:3101"
-    #url = "dacp://47.111.98.226:3101"
+    #url = "dacp://10.0.89.38:3101"
     #url = "dacp://60.245.194.25:50201"
     username = "faird-user1"
     password = "user1@cnic.cn"

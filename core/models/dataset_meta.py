@@ -10,13 +10,13 @@ class Identifier(BaseModel):
 
 class BasicInfo(BaseModel):
     """基本信息"""
-    name: Optional[str] = Field(..., min_length=10)
+    name: Optional[str] = None
     identifier: Optional[List[Identifier]] = None  # 多值字典
-    description: Optional[str] = Field(..., min_length=20)
-    keywords: Optional[List[str]] = Field(..., min_items=3)
+    description: Optional[str] = None
+    keywords: Optional[List[str]] = None
     url: Optional[HttpUrl] = None
     datePublished: Optional[date] = None
-    subject: Optional[List[str]] = Field(..., max_items=3)
+    subject: Optional[List[str]] = None
     format: Optional[List[str]] = None  # 可选字段
     image: Optional[HttpUrl] = None     # 可选字段
 
@@ -30,7 +30,7 @@ class DistributionInfo(BaseModel):
     """分发信息"""
     accessRights: Optional[AccessRights] = None
     license: Optional[str] = None
-    byteSize: Optional[float] = Field(None, description="存储量（单位：KB）")
+    byteSize: Optional[float] = None
     fileNumber: Optional[int] = None
     downloadURL: Optional[HttpUrl] = None
 
