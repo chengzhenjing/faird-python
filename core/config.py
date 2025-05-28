@@ -60,6 +60,10 @@ class FairdConfig:
         return self.get('metacat_token')
 
     @property
+    def use_mongo(self):
+        return self.get('use_mongo', 'false')
+
+    @property
     def mongo_db_url(self):
         return self.get('mongo_db_url')
 

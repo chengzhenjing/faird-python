@@ -2,11 +2,11 @@ import os
 from urllib.parse import urlparse
 
 import pyarrow.flight
-from docutils.utils import relative_path
 
 from sdk.dataframe import DataFrame
 from services.connection.faird_connection import FairdConnection
 from utils.format_utils import format_arrow_table
+from services.datasource.services.metacat_service import MetaCatService
 from services.datasource.services.metacat_mongo_service import MetaCatMongoService
 from services.types.thread_safe_dict import ThreadSafeDict
 from services.connection.connection_service import connect_server
@@ -26,7 +26,10 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         self.user_compute_resources = ThreadSafeDict()  # username -> UserComputeResource
 
         # 初始化datasource_service todo: 根据传入service_class_name动态加载
-        self.data_source_sevice = MetaCatMongoService()
+        if FairdConfigManager.get_config().use_mongo == "true":
+            self.data_source_service = MetaCatMongoService()
+        else:
+            self.data_source_service = MetaCatService()
 
     def list_flights(self, context, criteria):
         # 实现列出可用的 Flight 数据集
@@ -120,7 +123,7 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             token = ticket_data.get("token")
             page = int(ticket_data.get("page"))
             limit = int(ticket_data.get("limit"))
-            result = pa.flight.Result(json.dumps(self.data_source_sevice.list_dataset(token=token, page=page, limit=limit)).encode())
+            result = pa.flight.Result(json.dumps(self.data_source_service.list_dataset(token=token, page=page, limit=limit)).encode())
             return iter([result])
 
         elif action_type == "get_dataset":
@@ -128,7 +131,7 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             token = ticket_data.get("token")
             dataset_name = ticket_data.get("dataset_name")
             meta = (self.datasetMetas.get(dataset_name)
-                    or self.data_source_sevice.get_dataset_meta(token, dataset_name))
+                    or self.data_source_service.get_dataset_meta(token, dataset_name))
             if meta:
                 self.datasetMetas[dataset_name] = meta
                 return iter([pa.flight.Result(meta.model_dump_json().encode())])
@@ -139,7 +142,7 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             token = ticket_data.get("token")
             username = ticket_data.get("username")
             dataset_name = ticket_data.get("dataset_name")
-            dataframes = self.data_source_sevice.list_dataframes(token, username, dataset_name)
+            dataframes = self.data_source_service.list_dataframes(token, username, dataset_name)
             return iter([pa.flight.Result(json.dumps(dataframes).encode())])
 
         elif action_type == "open":

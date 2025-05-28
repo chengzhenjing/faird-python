@@ -49,7 +49,8 @@ class MetaCatService(FairdDatasourceInterface):
             self.dataset_count = data.get("count", 0)
             ds_names = []
             for dataset in dataset_list:
-                name = "dacp://" + self.config.domain + ":" + str(self.config.port) + "/" + dataset['name']
+                name = "dacp://" + self.config.external_domain + ":" + str(self.config.external_port) + "/" + dataset[
+                    'name']
                 ds_names.append(name)
                 self.datasets[name] = dataset['id']
             return ds_names
@@ -124,13 +125,25 @@ class MetaCatService(FairdDatasourceInterface):
                 print(f"Error fetching dataset details: {response.status_code}")
                 return None
             data = response.json()
-            dataframes = data.get("data", "{}").get("datasetFiles", [])
+            datasetFiles = data.get("data", "{}").get("datasetFiles", [])
             #has_permission = self._check_permission(token, dataset_id, username)  # 检查用户是否有数据集权限
-            df_names = []
-            for df in dataframes:
-                df_name = dataset_name + df
-                df_names.append(df_name)
-            return df_names
+            dataframes = []
+            root_path = self.config.storage_local_path
+            for file in datasetFiles:
+                df = {}
+                df['id'] = file['id']
+                df['datasetId'] = file['datasetId']
+                df['fId'] = file['fid']
+                df['name'] = file['name']
+                df['path'] = file['path']
+                if file['path'].startswith(root_path):
+                    df['path'] = "/" + os.path.relpath(file['path'], root_path)
+                df['size'] = file['size']
+                df['suffix'] = file['suffix']
+                df['type'] = file['type']
+                df['dataframeName'] = f"{dataset_name}{df['path']}"
+                dataframes.append(df)
+            return dataframes
         except Exception as e:
             print(f"Error fetching dataset info from metacat: {e}")
             return None
@@ -171,18 +184,15 @@ class MetaCatService(FairdDatasourceInterface):
 def parse_metadata(raw_data: dict) -> Optional[DatasetMetadata]:
     """解析元数据字段"""
     processed_data = raw_data.copy()
-    
     # 转换分号分隔的字符串为列表
     if "basic" in processed_data:
         basic = processed_data["basic"]
         if "keywords" in basic and isinstance(basic["keywords"], str):
             basic["keywords"] = basic["keywords"].split(";")
-        
         # 转换日期字符串
         if "datePublished" in basic:
             date_str = basic["datePublished"]
             basic["datePublished"] = datetime.strptime(date_str, "%Y-%m-%d").date()
-    
     # 解析为DatasetMetadata对象
     try:
         dataset_metadata = DatasetMetadata.model_validate(processed_data)
@@ -190,12 +200,4 @@ def parse_metadata(raw_data: dict) -> Optional[DatasetMetadata]:
         return dataset_metadata
     except ValidationError as e:
         print(f"元数据解析失败:\n{e.json()}")
-        return None
-
-def get_key(dictionary, value):
-    """根据值获取字典的键"""
-    try:
-        return {val: key for key, val in dictionary.items()}[value]
-    except KeyError:
-        print(f"Value {value} not found in dictionary.")
         return None
