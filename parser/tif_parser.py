@@ -9,69 +9,140 @@ from parser.abstract_parser import BaseParser
 
 class TIFParser(BaseParser):
     """
-    TIFF/GeoTIFF file parser implementing the BaseParser interface.
+    通用 TIFF/GeoTIFF 解析器，支持任意波段数、任意图像大小。
+    可读取 TIFF 并转为 Arrow Table，也可从 Arrow Table 写回 TIFF。
     """
 
-    def parse(self, file_path: str) -> pa.Table:
+    def parse(self, file_path: str) -> dict:
         """
-        Parse a TIFF/GeoTIFF file into a pyarrow Table.
+        将任意 TIFF 文件解析为 Arrow Table，并附带元数据。
 
         Args:
-            file_path (str): Path to the input TIFF/GeoTIFF file.
+            file_path (str): 输入 TIFF 文件路径
         Returns:
-            pa.Table: A pyarrow Table object representing pixel values for each band.
+            dict: 包含 Arrow Table 和元数据的对象
         """
 
-        # 设置缓存路径
         DEFAULT_ARROW_CACHE_PATH = os.path.expanduser("~/.cache/faird/dataframe/tif/")
         os.makedirs(DEFAULT_ARROW_CACHE_PATH, exist_ok=True)
 
-        # 构造缓存文件路径
         arrow_file_name = os.path.basename(file_path).rsplit(".", 1)[0] + ".arrow"
         arrow_file_path = os.path.join(DEFAULT_ARROW_CACHE_PATH, arrow_file_name)
 
-        # 如果缓存存在，直接从缓存加载
+        # 缓存加载
         if os.path.exists(arrow_file_path):
-            print(f"从缓存加载 {arrow_file_path}")
-            with pa.memory_map(arrow_file_path, "r") as source:
-                return ipc.open_file(source).read_all()
+            print(f"🔁 从缓存加载 {arrow_file_path}")
+            try:
+                with pa.memory_map(arrow_file_path, "r") as source:
+                    table = ipc.open_file(source).read_all()
+                return {
+                    "table": table,
+                    "metadata": self._load_metadata(file_path)
+                }
+            except Exception as e:
+                print(f"🚨 缓存加载失败: {e}")
 
-        # 打开 TIFF 文件
+        # 解析文件
+        print(f"📂 正在解析 TIFF 文件: {file_path}")
         with rasterio.open(file_path) as src:
             num_bands = src.count
             height, width = src.height, src.width
-            data = []
+            dtype = src.dtypes[0]
 
-            # 逐波段读取数据
+            data = []
+            names = []
+
             for i in range(1, num_bands + 1):
                 band_data = src.read(i)
-                data.append(band_data.flatten())  # 展平为一维数组
+                data.append(band_data.flatten())
+                names.append(f"band_{i}")
 
-            # 转换为 PyArrow 数组
             arrays = [pa.array(d, type=pa.from_numpy_dtype(d.dtype)) for d in data]
-            names = [f"band_{i}" for i in range(1, num_bands + 1)]
-
-            # 创建 Table
             table = pa.Table.from_arrays(arrays, names=names)
 
             # 写入缓存
-            with ipc.new_file(arrow_file_path, table.schema) as writer:
-                writer.write_table(table)
-            print(f"成功将 {file_path} 保存为 {arrow_file_path}")
+            print(f"💾 写入缓存文件: {arrow_file_path}")
+            try:
+                with ipc.new_file(arrow_file_path, table.schema) as writer:
+                    writer.write_table(table)
+            except Exception as e:
+                print(f"❌ 缓存写入失败: {e}")
 
-            # 零拷贝读取返回
-            with pa.memory_map(arrow_file_path, "r") as source:
-                return ipc.open_file(source).read_all()
+        metadata = self._load_metadata(file_path, src)
 
-    def write(self, table: pa.Table, output_path: str):
+        return {
+            "table": table,
+            "metadata": metadata
+        }
+
+    def _load_metadata(self, file_path: str, src=None):
+        """提取 TIFF 文件的元数据"""
+        if src is None:
+            with rasterio.open(file_path) as src:
+                return {
+                    "width": src.width,
+                    "height": src.height,
+                    "count": src.count,
+                    "dtype": src.dtypes[0],
+                    "crs": src.crs.to_string() if src.crs else None,
+                    "transform": list(src.transform),
+                    "driver": src.driver,
+                    "nodata": src.nodata,
+                }
+        else:
+            return {
+                "width": src.width,
+                "height": src.height,
+                "count": src.count,
+                "dtype": src.dtypes[0],
+                "crs": src.crs.to_string() if src.crs else None,
+                "transform": list(src.transform),
+                "driver": src.driver,
+                "nodata": src.nodata,
+            }
+
+    def write(self, parsed_data: dict, output_path: str):
         """
-        占位 write 方法，用于满足 BaseParser 接口要求。
-        当前尚未实现写入功能。
+        将 parse 返回的 dict 对象写回 GeoTIFF 文件。
 
         Args:
-            table (pa.Table): 要写入的数据（当前不处理）
-            output_path (str): 目标输出路径（当前不处理）
-        Raises:
-            NotImplementedError: 始终抛出未实现异常
+            parsed_data (dict): 包含 Arrow Table 和元数据的对象
+            output_path (str): 输出文件路径
         """
-        raise NotImplementedError("TIFParser.write() 尚未实现：当前不支持写回 TIF 文件")
+        table = parsed_data["table"]
+        meta = parsed_data["metadata"]
+
+        num_bands = len(table.column_names)
+        width = meta["width"]
+        height = meta["height"]
+        dtype = meta.get("dtype", "float32")
+        crs = meta.get("crs")
+        transform = meta.get("transform")
+
+        # 构建二维数组
+        bands = []
+        for col in table.column_names:
+            flat_array = table[col].to_numpy()
+            reshaped = flat_array.reshape((height, width))
+            bands.append(reshaped)
+
+        # 构建 RasterIO 元数据
+        profile = {
+            'driver': meta.get('driver', 'GTiff'),
+            'height': height,
+            'width': width,
+            'count': num_bands,
+            'dtype': dtype,
+            'nodata': meta.get('nodata'),
+            'transform': rasterio.Affine(*transform) if transform else rasterio.Affine.identity(),
+            'crs': crs or 'EPSG:4326',
+            'compress': 'lzw'
+        }
+
+        print(f"💾 正在写入 GeoTIFF 文件: {output_path}")
+        with rasterio.open(output_path, 'w', **profile) as dst:
+            for i, band_data in enumerate(bands, start=1):
+                dst.write(band_data, i)
+
+        print(f"✅ 成功写回 GeoTIFF 文件: {output_path}")
+

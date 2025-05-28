@@ -32,8 +32,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 安装本地 SDK 模块（重点！）
 RUN pip install -e .
 
+# 创建日志目录
+RUN mkdir -p /var/log/faird
+
 # 暴露服务端口
 EXPOSE 3101
 
-# 启动命令
-CMD ["python", "main.py"]
+# 启动命令，并将输出写入日志文件
+CMD python main.py > /var/log/faird/app.log 2>&1

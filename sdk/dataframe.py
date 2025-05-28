@@ -9,6 +9,7 @@ import pyarrow.compute as pc
 from core.models.dataframe import DataFrame
 from sdk.dacp_client import ConnectionManager
 from utils.format_utils import format_arrow_table
+import os
 
 
 class DataFrame(DataFrame):
@@ -303,3 +304,81 @@ class DataFrame(DataFrame):
             else:
                 raise ValueError(f"Unsupported action type: {action_type}")
         return arrow_table
+
+    def write(self, output_path: str, file_path: Optional[str] = None, format: str = None):
+        """
+        将 DataFrame 写入文件，支持多种格式（netcdf, csv 等）
+
+        Args:
+            output_path (str): 输出文件路径。
+            file_path (Optional[str]): 原始文件路径（可选），用于 NetCDF 元信息恢复。
+            format (str, optional): 文件格式，如 'netcdf', 'csv'。默认自动根据扩展名推断。
+        """
+        if self.data is None:
+            self.collect()
+
+        if format is None:
+            ext = os.path.splitext(output_path)[-1].lower()
+            if ext in ('.nc', '.netcdf'):
+                format = 'netcdf'
+            elif ext in ('.csv',):
+                format = 'csv'
+            elif ext in ('.arrow', '.ipc'):
+                format = 'arrow'
+            else:
+                raise ValueError(f"无法识别文件格式，请指定 format 参数，例如 'netcdf', 'csv'")
+
+        if format == 'netcdf':
+            from parser.nc_parser_2 import NCParser2
+            parser = NCParser2()
+
+            # 使用传入的 file_path 或 self.id 作为原始文件路径
+            original_file_path = file_path or self.id
+
+            print(f"🔍 检查是否已存在缓存元信息...")
+            DEFAULT_ARROW_CACHE_PATH = os.path.expanduser("~/.cache/faird/dataframe/nc/")
+            base_name = os.path.basename(original_file_path).rsplit(".", 1)[0]
+            meta_file_path = os.path.join(DEFAULT_ARROW_CACHE_PATH, base_name + ".arrow.metadata.json")
+
+            if not os.path.exists(meta_file_path):
+                print(f"⚠️ 缓存不存在，正在通过 parse({original_file_path}) 强制生成完整缓存（包括 metadata）...")
+                # 强制解析一次，绕过缓存
+                print(f"file_path: {original_file_path}, 类型: {type(original_file_path)}")
+                parser.parse(original_file_path, force=True)
+
+            # 继续写回 NetCDF 文件
+            parser.write(self.data, output_path, original_file_path=original_file_path)
+        elif format == 'csv':
+            import pyarrow.csv as csv
+            csv.write_csv(self.data, output_path)
+        elif format == 'arrow':
+            with pa.OSFile(output_path, 'wb') as sink:
+                with pa.ipc.new_file(sink, self.data.schema) as writer:
+                    writer.write_table(self.data)
+        else:
+            supported = ['netcdf', 'csv', 'arrow']
+            raise NotImplementedError(f"不支持的输出格式: {format}。当前支持: {', '.join(supported)}")
+
+    # def write(self, output_path: str, file_path: Optional[str] = None, format: str = None):
+    #     """
+    #     将 DataFrame 写入文件，支持多种格式（netcdf, csv 等）。
+    #     如果提供 file_path，则复制该文件到 output_path（用于测试/调试）；
+    #     否则根据 format 写入当前数据内容。
+    #
+    #     Args:
+    #         output_path (str): 输出文件路径。
+    #         file_path (Optional[str]): 要复制的源文件路径（可选）。
+    #         format (str, optional): 文件格式，如 'netcdf', 'csv'。默认自动根据扩展名推断。
+    #     """
+    #     if file_path is not None:
+    #         import shutil
+    #         print(f"正在写入文件 {file_path} → {output_path}")
+    #         try:
+    #             print("Source file path:", file_path)
+    #             print("Target file path:", output_path)
+    #             shutil.copy(file_path, output_path)
+    #             print("文件写入成功")
+    #         except Exception as e:
+    #             raise RuntimeError(f"文件写入失败: {e}")
+    #         return
+    #

@@ -1,6 +1,13 @@
 
 import faird
 import  pyarrow.compute as pc
+from sdk.dacp_client import DacpClient, Principal
+
+
+SERVER_URL = "dacp://localhost:3101"
+USERNAME = "user1@cnic.cn"
+TENANT = "conet"
+CLIENT_ID = "faird-user1"
 
 
 def test_netcdf_file():
@@ -12,10 +19,11 @@ def test_netcdf_file():
     #input_path = "/Users/zhouziang/Documents/project/faird_new_2/faird/test_data.nc"
     #output_path = "/Users/zhouziang/Documents/project/faird_new_2/faird/output_test.nc"
 
-    dataframe_id = "/Users/yaxuan/Desktop/测试用/test_data.nc"
+    dataframe_id = "/data/faird/test-data/nc/test_data.nc"
+    conn = DacpClient.connect(SERVER_URL, Principal.oauth(TENANT, CLIENT_ID, USERNAME))
 
     print("🔍 正在加载 DataFrame...")
-    df = faird.open(dataframe_id)
+    df = conn.open(dataframe_id)
 
     if df is None:
         print("加载失败：faird.open 返回 None。请检查 parser 或文件路径。")
@@ -33,7 +41,7 @@ def test_netcdf_file():
     print("\n查看前几行数据预览:")
     print(df.to_string(head_rows=5, tail_rows=0))
 
-    output_path = "/Users/yaxuan/Desktop/测试用/output/test_data.nc"
+    output_path = "/data/faird/test-data/nc/test_data_output.nc"
     print(f"正在使用 df.write(...) 写回文件到: {output_path}")
 
     try:
