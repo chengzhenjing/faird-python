@@ -39,4 +39,4 @@ RUN mkdir -p /var/log/faird
 EXPOSE 3101
 
 # 启动命令，并将输出写入日志文件
-CMD python main.py > /var/log/faird/app.log 2>&1
+CMD python -u main.py > /var/log/faird/app.log 2>&1
