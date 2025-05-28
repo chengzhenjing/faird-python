@@ -1,5 +1,9 @@
+import json
+
 from sdk.dacp_client import DacpClient, Principal
 from sdk.dataframe import DataFrame
+import os
+import uuid
 
 
 def test_sdk():
@@ -18,8 +22,9 @@ def test_sdk():
     datasets = conn.list_datasets()
     metadata = conn.get_dataset(datasets[0])
     dataframes = conn.list_dataframes(datasets[0])
-
-    df = conn.open(dataframes[0])
+    #dataframe_name = dataframes[0]['dataframeName']
+    dataframe_name = "dacp://60.245.194.25:50201/电子束粉末床增材制造过程压力记录日志/Desktop/测试用"
+    df = conn.open(dataframe_name)
     #df = conn.open("/Users/yaxuan/Desktop/测试用/2019年中国榆林市沟道信息.csv")
 
     print(f"表结构: {df.schema} \n")
@@ -96,4 +101,6 @@ def test_sdk():
 
 
 if __name__ == "__main__":
+    file_path = "/"
+    arrow_file_name = str(uuid.uuid4()) + ".arrow"
     test_sdk()

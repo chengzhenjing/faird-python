@@ -81,14 +81,14 @@ class DacpClient:
             res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
             return res_json
 
-    def open(self, dataframe_id: str):
+    def open(self, dataframe_name: str):
         from sdk.dataframe import DataFrame
         ticket = {
-            'dataframe_id': dataframe_id,
+            'dataframe_name': dataframe_name,
             'connection_id': self.__connection_id
         }
         results = self.__connection.do_action(pa.flight.Action("open", json.dumps(ticket).encode('utf-8')))
-        return DataFrame(id=dataframe_id, connection_id=self.__connection_id)
+        return DataFrame(id=dataframe_name, connection_id=self.__connection_id)
 
 class AuthType(Enum):
     OAUTH = "oauth"

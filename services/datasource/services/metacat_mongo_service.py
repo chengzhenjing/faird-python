@@ -149,6 +149,28 @@ class MetaCatMongoService(FairdDatasourceInterface):
             print(f"Error checking permission: {e}")
             return False
 
+    def list_dataframes_all_files(self, dataset_name: str):
+        try:
+            dataset_id = self.datasets[dataset_name]
+            root_path = self.config.storage_local_path
+            dataset_file_collection = self.mongo_client['metacat']['dataset_file_2025']
+            cursor = dataset_file_collection.find({"datasetId": dataset_id, "type": "file"})
+            dataframes = []
+            for file in cursor:
+                df = {}
+                df['name'] = file['name']
+                df['path'] = file['path']
+                if file['path'].startswith(root_path):
+                    df['path'] = "/" + os.path.relpath(file['path'], root_path)
+                df['size'] = file['size']
+                df['suffix'] = file['suffix']
+                df['type'] = file['type']
+                dataframes.append(df)
+            return dataframes
+        except Exception as e:
+            print(f"Error fetching dataset files from MongoDB: {e}")
+            return None
+
 
 def parse_metadata(raw_data: dict) -> Optional[DatasetMetadata]:
     """解析元数据字段"""

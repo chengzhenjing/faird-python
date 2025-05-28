@@ -1,5 +1,8 @@
 import os
+from urllib.parse import urlparse
+
 import pyarrow.flight
+from docutils.utils import relative_path
 
 from sdk.dataframe import DataFrame
 from services.connection.faird_connection import FairdConnection
@@ -141,13 +144,13 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
 
         elif action_type == "open":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
-            dataframe_id = ticket_data.get("dataframe_id")
             connection_id = ticket_data.get('connection_id')
+            dataframe_name = ticket_data.get("dataframe_name")  # uri
             # open with parser
-            df = self.open_action(dataframe_id)
+            df = self.open_action(dataframe_name)
             # put dataframe to connection memory
             conn = self.connections.get(connection_id)
-            conn.dataframes[dataframe_id] = df
+            conn.dataframes[dataframe_name] = df
             return None
 
         elif action_type == "to_string":
@@ -159,23 +162,30 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         else:
             return None
 
-    def open_action(self, dataframe_id):
-        file_extension = os.path.splitext(dataframe_id)[1].lower()
+    def open_action(self, dataframe_name):
+        parsed_url = urlparse(dataframe_name)
+        dataset_name = f"{parsed_url.scheme}://{parsed_url.netloc}/{parsed_url.path.split('/', 2)[1]}"
+        relative_path = '/' + parsed_url.path.split('/', 2)[2]  # 相对路径
+        file_path = FairdConfigManager.get_config().storage_local_path + relative_path  # 绝对路径
+        file_extension = os.path.splitext(file_path)[1].lower()
+        # 暂时这样适配文件夹类型
+        if file_extension == "":
+            arrow_table = dir_parser.DirParser().parse_dir(file_path, dataset_name)
+            return DataFrame(id=dataframe_name, data=arrow_table)
         parser_switch = {
             ".csv": csv_parser.CSVParser,
             ".json": None,
             ".xml": None,
             ".nc": nc_parser.NCParser,
             ".tiff": tif_parser.TIFParser,
-            ".tif": tif_parser.TIFParser,
-
+            ".tif": tif_parser.TIFParser
         }
         parser_class = parser_switch.get(file_extension)
         if not parser_class:
             raise ValueError(f"Unsupported file extension: {file_extension}")
         parser = parser_class()
-        arrow_table = parser.parse(dataframe_id)
-        return DataFrame(id=dataframe_id, data=arrow_table)
+        arrow_table = parser.parse(file_path)
+        return DataFrame(id=dataframe_name, data=arrow_table)
 
     def to_string_action(self, context, action):
         params = json.loads(action.body.to_pybytes().decode("utf-8"))
