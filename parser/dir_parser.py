@@ -5,6 +5,8 @@ import os
 import uuid
 from parser.abstract_parser import BaseParser
 from services.datasource.services.metacat_mongo_service import MetaCatMongoService
+from core.config import FairdConfigManager
+from services.datasource.services.metacat_service import MetaCatService
 
 
 class DirParser(BaseParser):
@@ -18,9 +20,17 @@ class DirParser(BaseParser):
         arrow_file_path = os.path.join(DEFAULT_ARROW_CACHE_PATH, arrow_file_name)
 
         # read from mongodb to get all file
+        data_source_service = None;
+        if FairdConfigManager.get_config().use_mongo == "true":
+            data_source_service = MetaCatMongoService()
+        else:
+            data_source_service = MetaCatService()
+
         files_data = []
-        all_files = MetaCatMongoService().list_dataframes_all_files(dataset_name)
+        all_files = data_source_service.list_dataframes_all_files(dataset_name)
         for file_dict in all_files:
+            if file_dict["type"] == "dir":
+                continue
             files_data.append({
                 "name": file_dict["name"],
                 "path": file_dict["path"],

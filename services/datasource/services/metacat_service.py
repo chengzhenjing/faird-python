@@ -181,6 +181,11 @@ class MetaCatService(FairdDatasourceInterface):
             print(f"Error checking permission: {e}")
             return False
 
+    def list_dataframes_all_files(self, dataset_name: str):
+        dataframes = self.list_dataframes("", "", dataset_name)
+        return dataframes
+
+
 def parse_metadata(raw_data: dict) -> Optional[DatasetMetadata]:
     """解析元数据字段"""
     processed_data = raw_data.copy()
