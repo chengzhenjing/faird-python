@@ -9,6 +9,8 @@ from pydantic import ValidationError
 from core.config import FairdConfigManager
 from core.models.dataset_meta import DatasetMetadata
 from services.datasource.interfaces.datasource_interface import FairdDatasourceInterface
+import logging
+logger = logging.getLogger(__name__)
 
 
 class MetaCatMongoService(FairdDatasourceInterface):
@@ -42,7 +44,7 @@ class MetaCatMongoService(FairdDatasourceInterface):
             response = requests.get(url, headers=headers, params=params)
             response.raise_for_status()  # 检查请求是否成功
             if response.status_code != 200:
-                print(f"Error fetching dataset list: {response.status_code}")
+                logger.info(f"Error fetching dataset list: {response.status_code}")
                 return None
             data = response.json().get("data")
             dataset_list = data.get("datasetIds", [])
@@ -54,13 +56,13 @@ class MetaCatMongoService(FairdDatasourceInterface):
                 self.datasets[name] = dataset['id']
             return ds_names
         except requests.RequestException as e:
-            print(f"Error fetching dataset list: {e}")
+            logger.info(f"Error fetching dataset list: {e}")
         except json.JSONDecodeError as e:
-            print(f"Error decoding JSON response: {e}")
+            logger.info(f"Error decoding JSON response: {e}")
         except KeyError as e:
-            print(f"Error parsing response: {e}")
+            logger.info(f"Error parsing response: {e}")
         except Exception as e:
-            print(f"Unexpected error: {e}")
+            logger.info(f"Unexpected error: {e}")
         return None
 
     def get_dataset_meta(self, token: str, dataset_name: str) -> Optional[DatasetMetadata]:
@@ -74,7 +76,7 @@ class MetaCatMongoService(FairdDatasourceInterface):
         # 获取数据集ID
         dataset_id = self.datasets[dataset_name]
         if dataset_id is None:
-            print(f"dataset {dataset_name} not found in the dataset list.")
+            logger.info(f"dataset {dataset_name} not found in the dataset list.")
             return None
         params = {
             "datasetId": dataset_id
@@ -83,20 +85,20 @@ class MetaCatMongoService(FairdDatasourceInterface):
             response = requests.get(url, headers=headers, params=params)
             response.raise_for_status()  # 检查请求是否成功
             if response.status_code != 200:
-                print(f"Error fetching dataset details: {response.status_code}")
+                logger.info(f"Error fetching dataset details: {response.status_code}")
                 return None
             data = response.json()
             metadata_obj = data.get("data", "{}").get("metadata", {})
             metadata = parse_metadata(metadata_obj)
             return metadata
         except Exception as e:
-            print(f"Error fetching dataset info from metacat: {e}")
+            logger.info(f"Error fetching dataset info from metacat: {e}")
             return None
         except json.JSONDecodeError as e:
-            print(f"Error decoding JSON resonse: {e}")
+            logger.info(f"Error decoding JSON resonse: {e}")
             return None
         except KeyError as e:
-            print(f"Error parsing response: {e}")
+            logger.info(f"Error parsing response: {e}")
             return None
 
     def list_dataframes(self, token: str, username: str, dataset_name: str):
@@ -122,7 +124,7 @@ class MetaCatMongoService(FairdDatasourceInterface):
                 dataframes.append(df)
             return dataframes
         except Exception as e:
-            print(f"Error fetching dataset files from MongoDB: {e}")
+            logger.info(f"Error fetching dataset files from MongoDB: {e}")
             return None
 
     def _check_permission(self, token: str, dataset_id: str, username: str) -> bool:
@@ -146,7 +148,7 @@ class MetaCatMongoService(FairdDatasourceInterface):
             response.raise_for_status()
             return response.json().get("data", {}).get("result", False)
         except Exception as e:
-            print(f"Error checking permission: {e}")
+            logger.info(f"Error checking permission: {e}")
             return False
 
     def list_dataframes_all_files(self, dataset_name: str):
@@ -168,7 +170,7 @@ class MetaCatMongoService(FairdDatasourceInterface):
                 dataframes.append(df)
             return dataframes
         except Exception as e:
-            print(f"Error fetching dataset files from MongoDB: {e}")
+            logger.info(f"Error fetching dataset files from MongoDB: {e}")
             return None
 
 
@@ -187,8 +189,8 @@ def parse_metadata(raw_data: dict) -> Optional[DatasetMetadata]:
     # 解析为DatasetMetadata对象
     try:
         dataset_metadata = DatasetMetadata.model_validate(processed_data)
-        print("元数据解析成功:", dataset_metadata)
+        logger.info("元数据解析成功:", dataset_metadata)
         return dataset_metadata
     except ValidationError as e:
-        print(f"元数据解析失败:\n{e.json()}")
+        logger.info(f"元数据解析失败:\n{e.json()}")
         return None

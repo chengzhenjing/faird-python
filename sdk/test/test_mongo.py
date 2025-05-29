@@ -27,4 +27,4 @@ if __name__ == "__main__":
         df['type'] = file['type']
         df['dataframeName'] = f"dataset_name{df['path']}"
         dataframes.append(df)
-    print("aaa")
+    logger.info("aaa")

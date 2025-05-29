@@ -32,7 +32,7 @@ def tiff_to_arrow(tiff_file, arrow_file):
     # 写入 Arrow 文件
     with ipc.new_file(arrow_file, table.schema) as writer:
         writer.write_table(table)
-    print(f"成功将 {tiff_file} 转换为 {arrow_file}")
+    logger.info(f"成功将 {tiff_file} 转换为 {arrow_file}")
 
 
 
@@ -63,12 +63,12 @@ def arrow_to_tiff(arrow_file, tiff_file):
 
     # 保存为 TIFF 文件
     tifffile.imwrite(tiff_file, array)
-    print(f"成功将 {arrow_file} 转换为 {tiff_file}")
+    logger.info(f"成功将 {arrow_file} 转换为 {tiff_file}")
 
 
 if __name__ == "__main__":
     tiff_to_arrow("sample.tiff", "output.arrow")
 
-    print("----------------------------------------")
+    logger.info("----------------------------------------")
 
     arrow_to_tiff("output.arrow", "restored.tiff")

@@ -27,10 +27,10 @@ def connect_server(username: str, password: str):
         token = response_json.get("data")
         return token
     except requests.RequestException as e:
-        print(f"Error connecting server: {e}")
+        logger.info(f"Error connecting server: {e}")
     except json.JSONDecodeError as e:
-        print(f"Error decoding JSON response: {e}")
+        logger.info(f"Error decoding JSON response: {e}")
     except KeyError as e:
-        print(f"Error parsing response: {e}")
+        logger.info(f"Error parsing response: {e}")
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        logger.info(f"Unexpected error: {e}")

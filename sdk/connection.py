@@ -66,7 +66,7 @@ class FlightConnection:
         """
         flights = self.client.list_flights(criteria)
         for info in flights:
-            print(f"Dataset: {info.descriptor.path[0]}, Rows: {info.total_records}, Size: {info.total_bytes}")
+            logger.info(f"Dataset: {info.descriptor.path[0]}, Rows: {info.total_records}, Size: {info.total_bytes}")
 
     def do_action(self, action_type: str, body: bytes = b''):
         """

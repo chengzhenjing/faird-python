@@ -3,6 +3,8 @@ import pyarrow.compute as pc
 import pandas as pd
 
 from dataframe import DataFrame
+import logging
+logger = logging.getLogger(__name__)
 
 
 def test_local_sdk():
@@ -33,12 +35,12 @@ def test_local_sdk():
     """
     ## 4.1 collect all data
     all_data = df.collect()
-    print(f"data size: {all_data.num_rows}")
+    logger.info(f"data size: {all_data.num_rows}")
     ## 4.2 stream data
     stream_data = df.get_stream(max_chunksize=100)
     for chunk in stream_data:
-        print(chunk)
-        print(f"Chunk size: {chunk.num_rows}")
+        logger.info(chunk)
+        logger.info(f"Chunk size: {chunk.num_rows}")
 
     """
     5. row & column operations
@@ -73,7 +75,7 @@ def test_local_sdk():
 
     pandas_data = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
     df_from_pandas = DataFrame.from_pandas(pandas_data)
-    print(df_from_pandas)
+    logger.info(df_from_pandas)
 
 
 if __name__ == "__main__":

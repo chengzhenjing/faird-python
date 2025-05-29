@@ -27,11 +27,11 @@ with Dataset(file_path, 'w', format='NETCDF4') as ds:
     temp_data = np.random.rand(1093, 180, 360).astype(np.float32)
     temp[:, :, :] = temp_data
 
-print(f"✅ 已生成测试 NetCDF 文件：{file_path}")
+logger.info(f"✅ 已生成测试 NetCDF 文件：{file_path}")
 
 # Step 2: 打包成 ZIP
 zip_filename = "test_nc_data.zip"
 with zipfile.ZipFile(zip_filename, 'w') as zipf:
     zipf.write(file_path)
 
-print(f"📦 已打包为 {zip_filename}")
+logger.info(f"📦 已打包为 {zip_filename}")

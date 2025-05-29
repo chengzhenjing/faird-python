@@ -20,7 +20,7 @@ class DacpClient:
     @staticmethod
     def connect(url: str, principal: Optional[Principal] = None) -> DacpClient:
         client = DacpClient(url, principal)
-        print(f"Connecting to {url} with principal {principal}...")
+        logger.info(f"Connecting to {url} with principal {principal}...")
         parsed = urlparse(url)
         host = f"grpc://{parsed.hostname}:{parsed.port}"
         client.__connection =  pa.flight.connect(host)

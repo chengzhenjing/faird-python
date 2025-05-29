@@ -2,6 +2,8 @@ import pandas as pd
 import time
 import psutil
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 # 工具函数：监控资源占用
 def measure(func, *args, **kwargs):
@@ -16,10 +18,10 @@ def measure(func, *args, **kwargs):
     mem_after = process.memory_info().rss
     cpu_percent_after = psutil.cpu_percent(interval=1.0)
 
-    print(f"操作: {func.__name__}")
-    print(f"用时: {duration:.4f}s")
-    print(f"内存占用: {(mem_after - mem_before) / 1024 / 1024:.2f} MB")
-    print(f"CPU 使用率: {cpu_percent_after}%\n")
+    logger.info(f"操作: {func.__name__}")
+    logger.info(f"用时: {duration:.4f}s")
+    logger.info(f"内存占用: {(mem_after - mem_before) / 1024 / 1024:.2f} MB")
+    logger.info(f"CPU 使用率: {cpu_percent_after}%\n")
 
     return result
 
@@ -68,7 +70,7 @@ def main():
     # 正确性验证
     expected = ['lat', 'lon']
     is_correct = correctness_check(df_selected, expected)
-    print(f"正确性验证: {'通过 ✅' if is_correct else '失败 ❌'}")
+    logger.info(f"正确性验证: {'通过 ✅' if is_correct else '失败 ❌'}")
 
 if __name__ == "__main__":
     main()

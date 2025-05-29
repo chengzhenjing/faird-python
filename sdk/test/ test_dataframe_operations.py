@@ -3,6 +3,8 @@ import time
 import psutil
 import unittest
 from sdk.dacp_client import DacpClient, Principal  # 假设这是用于获取 DataFrame 的客户端
+import logging
+logger = logging.getLogger(__name__)
 
 class DataFramePerformanceTest(unittest.TestCase):
     SERVER_URL = "dacp://localhost:3101"
@@ -26,14 +28,14 @@ class DataFramePerformanceTest(unittest.TestCase):
 
     def tearDown(self):
         mem_after = self.process.memory_info().rss / (1024 ** 2)
-        print(f"内存占用变化: {mem_after - self.mem_before:.2f} MB")
+        logger.info(f"内存占用变化: {mem_after - self.mem_before:.2f} MB")
 
     def measure_performance(self, operation, description):
         start_time = time.time()
         result = operation()
         end_time = time.time()
         duration = end_time - start_time
-        print(f"{description} 耗时: {duration:.3f} 秒")
+        logger.info(f"{description} 耗时: {duration:.3f} 秒")
         return result, duration
 
     ### 筛选操作测试
@@ -91,7 +93,7 @@ class DataFramePerformanceTest(unittest.TestCase):
         duration = end_time - start_time
 
         cpu_percent = self.process.cpu_percent(interval=duration)
-        print(f"CPU 密集型操作耗时: {duration:.3f} 秒, CPU 使用率: {cpu_percent}%")
+        logger.info(f"CPU 密集型操作耗时: {duration:.3f} 秒, CPU 使用率: {cpu_percent}%")
 
     ### 可扩展性测试（示例）
     def test_scalability(self):
@@ -104,7 +106,7 @@ class DataFramePerformanceTest(unittest.TestCase):
         small_result, small_duration = self.measure_performance(lambda: operation(small_df), "小数据量排序")
         large_result, large_duration = self.measure_performance(lambda: operation(large_df), "大数据量排序")
 
-        print(f"小数据量 vs 大数据量排序性能比: {small_duration / large_duration:.2f}")
+        logger.info(f"小数据量 vs 大数据量排序性能比: {small_duration / large_duration:.2f}")
 
     ### 正确性验证测试（示例）
     def test_correctness(self):

@@ -27,37 +27,37 @@ def test_sdk():
     df = conn.open(dataframe_name)
     #df = conn.open("/Users/yaxuan/Desktop/测试用/2019年中国榆林市沟道信息.csv")
 
-    print(f"表结构: {df.schema} \n")
-    print(f"表大小: {df.shape} \n")
-    print(f"行数: {df.num_rows} \n")  # 或者len(dataframe)
-    print(f"列数: {df.num_cols} \n")
-    print(f"列名: {df.column_names} \n")
-    print(f"数据大小: {df.total_bytes} \n")
+    logger.info(f"表结构: {df.schema} \n")
+    logger.info(f"表大小: {df.shape} \n")
+    logger.info(f"行数: {df.num_rows} \n")  # 或者len(dataframe)
+    logger.info(f"列数: {df.num_cols} \n")
+    logger.info(f"列名: {df.column_names} \n")
+    logger.info(f"数据大小: {df.total_bytes} \n")
 
     data_str = df.to_string(head_rows=5, tail_rows=5, first_cols=3, last_cols=3, display_all=False)
-    print(f"打印dataframe：\n {data_str}\n")  # 或者直接用print(df)
+    logger.info(f"打印dataframe：\n {data_str}\n")  # 或者直接用logger.info(df)
 
     # 默认1000行
     for chunk in df.get_stream():
-        print(chunk)
-        print(f"Chunk size: {chunk.num_rows}")
+        logger.info(chunk)
+        logger.info(f"Chunk size: {chunk.num_rows}")
 
     # 设置每次读取100行
     for chunk in df.get_stream(max_chunksize=100):
-        print(chunk)
-        print(f"Chunk size: {chunk.num_rows}")
+        logger.info(chunk)
+        logger.info(f"Chunk size: {chunk.num_rows}")
     #
-    # print(f"=== 01.limit, select 在本地计算: === \n {df.collect().limit(3).select("start_p")} \n")
-    # print(f"=== 02.limit, select 在远程计算，仅将处理结果加载到本地: === \n {df.limit(3).select("start_p").collect()} \n")
-    # print(f"=== 03.limit 在远程计算，select 在本地计算: === \n {df.limit(3).collect().select("start_p")} \n")
+    # logger.info(f"=== 01.limit, select 在本地计算: === \n {df.collect().limit(3).select("start_p")} \n")
+    # logger.info(f"=== 02.limit, select 在远程计算，仅将处理结果加载到本地: === \n {df.limit(3).select("start_p").collect()} \n")
+    # logger.info(f"=== 03.limit 在远程计算，select 在本地计算: === \n {df.limit(3).collect().select("start_p")} \n")
 
-    print(f"打印指定列的值: \n {df["start_p"]} \n")
-    print(f"筛选某几列: \n {df.select("start_p", "start_l", "end_l")} \n")
+    logger.info(f"打印指定列的值: \n {df["start_p"]} \n")
+    logger.info(f"筛选某几列: \n {df.select("start_p", "start_l", "end_l")} \n")
 
-    print(f"打印第0行的值: \n {df[0]} \n")
-    print(f"打印第0行、指定列的值: \n {df[0]["start_l"]} \n")
-    print(f"筛选前10行: \n {df.limit(10)} \n")
-    print(f"筛选第2-4行: \n {df.slice(2, 4)} \n")
+    logger.info(f"打印第0行的值: \n {df[0]} \n")
+    logger.info(f"打印第0行、指定列的值: \n {df[0]["start_l"]} \n")
+    logger.info(f"筛选前10行: \n {df.limit(10)} \n")
+    logger.info(f"筛选第2-4行: \n {df.slice(2, 4)} \n")
 
     # 示例 1: 筛选某列值大于 10 的行
     expression = "OBJECTID <= 30"
@@ -77,18 +77,18 @@ def test_sdk():
     # 示例 6: 复杂条件组合
     expression = "((OBJECTID < 10) | (name == 'example')) & (start_p != 0)"
 
-    print(f"条件筛选后的结果: \n {df.filter(expression)} \n")
+    logger.info(f"条件筛选后的结果: \n {df.filter(expression)} \n")
 
     ## 8.1 sum
-    print(f"统计某一数值列的和: {df.sum("start_l")}")
+    logger.info(f"统计某一数值列的和: {df.sum("start_l")}")
     ## 8.2 mean
-    print(f"统计某一数值列的平均值: {df.mean("start_l")}")
+    logger.info(f"统计某一数值列的平均值: {df.mean("start_l")}")
     ## 8.3 min
-    print(f"统计某一数值列的最小值: {df.min("start_l")}")
+    logger.info(f"统计某一数值列的最小值: {df.min("start_l")}")
     ## 8.4 max
-    print(f"统计某一数值列的最大值: {df.max("start_l")}")
+    logger.info(f"统计某一数值列的最大值: {df.max("start_l")}")
 
-    print(f"按照某个列的值升序或者降序: \n {df.sort('start_l', order='descending')}")
+    logger.info(f"按照某个列的值升序或者降序: \n {df.sort('start_l', order='descending')}")
 
     ## 10.1 sql
     sql_str = ("select OBJECTID, start_l, end_l "
@@ -96,7 +96,7 @@ def test_sdk():
                "where OBJECTID <= 30 "
                "order by OBJECTID desc ")
 
-    print(f"sql执行结果: {df.sql(sql_str)}")
+    logger.info(f"sql执行结果: {df.sql(sql_str)}")
 
 
 

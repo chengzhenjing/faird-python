@@ -56,14 +56,14 @@ nbytes = df.nbytes
 2. get all data, streaming data
 """
 ## 2.1 get all data
-print(df)
+logger.info(df)
 df.to_string(head_rows=5, tail_rows=5, first_cols=3, last_cols=3, display_all=False) 
 
 ## 2.2 streaming
 stream_data = df.get_stream(max_chunksize=100) # max_chunksize指定chunk行数，默认1000
 for chunk in stream_data:
-    print(chunk)
-    print(f"Chunk size: {chunk.num_rows}")
+    logger.info(chunk)
+    logger.info(f"Chunk size: {chunk.num_rows}")
 
 
 """
@@ -101,7 +101,7 @@ pdf = df.to_pandas()
 ## 5.2 to_pandas
 pandas_data = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
 df_from_pandas = DataFrame.from_pandas(pandas_data)
-print(df_from_pandas)
+logger.info(df_from_pandas)
 
 
 ```

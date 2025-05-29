@@ -6,6 +6,9 @@ from parser import  nc_parser
 from parser import  tif_parser
 import os
 import configparser
+import logging
+logger = logging.getLogger(__name__)
+
 
 class FairdConfig:
     def __init__(self):
@@ -50,7 +53,7 @@ def list_datasets(page: Optional[int] = 1, limit: Optional[int] = 10) -> List[st
 
         if storage_type == "local":
             local_path = config.get_local_path()
-            print(f"使用本地存储，路径: {local_path}")
+            logger.info(f"使用本地存储，路径: {local_path}")
             dataset_ids = []
             if os.path.isdir(local_path):
                 for item in os.listdir(local_path):
@@ -60,13 +63,13 @@ def list_datasets(page: Optional[int] = 1, limit: Optional[int] = 10) -> List[st
             return dataset_ids
         elif storage_type == "ftp":
             ftp_config = config.get_ftp_config()
-            print(f"使用 FTP 存储，URL: {ftp_config['url']}, 用户名: {ftp_config['username']}")
+            logger.info(f"使用 FTP 存储，URL: {ftp_config['url']}, 用户名: {ftp_config['username']}")
             return []
         else:
-            print(f"未知存储类型: {storage_type}")
+            logger.info(f"未知存储类型: {storage_type}")
             return []
     except Exception as e:
-        print(f"加载配置失败: {e}")
+        logger.info(f"加载配置失败: {e}")
 
 def list_dataframes(dataset_id: str) -> List[str]:
     config = FairdConfig()

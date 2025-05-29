@@ -31,25 +31,25 @@ class CSVParser(BaseParser):
 
         # Read the CSV file into a pyarrow Table
         try:
-            print(f"即将读取 CSV 文件: {file_path}")
+            logger.info(f"即将读取 CSV 文件: {file_path}")
             table = csv.read_csv(file_path)
-            print(f"成功读取 CSV 文件: {file_path}")
+            logger.info(f"成功读取 CSV 文件: {file_path}")
         except Exception as e:
-            print(f"读取 CSV 文件时出错: {e}")
+            logger.info(f"读取 CSV 文件时出错: {e}")
             raise
 
         try:
             with ipc.new_file(arrow_file_path, table.schema) as writer:
                 writer.write_table(table)
         except Exception as e:
-            print(f"保存 .arrow 文件时出错: {e}")
+            logger.info(f"保存 .arrow 文件时出错: {e}")
             raise
 
         try:
             with pa.memory_map(arrow_file_path, "r") as source:
                 return ipc.open_file(source).read_all()
         except Exception as e:
-            print(f"加载 .arrow 文件时出错: {e}")
+            logger.info(f"加载 .arrow 文件时出错: {e}")
             raise
 
     def write(self, table: pa.Table, output_path: str):

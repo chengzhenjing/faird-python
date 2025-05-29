@@ -37,12 +37,12 @@ df = conn.open(dataframe_ids[0])
 ### 3.1. 数据结构信息
 查看 dataframe 表结构、行数、数据大小等基本信息，不需要实际加载数据。
 ```python
-print(f"表结构: {df.schema} \n")
-print(f"表大小: {df.shape} \n")
-print(f"行数: {df.num_rows} \n")  # 或者len(dataframe)
-print(f"列数: {df.num_cols} \n")
-print(f"列名: {df.column_names} \n")
-print(f"数据大小: {df.total_bytes} \n")
+logger.info(f"表结构: {df.schema} \n")
+logger.info(f"表大小: {df.shape} \n")
+logger.info(f"行数: {df.num_rows} \n")  # 或者len(dataframe)
+logger.info(f"列数: {df.num_cols} \n")
+logger.info(f"列名: {df.column_names} \n")
+logger.info(f"数据大小: {df.total_bytes} \n")
 ```
 
 ### 3.2 数据预览与打印
@@ -51,11 +51,11 @@ print(f"数据大小: {df.total_bytes} \n")
 - __*to_string(head_rows: int = 5, tail_rows: int = 5, first_cols: int = 3, last_cols: int = 3, display_all: bool = False) -> str*__: 
   - `head_rows` `tail_rows` `first_cols` `last_cols`: 选择查看的行数和列数，默认前5行和后5行、前3列和后3列。
   - `display_all`: 是否查看所有行和列，默认False
-- __*print(df)*__: 默认打印前5行和后5行、前3列和后3列。
+- __*logger.info(df)*__: 默认打印前5行和后5行、前3列和后3列。
 
 ```python
 data_str = df.to_string(head_rows=5, tail_rows=5, first_cols=3, last_cols=3, display_all=False)
-print(f"打印dataframe：\n {data_str}\n") # 或者直接用print(df)
+logger.info(f"打印dataframe：\n {data_str}\n") # 或者直接用logger.info(df)
 ```
 
 ### 3.3 数据流式读取
@@ -64,22 +64,22 @@ print(f"打印dataframe：\n {data_str}\n") # 或者直接用print(df)
 ```python
 # 默认1000行
 for chunk in df.get_stream(): 
-    print(chunk)
-    print(f"Chunk size: {chunk.num_rows}")
+    logger.info(chunk)
+    logger.info(f"Chunk size: {chunk.num_rows}")
 
 # 设置每次读取100行
 for chunk in df.get_stream(max_chunksize=100):
-    print(chunk)
-    print(f"Chunk size: {chunk.num_rows}")
+    logger.info(chunk)
+    logger.info(f"Chunk size: {chunk.num_rows}")
 ```
 
 ### 3.4 加载数据到本地
 - __*collect() -> DataFrame*__: 将全部数据加载到本地，后续的所有计算将在本地进行。
 > 注：连续操作时，collect()调用位置将影响计算方式。
 ```python
-print(f"=== 01.limit, select 在本地计算: === \n {df.collect().limit(3).select("col1")} \n")
-print(f"=== 02.limit, select 在远程计算，仅将处理结果加载到本地: === \n {df.limit(3).select("col1").collect()} \n")
-print(f"=== 03.limit 在远程计算，select 在本地计算: === \n {df.limit(3).collect().select("col1")} \n")
+logger.info(f"=== 01.limit, select 在本地计算: === \n {df.collect().limit(3).select("col1")} \n")
+logger.info(f"=== 02.limit, select 在远程计算，仅将处理结果加载到本地: === \n {df.limit(3).select("col1").collect()} \n")
+logger.info(f"=== 03.limit 在远程计算，select 在本地计算: === \n {df.limit(3).collect().select("col1")} \n")
 ```
 
 ### 3.5 数据选择与过滤
@@ -88,8 +88,8 @@ print(f"=== 03.limit 在远程计算，select 在本地计算: === \n {df.limit(
 - __*select(\*columns: str) -> DataFrame*__：选择指定的一列或多列，返回一个新的 DataFrame 对象。
 
 ```python
-print(f"打印指定列的值: \n {df["col1"]} \n")
-print(f"筛选某几列: \n {df.select("col1", "col2", "col3")} \n")
+logger.info(f"打印指定列的值: \n {df["col1"]} \n")
+logger.info(f"筛选某几列: \n {df.select("col1", "col2", "col3")} \n")
 ```
 
 #### 3.5.2 行过滤
@@ -99,10 +99,10 @@ print(f"筛选某几列: \n {df.select("col1", "col2", "col3")} \n")
 - __*slice(offset: int = 0, length: Optional[int] = None) -> DataFrame*__: 进行行切片操作，返回一个新的 DataFrame 对象。
 
 ```python
-print(f"打印第0行的值: \n {df[0]} \n")
-print(f"打印第0行、指定列的值: \n {df[0]["col1"]} \n")
-print(f"筛选前10行: \n {df.limit(10)} \n")
-print(f"筛选第2-4行: \n {df.slice(2, 4)} \n")
+logger.info(f"打印第0行的值: \n {df[0]} \n")
+logger.info(f"打印第0行、指定列的值: \n {df[0]["col1"]} \n")
+logger.info(f"筛选前10行: \n {df.limit(10)} \n")
+logger.info(f"筛选第2-4行: \n {df.slice(2, 4)} \n")
 ```
 #### 3.5.3 条件筛选
 - __*filter(expression: str) -> DataFrame*__: 选择符合条件的行，返回一个新的 DataFrame 对象。
@@ -126,7 +126,7 @@ expression = "col5.notnull()"
 # 示例 6: 复杂条件组合
 expression = "((col1 < 10) | (col2 == 'example')) & (col3 != 0)"
 
-print(f"条件筛选后的结果: \n {df.filter(expression)} \n")
+logger.info(f"条件筛选后的结果: \n {df.filter(expression)} \n")
 ```
 
 ### 3.6 数据聚合与统计

@@ -20,27 +20,27 @@ def test_tiff_file():
 
     # 1. 连接服务并加载数据
     conn = DacpClient.connect(SERVER_URL, Principal.oauth(TENANT))
-    print("正在加载 DataFrame...")
+    logger.info("正在加载 DataFrame...")
     df = conn.open(INPUT_TIFF_PATH)
     if df is None:
-        print("加载失败：faird.open 返回 None。请检查 parser 或文件路径。")
+        logger.info("加载失败：faird.open 返回 None。请检查 parser 或文件路径。")
         return
-    print("DataFrame 加载成功")
+    logger.info("DataFrame 加载成功")
 
     # 2. 写出 TIFF 文件
-    print(f"正在使用 df.write(...) 转换文件到: {OUTPUT_TIFF_PATH}")
+    logger.info(f"正在使用 df.write(...) 转换文件到: {OUTPUT_TIFF_PATH}")
     try:
         df.write(OUTPUT_TIFF_PATH, INPUT_TIFF_PATH)
-        print(f"成功从df转换为文件: {OUTPUT_TIFF_PATH}")
+        logger.info(f"成功从df转换为文件: {OUTPUT_TIFF_PATH}")
     except Exception as e:
-        print(f"转换文件失败: {e}")
+        logger.info(f"转换文件失败: {e}")
         return
 
     # # 3. 验证转换前后一致性
     # if compare_tiff_files(INPUT_TIFF_PATH, OUTPUT_TIFF_PATH):
-    #     print("TIFF 文件转换前后内容一致")
+    #     logger.info("TIFF 文件转换前后内容一致")
     # else:
-    #     print("TIFF 文件存在差异，请检查转换过程")
+    #     logger.info("TIFF 文件存在差异，请检查转换过程")
 
 
 def compare_tiff_files(original_path, output_path):
@@ -53,7 +53,7 @@ def compare_tiff_files(original_path, output_path):
 
         # 比较元数据
         if src1.meta != src2.meta:
-            print("元数据不一致")
+            logger.info("元数据不一致")
             return False
 
         # 比较数据
@@ -61,10 +61,10 @@ def compare_tiff_files(original_path, output_path):
         data2 = src2.read()
 
         if not np.array_equal(data1, data2):
-            print("像素数据不一致")
+            logger.info("像素数据不一致")
             return False
 
-    print("所有检查项通过，TIFF 文件完整一致")
+    logger.info("所有检查项通过，TIFF 文件完整一致")
     return True
 
 

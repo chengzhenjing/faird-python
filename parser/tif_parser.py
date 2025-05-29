@@ -31,7 +31,7 @@ class TIFParser(BaseParser):
 
         # 缓存加载
         if os.path.exists(arrow_file_path):
-            print(f"🔁 从缓存加载 {arrow_file_path}")
+            logger.info(f"🔁 从缓存加载 {arrow_file_path}")
             try:
                 with pa.memory_map(arrow_file_path, "r") as source:
                     table = ipc.open_file(source).read_all()
@@ -40,10 +40,10 @@ class TIFParser(BaseParser):
                     "metadata": self._load_metadata(file_path)
                 }
             except Exception as e:
-                print(f"🚨 缓存加载失败: {e}")
+                logger.info(f"🚨 缓存加载失败: {e}")
 
         # 解析文件
-        print(f"📂 正在解析 TIFF 文件: {file_path}")
+        logger.info(f"📂 正在解析 TIFF 文件: {file_path}")
         with rasterio.open(file_path) as src:
             num_bands = src.count
             height, width = src.height, src.width
@@ -61,12 +61,12 @@ class TIFParser(BaseParser):
             table = pa.Table.from_arrays(arrays, names=names)
 
             # 写入缓存
-            print(f"💾 写入缓存文件: {arrow_file_path}")
+            logger.info(f"💾 写入缓存文件: {arrow_file_path}")
             try:
                 with ipc.new_file(arrow_file_path, table.schema) as writer:
                     writer.write_table(table)
             except Exception as e:
-                print(f"❌ 缓存写入失败: {e}")
+                logger.info(f"❌ 缓存写入失败: {e}")
 
         metadata = self._load_metadata(file_path, src)
 
@@ -139,10 +139,10 @@ class TIFParser(BaseParser):
             'compress': 'lzw'
         }
 
-        print(f"💾 正在写入 GeoTIFF 文件: {output_path}")
+        logger.info(f"💾 正在写入 GeoTIFF 文件: {output_path}")
         with rasterio.open(output_path, 'w', **profile) as dst:
             for i, band_data in enumerate(bands, start=1):
                 dst.write(band_data, i)
 
-        print(f"✅ 成功写回 GeoTIFF 文件: {output_path}")
+        logger.info(f"✅ 成功写回 GeoTIFF 文件: {output_path}")
 

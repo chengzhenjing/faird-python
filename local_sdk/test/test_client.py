@@ -7,17 +7,17 @@ def test_flight_connection():
     try:
         # 获取服务上的所有可用 endpoint（可选）
         endpoints = list(client.list_flights())
-        print("Available flights:")
+        logger.info("Available flights:")
         for endpoint in endpoints:
-            print(endpoint)
+            logger.info(endpoint)
 
         # 示例调用某个 action 或直接 ping
         result = client.do_action(flight.Action("health_check", b""))
         for r in result:
-            print("Health check response:", r.body.to_pybytes().decode())
+            logger.info("Health check response:", r.body.to_pybytes().decode())
 
     except Exception as e:
-        print("Error during testing:", str(e))
+        logger.info("Error during testing:", str(e))
 
 if __name__ == "__main__":
     test_flight_connection()

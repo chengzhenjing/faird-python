@@ -22,33 +22,33 @@ def test_netcdf_file():
     dataframe_id = "/data/faird/test-data/nc/test_data.nc"
     conn = DacpClient.connect(SERVER_URL, Principal.oauth(TENANT, CLIENT_ID, USERNAME))
 
-    print("🔍 正在加载 DataFrame...")
+    logger.info("🔍 正在加载 DataFrame...")
     df = conn.open(dataframe_id)
 
     if df is None:
-        print("加载失败：faird.open 返回 None。请检查 parser 或文件路径。")
+        logger.info("加载失败：faird.open 返回 None。请检查 parser 或文件路径。")
         return
 
-    print("DataFrame 加载成功")
-    print(f"Schema: {df.schema}")
-    print(f"Columns: {df.column_names}")
-    print(f"Number of rows: {df.num_rows}")
-    print(f"Memory usage: {df.nbytes} bytes")
+    logger.info("DataFrame 加载成功")
+    logger.info(f"Schema: {df.schema}")
+    logger.info(f"Columns: {df.column_names}")
+    logger.info(f"Number of rows: {df.num_rows}")
+    logger.info(f"Memory usage: {df.nbytes} bytes")
 
-    print(f"Filter temperature < 0.08: {df.filter(pc.less(df["temperature"], 0.08))}")
+    logger.info(f"Filter temperature < 0.08: {df.filter(pc.less(df["temperature"], 0.08))}")
 
     # 🔍 1. 查看前几行数据（自动触发 data 加载）
-    print("\n查看前几行数据预览:")
-    print(df.to_string(head_rows=5, tail_rows=0))
+    logger.info("\n查看前几行数据预览:")
+    logger.info(df.to_string(head_rows=5, tail_rows=0))
 
     output_path = "/data/faird/test-data/nc/test_data_output.nc"
-    print(f"正在使用 df.write(...) 写回文件到: {output_path}")
+    logger.info(f"正在使用 df.write(...) 写回文件到: {output_path}")
 
     try:
         df.write(output_path=output_path)
-        print(f"成功写入文件: {output_path}")
+        logger.info(f"成功写入文件: {output_path}")
     except Exception as e:
-        print(f"写入文件失败: {e}")
+        logger.info(f"写入文件失败: {e}")
 
 
 if __name__ == "__main__":

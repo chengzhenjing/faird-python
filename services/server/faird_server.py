@@ -1,6 +1,8 @@
 import pyarrow as pa
 import pyarrow.flight as flight
 from services.server.faird_service_producer import FairdServiceProducer
+import logging
+logger = logging.getLogger(__name__)
 
 class FairdServer:
     service_producer = None
@@ -13,8 +15,8 @@ class FairdServer:
         location = flight.Location.for_grpc_tcp(host, port)
         try:
             server = FairdServiceProducer(location)
-            print(f"S: Listening on {host}:{port}")
+            logger.info(f"S: Listening on {host}:{port}")
             server.serve()
             server.wait_for_termination()
         except Exception as e:
-            print(e)
+            logger.info(e)
