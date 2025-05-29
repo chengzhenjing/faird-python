@@ -51,7 +51,7 @@ class TestMetaCatService(unittest.TestCase):
       "气候变化"
     ],
     "url": "https://example.com/dataset/123",
-    "datePublished": "2023/05/01",
+    "dateCreated": "2023/05/01",
     "subject": [
       "地球科学>冰川学"
     ],
@@ -108,7 +108,7 @@ class TestMetaCatService(unittest.TestCase):
         # 验证结果
         self.assertIsNotNone(result)
         self.assertEqual(result.meta.basic.keywords, ['冰川学', '遥感监测', '气候变化'])
-        self.assertEqual(result.meta.basic.datePublished.year, 2023)
+        self.assertEqual(result.meta.basic.dateCreated.year, 2023)
         self.assertEqual(result.dataframeIds, ["/ds001/file001.nc", "/ds001/file002.csv", "ds001/file003.tif"])
 
     @patch("services.datasource.services.metacat_service.requests.get")

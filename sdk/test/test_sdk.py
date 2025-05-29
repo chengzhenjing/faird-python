@@ -22,7 +22,7 @@ def test_sdk():
     datasets = conn.list_datasets()
     metadata = conn.get_dataset(datasets[66])
     dataframes = conn.list_dataframes(datasets[66])
-    dataframe_name = dataframes[4]['dataframeName']
+    dataframe_name = dataframes[6]['dataframeName']
     #dataframe_name = 'dacp://60.245.194.25:50201/GFS全球预报系统数据（实时更新）/historical/SD039-SurfOcean_CO2_Atlas/SOCATv2021_Gridded_Dat/Instructions_for_Read_SOCATv3_v2021.pdf/2019年中国榆林市沟道信息.csv'
     df = conn.open(dataframe_name)
     #df = conn.open("/Users/yaxuan/Desktop/测试用/2019年中国榆林市沟道信息.csv")

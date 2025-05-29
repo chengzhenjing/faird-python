@@ -15,7 +15,7 @@ class BasicInfo(BaseModel):
     description: Optional[str] = None
     keywords: Optional[List[str]] = None
     url: Optional[HttpUrl] = None
-    datePublished: Optional[date] = None
+    dateCreated: Optional[date] = None
     subject: Optional[List[str]] = None
     format: Optional[List[str]] = None  # 可选字段
     image: Optional[HttpUrl] = None     # 可选字段

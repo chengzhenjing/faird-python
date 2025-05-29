@@ -181,9 +181,9 @@ def parse_metadata(raw_data: dict) -> Optional[DatasetMetadata]:
         if "keywords" in basic and isinstance(basic["keywords"], str):
             basic["keywords"] = basic["keywords"].split(";")
         # 转换日期字符串
-        if "datePublished" in basic:
-            date_str = basic["datePublished"]
-            basic["datePublished"] = datetime.strptime(date_str, "%Y-%m-%d").date()
+        if "dateCreated" in basic:
+            date_str = basic["dateCreated"]
+            basic["dateCreated"] = datetime.strptime(date_str, "%Y-%m-%d").date()
     # 解析为DatasetMetadata对象
     try:
         dataset_metadata = DatasetMetadata.model_validate(processed_data)
