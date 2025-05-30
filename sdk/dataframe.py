@@ -33,7 +33,8 @@ class DataFrame(DataFrame):
                     "dataframe": json.dumps(self, default=vars),
                     "row_index": index
                 }
-                reader = ConnectionManager.get_connection().do_get(pa.flight.Ticket(json.dumps(ticket).encode('utf-8')))
+                with ConnectionManager.get_connection() as conn:
+                    reader = conn.do_get(pa.flight.Ticket(json.dumps(ticket).encode('utf-8')))
                 row_data = reader.read_all().to_pydict()
                 return {col: row_data[col][0] for col in row_data}
             return {col: self.data[col][index].as_py() for col in self.data.column_names}
@@ -43,7 +44,8 @@ class DataFrame(DataFrame):
                     "dataframe": json.dumps(self, default=vars),
                     "column_name": index
                 }
-                reader = ConnectionManager.get_connection().do_get(pa.flight.Ticket(json.dumps(ticket).encode('utf-8')))
+                with ConnectionManager.get_connection() as conn:
+                    reader = conn.do_get(pa.flight.Ticket(json.dumps(ticket).encode('utf-8')))
                 column_data = reader.read_all()
                 return column_data.column(0).combine_chunks().to_pylist()  # 转换为列表
             return self.data[index].combine_chunks().to_pylist()
@@ -58,7 +60,8 @@ class DataFrame(DataFrame):
                 "dataframe": json.dumps(self, default=vars)
             }
             descriptor = pa.flight.FlightDescriptor.for_command(json.dumps(ticket))
-            flight_info = ConnectionManager.get_connection().get_flight_info(descriptor)
+            with ConnectionManager.get_connection() as conn:
+                flight_info = conn.get_flight_info(descriptor)
             return flight_info.schema
         return self.data.schema
 
@@ -69,7 +72,8 @@ class DataFrame(DataFrame):
                 "dataframe": json.dumps(self, default=vars)
             }
             descriptor = pa.flight.FlightDescriptor.for_command(json.dumps(ticket))
-            flight_info = ConnectionManager.get_connection().get_flight_info(descriptor)
+            with ConnectionManager.get_connection() as conn:
+                flight_info = conn.get_flight_info(descriptor)
             return flight_info.total_records
         return self.data.num_rows
 
@@ -80,7 +84,8 @@ class DataFrame(DataFrame):
                 "dataframe": json.dumps(self, default=vars)
             }
             descriptor = pa.flight.FlightDescriptor.for_command(json.dumps(ticket))
-            flight_info = ConnectionManager.get_connection().get_flight_info(descriptor)
+            with ConnectionManager.get_connection() as conn:
+                flight_info = conn.get_flight_info(descriptor)
             return len(flight_info.schema)
         return len(self.data.column_names)
 
@@ -91,7 +96,8 @@ class DataFrame(DataFrame):
                 "dataframe": json.dumps(self, default=vars)
             }
             descriptor = pa.flight.FlightDescriptor.for_command(json.dumps(ticket))
-            flight_info = ConnectionManager.get_connection().get_flight_info(descriptor)
+            with ConnectionManager.get_connection() as conn:
+                flight_info = conn.get_flight_info(descriptor)
             num_rows = flight_info.total_records
             num_cols = len(flight_info.schema)
             return (num_rows, num_cols)
@@ -104,7 +110,8 @@ class DataFrame(DataFrame):
                 "dataframe": json.dumps(self, default=vars)
             }
             descriptor = pa.flight.FlightDescriptor.for_command(json.dumps(ticket))
-            flight_info = ConnectionManager.get_connection().get_flight_info(descriptor)
+            with ConnectionManager.get_connection() as conn:
+                flight_info = conn.get_flight_info(descriptor)
             return flight_info.schema.names
         return self.data.column_names
 
@@ -115,7 +122,8 @@ class DataFrame(DataFrame):
                 "dataframe": json.dumps(self, default=vars)
             }
             descriptor = pa.flight.FlightDescriptor.for_command(json.dumps(ticket))
-            flight_info = ConnectionManager.get_connection().get_flight_info(descriptor)
+            with ConnectionManager.get_connection() as conn:
+                flight_info = conn.get_flight_info(descriptor)
             return flight_info.total_bytes
         return self.data.nbytes
 
@@ -124,7 +132,8 @@ class DataFrame(DataFrame):
             ticket = {
                 "dataframe": json.dumps(self, default=vars)
             }
-            reader = ConnectionManager.get_connection().do_get(pa.flight.Ticket(json.dumps(ticket).encode('utf-8')))
+            with ConnectionManager.get_connection() as conn:
+                reader = conn.do_get(pa.flight.Ticket(json.dumps(ticket).encode('utf-8')))
             self.data = reader.read_all()
             self.actions = []
         return self
@@ -135,7 +144,8 @@ class DataFrame(DataFrame):
                 "dataframe": json.dumps(self, default=vars),
                 "max_chunksize": max_chunksize
             }
-            reader = ConnectionManager.get_connection().do_get(pa.flight.Ticket(json.dumps(ticket).encode('utf-8')))
+            with ConnectionManager.get_connection() as conn:
+                reader = conn.do_get(pa.flight.Ticket(json.dumps(ticket).encode('utf-8')))
             for batch in reader:
                 yield batch.data
             self.actions = []
@@ -169,8 +179,9 @@ class DataFrame(DataFrame):
                 "dataframe": json.dumps(self, default=vars),
                 "column": column
             }
-            results = ConnectionManager.get_connection().do_action(
-                pa.flight.Action("compute_sum", json.dumps(ticket).encode("utf-8")))
+            with ConnectionManager.get_connection() as conn:
+                results = conn.do_action(
+                    pa.flight.Action("compute_sum", json.dumps(ticket).encode("utf-8")))
             for res in results:
                 return json.loads(res.body.to_pybytes().decode("utf-8"))["result"]
         else:
@@ -183,8 +194,9 @@ class DataFrame(DataFrame):
                 "dataframe": json.dumps(self, default=vars),
                 "column": column
             }
-            results = ConnectionManager.get_connection().do_action(
-                pa.flight.Action("compute_mean", json.dumps(ticket).encode("utf-8")))
+            with ConnectionManager.get_connection() as conn:
+                results = conn.do_action(
+                    pa.flight.Action("compute_mean", json.dumps(ticket).encode("utf-8")))
             for res in results:
                 return json.loads(res.body.to_pybytes().decode("utf-8"))["result"]
         else:
@@ -197,8 +209,9 @@ class DataFrame(DataFrame):
                 "dataframe": json.dumps(self, default=vars),
                 "column": column
             }
-            results = ConnectionManager.get_connection().do_action(
-                pa.flight.Action("compute_min", json.dumps(ticket).encode("utf-8")))
+            with ConnectionManager.get_connection() as conn:
+                results = conn.do_action(
+                    pa.flight.Action("compute_min", json.dumps(ticket).encode("utf-8")))
             for res in results:
                 return json.loads(res.body.to_pybytes().decode("utf-8"))["result"]
         else:
@@ -211,8 +224,9 @@ class DataFrame(DataFrame):
                 "dataframe": json.dumps(self, default=vars),
                 "column": column
             }
-            results = ConnectionManager.get_connection().do_action(
-                pa.flight.Action("compute_max", json.dumps(ticket).encode("utf-8")))
+            with ConnectionManager.get_connection() as conn:
+                results = conn.do_action(
+                    pa.flight.Action("compute_max", json.dumps(ticket).encode("utf-8")))
             for res in results:
                 return json.loads(res.body.to_pybytes().decode("utf-8"))["result"]
         else:
@@ -236,15 +250,17 @@ class DataFrame(DataFrame):
 
     def to_pandas(self, **kwargs) -> pandas.DataFrame:
         if self.data is None:
-            reader = ConnectionManager.get_connection().do_get(pa.flight.Ticket(json.dumps(self, default=vars).encode('utf-8')))
+            with ConnectionManager.get_connection() as conn:
+                reader = conn.do_get(pa.flight.Ticket(json.dumps(self, default=vars).encode('utf-8')))
             self.data = reader.read_all()
             self.actions = []
         return self.data.to_pandas(**kwargs)
 
     def to_pydict(self) -> Dict[str, List[Any]]:
         if self.data is None:
-            reader = ConnectionManager.get_connection().do_get(
-                pa.flight.Ticket(json.dumps(self, default=vars).encode('utf-8')))
+            with ConnectionManager.get_connection() as conn:
+                reader = conn.do_get(
+                    pa.flight.Ticket(json.dumps(self, default=vars).encode('utf-8')))
             self.data = reader.read_all()
             self.actions = []
         return self.data.to_pydict()

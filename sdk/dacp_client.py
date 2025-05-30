@@ -8,12 +8,13 @@ import pyarrow.flight
 import json
 import socket
 
+from sdk.connection_pool import FlightConnectionPool, ConnectionManager
+
 
 class DacpClient:
     def __init__(self, url: str, principal: Optional[Principal] = None):
         self.__url = url
         self.__principal = principal
-        self.__connection = None
         self.__token = None
         self.__connection_id = None
 
@@ -23,8 +24,7 @@ class DacpClient:
         logger.info(f"Connecting to {url} with principal {principal}...")
         parsed = urlparse(url)
         host = f"grpc://{parsed.hostname}:{parsed.port}"
-        client.__connection =  pa.flight.connect(host)
-        ConnectionManager.set_connection(client.__connection)
+        ConnectionManager.set_connection_pool(FlightConnectionPool(host, max_connections=20))
 
         # 构建ticket
         try:
@@ -113,15 +113,4 @@ class Principal:
         return f"Principal(auth_type={self.auth_type}, params={self.params})"
 Principal.ANONYMOUS = Principal.anonymous()
 
-class ConnectionManager:
-    _connection: Optional[pyarrow.flight.FlightClient] = None
 
-    @staticmethod
-    def set_connection(connection: pyarrow.flight.FlightClient):
-        ConnectionManager._connection = connection
-
-    @staticmethod
-    def get_connection() -> pyarrow.flight.FlightClient:
-        if ConnectionManager._connection is None:
-            raise RuntimeError("Connection has not been initialized.")
-        return ConnectionManager._connection
