@@ -7,6 +7,8 @@ import pyarrow as pa
 import pyarrow.flight
 import json
 import socket
+import logging
+logger = logging.getLogger(__name__)
 
 from sdk.connection_pool import FlightConnectionPool, ConnectionManager
 
