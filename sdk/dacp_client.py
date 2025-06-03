@@ -44,12 +44,13 @@ class DacpClient:
             })
 
         # 发送连接请求
-        results = client.__connection.do_action(pa.flight.Action("connect_server", json.dumps(ticket).encode('utf-8')))
-        for res in results:
-            res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
-            client.__token = res_json.get("token")
-            client.__connection_id = res_json.get("connectionID")
-        return client
+        with ConnectionManager.get_connection() as conn:
+            results = conn.do_action(pa.flight.Action("connect_server", json.dumps(ticket).encode('utf-8')))
+            for res in results:
+                res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
+                client.__token = res_json.get("token")
+                client.__connection_id = res_json.get("connectionID")
+            return client
 
     def list_datasets(self) -> List[str]:
         ticket = {
@@ -57,20 +58,22 @@ class DacpClient:
             'page': 1,
             'limit': 999999
         }
-        results = self.__connection.do_action(pa.flight.Action("list_datasets", json.dumps(ticket).encode('utf-8')))
-        for res in results:
-            res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
-            return res_json
+        with ConnectionManager.get_connection() as conn:
+            results = conn.do_action(pa.flight.Action("list_datasets", json.dumps(ticket).encode('utf-8')))
+            for res in results:
+                res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
+                return res_json
 
     def get_dataset(self, dataset_name: str):
         ticket = {
             'token': self.__token,
             'dataset_name': dataset_name
         }
-        results = self.__connection.do_action(pa.flight.Action("get_dataset", json.dumps(ticket).encode('utf-8')))
-        for res in results:
-            res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
-            return res_json
+        with ConnectionManager.get_connection() as conn:
+            results = conn.do_action(pa.flight.Action("get_dataset", json.dumps(ticket).encode('utf-8')))
+            for res in results:
+                res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
+                return res_json
 
     def list_dataframes(self, dataset_name: str) -> List[str]:
         ticket = {
@@ -78,10 +81,11 @@ class DacpClient:
             'username': self.__principal.params.get('username') if self.__principal and self.__principal.params else None,
             'dataset_name': dataset_name
         }
-        results = self.__connection.do_action(pa.flight.Action("list_dataframes", json.dumps(ticket).encode('utf-8')))
-        for res in results:
-            res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
-            return res_json
+        with ConnectionManager.get_connection() as conn:
+            results = conn.do_action(pa.flight.Action("list_dataframes", json.dumps(ticket).encode('utf-8')))
+            for res in results:
+                res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
+                return res_json
 
     def open(self, dataframe_name: str):
         from sdk.dataframe import DataFrame
@@ -89,8 +93,9 @@ class DacpClient:
             'dataframe_name': dataframe_name,
             'connection_id': self.__connection_id
         }
-        results = self.__connection.do_action(pa.flight.Action("open", json.dumps(ticket).encode('utf-8')))
-        return DataFrame(id=dataframe_name, connection_id=self.__connection_id)
+        with ConnectionManager.get_connection() as conn:
+            results = conn.do_action(pa.flight.Action("open", json.dumps(ticket).encode('utf-8')))
+            return DataFrame(id=dataframe_name, connection_id=self.__connection_id)
 
 class AuthType(Enum):
     OAUTH = "oauth"

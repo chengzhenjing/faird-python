@@ -4,10 +4,10 @@ import pyarrow.ipc as ipc
 import os
 import uuid
 from parser.abstract_parser import BaseParser
-from services.datasource.services.metacat_mongo_service import MetaCatMongoService
+from services.datasource.services import *
 from core.config import FairdConfigManager
-from services.datasource.services.metacat_service import MetaCatService
-
+import logging
+logger = logging.getLogger(__name__)
 
 class DirParser(BaseParser):
 
@@ -19,12 +19,15 @@ class DirParser(BaseParser):
         arrow_file_name = str(uuid.uuid4()) + ".arrow"
         arrow_file_path = os.path.join(DEFAULT_ARROW_CACHE_PATH, arrow_file_name)
 
-        # read from mongodb to get all file
         data_source_service = None;
-        if FairdConfigManager.get_config().use_mongo == "true":
-            data_source_service = MetaCatMongoService()
+        if FairdConfigManager.get_config().access_mode == "interface":
+            data_source_service = metacat_service.MetaCatService()
+        elif FairdConfigManager.get_config().access_mode == "mongodb":
+            data_source_service = metacat_mongo_service.MetaCatMongoService()
+        elif FairdConfigManager.get_config().access_mode == "neo4j":
+            data_source_service = metacat_neo4j_service.MetaCatNeo4jService()
         else:
-            data_source_service = MetaCatService()
+            logger.error("Failed to load data source service.")
 
         files_data = []
         all_files = data_source_service.list_dataframes_all_files(dataset_name)

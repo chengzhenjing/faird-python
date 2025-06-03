@@ -1,6 +1,8 @@
 import tifffile
 import pyarrow as pa
 import pyarrow.ipc as ipc
+import logging
+logger = logging.getLogger(__name__)
 
 def tiff_to_arrow(tiff_file, arrow_file):
     """

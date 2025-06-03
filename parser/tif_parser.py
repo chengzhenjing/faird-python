@@ -5,7 +5,8 @@ import pyarrow as pa
 import pyarrow.ipc as ipc
 
 from parser.abstract_parser import BaseParser
-
+import logging
+logger = logging.getLogger(__name__)
 
 class TIFParser(BaseParser):
     """

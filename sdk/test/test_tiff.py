@@ -2,6 +2,8 @@ import numpy as np
 import rasterio
 from rasterio.transform import from_origin
 from sdk.dacp_client import DacpClient, Principal
+import logging
+logger = logging.getLogger(__name__)
 
 SERVER_URL = "dacp://localhost:3101"
 USERNAME = "user1@cnic.cn"

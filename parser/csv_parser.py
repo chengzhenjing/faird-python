@@ -4,6 +4,8 @@ import pyarrow.ipc as ipc
 import os
 
 from parser.abstract_parser import BaseParser
+import logging
+logger = logging.getLogger(__name__)
 
 
 class CSVParser(BaseParser):

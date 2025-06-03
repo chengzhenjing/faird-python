@@ -4,13 +4,15 @@ from sdk.dacp_client import DacpClient, Principal
 from sdk.dataframe import DataFrame
 import os
 import uuid
+import logging
+logger = logging.getLogger(__name__)
 
 
 def test_sdk():
 
-    #url = "dacp://localhost:3101"
+    url = "dacp://localhost:3101"
     #url = "dacp://10.0.89.38:3101"
-    url = "dacp://60.245.194.25:50201"
+    #url = "dacp://60.245.194.25:50201"
     username = "faird-user1"
     password = "user1@cnic.cn"
 

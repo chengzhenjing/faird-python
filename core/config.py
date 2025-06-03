@@ -60,8 +60,8 @@ class FairdConfig:
         return self.get('metacat_token')
 
     @property
-    def use_mongo(self):
-        return self.get('use_mongo', 'false')
+    def access_mode(self):
+        return self.get('access_mode', 'neo4j')
 
     @property
     def mongo_db_url(self):
@@ -74,6 +74,18 @@ class FairdConfig:
     @property
     def instrument_info(self):
         return self.get('instrument.info')
+
+    @property
+    def neo4j_url(self):
+        return self.get('neo4j_url')
+
+    @property
+    def neo4j_user(self):
+        return self.get('neo4j_user')
+
+    @property
+    def neo4j_password(self):
+        return self.get('neo4j_password')
 
 class FairdConfigManager:
     _config = None

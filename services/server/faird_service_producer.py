@@ -6,15 +6,14 @@ import pyarrow.flight
 from sdk.dataframe import DataFrame
 from services.connection.faird_connection import FairdConnection
 from utils.format_utils import format_arrow_table
-from services.datasource.services.metacat_service import MetaCatService
-from services.datasource.services.metacat_mongo_service import MetaCatMongoService
+from services.datasource.services import *
 from services.types.thread_safe_dict import ThreadSafeDict
 from services.connection.connection_service import connect_server
 from parser import *
 from compute.interactive.interactive import *
 from core.config import FairdConfigManager
-
-
+import logging
+logger = logging.getLogger(__name__)
 
 class FairdServiceProducer(pa.flight.FlightServerBase):
     def __init__(self, location: pa.flight.Location):
@@ -25,11 +24,16 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         self.connections = ThreadSafeDict() # connection_id -> Connection
         self.user_compute_resources = ThreadSafeDict()  # username -> UserComputeResource
 
-        # 初始化datasource_service todo: 根据传入service_class_name动态加载
-        if FairdConfigManager.get_config().use_mongo == "true":
-            self.data_source_service = MetaCatMongoService()
+        # 初始化datasource_service
+        self.data_source_service = None;
+        if FairdConfigManager.get_config().access_mode == "interface":
+            self.data_source_service = metacat_service.MetaCatService()
+        elif FairdConfigManager.get_config().access_mode == "mongodb":
+            self.data_source_service = metacat_mongo_service.MetaCatMongoService()
+        elif FairdConfigManager.get_config().access_mode == "neo4j":
+            self.data_source_service = metacat_neo4j_service.MetaCatNeo4jService()
         else:
-            self.data_source_service = MetaCatService()
+            logger.error("Failed to load data source service.")
 
     def list_flights(self, context, criteria):
         # 实现列出可用的 Flight 数据集
