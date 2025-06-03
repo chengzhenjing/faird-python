@@ -5,6 +5,7 @@ from typing import Optional, Dict, List
 from datetime import datetime
 from pydantic import ValidationError
 from neo4j import GraphDatabase
+import neo4j
 
 from core.config import FairdConfigManager
 from core.models.dataset_meta import DatasetMetadata
@@ -45,7 +46,7 @@ class MetaCatNeo4jService(FairdDatasourceInterface):
             response = requests.get(url, headers=headers, params=params)
             response.raise_for_status()  # 检查请求是否成功
             if response.status_code != 200:
-                logger.info(f"Error fetching dataset list: {response.status_code}")
+                logger.error(f"Error fetching dataset list: {response.status_code}")
                 return None
             data = response.json().get("data")
             dataset_list = data.get("datasetIds", [])
@@ -57,13 +58,13 @@ class MetaCatNeo4jService(FairdDatasourceInterface):
                 self.datasets[name] = dataset['id']
             return ds_names
         except requests.RequestException as e:
-            logger.info(f"Error fetching dataset list: {e}")
+            logger.error(f"Error fetching dataset list: {e}")
         except json.JSONDecodeError as e:
-            logger.info(f"Error decoding JSON response: {e}")
+            logger.error(f"Error decoding JSON response: {e}")
         except KeyError as e:
-            logger.info(f"Error parsing response: {e}")
+            logger.error(f"Error parsing response: {e}")
         except Exception as e:
-            logger.info(f"Unexpected error: {e}")
+            logger.error(f"Unexpected error: {e}")
         return None
 
     def get_dataset_meta(self, token: str, dataset_name: str) -> Optional[DatasetMetadata]:
@@ -77,7 +78,7 @@ class MetaCatNeo4jService(FairdDatasourceInterface):
         # 获取数据集ID
         dataset_id = self.datasets[dataset_name]
         if dataset_id is None:
-            logger.info(f"dataset {dataset_name} not found in the dataset list.")
+            logger.error(f"dataset {dataset_name} not found in the dataset list.")
             return None
         params = {
             "datasetId": dataset_id
@@ -86,43 +87,46 @@ class MetaCatNeo4jService(FairdDatasourceInterface):
             response = requests.get(url, headers=headers, params=params)
             response.raise_for_status()  # 检查请求是否成功
             if response.status_code != 200:
-                logger.info(f"Error fetching dataset details: {response.status_code}")
+                logger.error(f"Error fetching dataset details: {response.status_code}")
                 return None
             data = response.json()
             metadata_obj = data.get("data", "{}").get("metadata", {})
             metadata = parse_metadata(metadata_obj)
             return metadata
         except Exception as e:
-            logger.info(f"Error fetching dataset info from metacat: {e}")
+            logger.error(f"Error fetching dataset info from metacat: {e}")
             return None
         except json.JSONDecodeError as e:
-            logger.info(f"Error decoding JSON resonse: {e}")
+            logger.error(f"Error decoding JSON resonse: {e}")
             return None
         except KeyError as e:
-            logger.info(f"Error parsing response: {e}")
+            logger.error(f"Error parsing response: {e}")
             return None
 
-    def list_dataframes(self, token: str, username: str, dataset_name: str):
+    def list_dataframes(self, token: str, dataset_name: str):
         try:
             dataset_id = self.datasets[dataset_name]
-            query = """
-            MATCH (n:DatasetFile{datasetId:"datasetId"}) where n.isFile=true or n.type ="dir" 
-            RETURN n.datasetId as datasetId,n.name as name,n.suffix as suffix,n.type as type,n.path as path,n.size as size,n.time as time 
-            """
+            root_path = self.config.storage_local_path
+            query = ('MATCH (n:DatasetFile{datasetId:"' + dataset_id + '"}) where n.isFile=true or n.type ="dir" '
+                     'RETURN n.datasetId as datasetId,n.name as name,n.suffix as suffix,n.type as type,n.path as path,n.size as size,n.time as time')
             dataframes = []
             with self.neo4j_driver.session() as session:
-                root_path = self.config.storage_local_path
-                result = session.run(query, dataset_id=dataset_id)
+                result = session.run(query)
                 for record in result:
+                    time_value = record.get('time')
+                    if isinstance(time_value, neo4j.time.DateTime):
+                        time_str = time_value.iso_format()
+                    else:
+                        time_str = str(time_value)  # 如果是字符串，直接使用
                     df = {
-                        'id': record['id'],
-                        'datasetId': record['datasetId'],
-                        'name': record['name'],
-                        'path': record['path'],
-                        'size': record['size'],
-                        'suffix': record['suffix'],
-                        'type': record['type'],
-                        'time': record['time'],
+                        # 'id': record.get('id'),
+                        'datasetId': record.get('datasetId'),
+                        'name': record.get('name'),
+                        'path': record.get('path'),
+                        'size': record.get('size'),
+                        'suffix': record.get('suffix'),
+                        'type': record.get('type'),
+                        'time': time_str,
                         'dataframeName': f"{dataset_name}{record['path']}"
                     }
                     if df['path'].startswith(root_path):
@@ -130,55 +134,8 @@ class MetaCatNeo4jService(FairdDatasourceInterface):
                     dataframes.append(df)
             return dataframes
         except Exception as e:
-            logger.info(f"Error fetching dataset files from MongoDB: {e}")
+            logger.error(f"Error fetching dataset files from Neo4j: {e}")
             return None
-
-    def _check_permission(self, token: str, dataset_id: str, username: str) -> bool:
-        """
-        检查用户对数据集的访问权限(默认为无)
-        @param dataset_id: 数据集ID
-        @param username: 用户名
-        @return: 是否有权限访问
-        """
-        url = f"{self.metacat_url}/api/fair/checkPermission"
-        headers = {
-            "Authorization": token,
-            "Content-Type": "application/json"
-        }
-        params = {
-            "username": username,
-            "datasetId": dataset_id
-        }
-        try:
-            response = requests.get(url, headers=headers, params=params)
-            response.raise_for_status()
-            return response.json().get("data", {}).get("result", False)
-        except Exception as e:
-            logger.info(f"Error checking permission: {e}")
-            return False
-
-    def list_dataframes_all_files(self, dataset_name: str):
-        try:
-            dataset_id = self.datasets[dataset_name]
-            root_path = self.config.storage_local_path
-            dataset_file_collection = self.mongo_client['metacat']['dataset_file_2025']
-            cursor = dataset_file_collection.find({"datasetId": dataset_id, "type": "file"})
-            dataframes = []
-            for file in cursor:
-                df = {}
-                df['name'] = file['name']
-                df['path'] = file['path']
-                if file['path'].startswith(root_path):
-                    df['path'] = "/" + os.path.relpath(file['path'], root_path)
-                df['size'] = file['size']
-                df['suffix'] = file['suffix']
-                df['type'] = file['type']
-                dataframes.append(df)
-            return dataframes
-        except Exception as e:
-            logger.info(f"Error fetching dataset files from MongoDB: {e}")
-            return None
-
 
 def parse_metadata(raw_data: dict) -> Optional[DatasetMetadata]:
     """解析元数据字段"""
@@ -195,8 +152,8 @@ def parse_metadata(raw_data: dict) -> Optional[DatasetMetadata]:
     # 解析为DatasetMetadata对象
     try:
         dataset_metadata = DatasetMetadata.model_validate(processed_data)
-        logger.info("元数据解析成功:", dataset_metadata)
+        logger.info(f"元数据解析成功: {dataset_metadata}")
         return dataset_metadata
     except ValidationError as e:
-        logger.info(f"元数据解析失败:\n{e.json()}")
+        logger.error(f"元数据解析失败:\n{e.json()}")
         return None

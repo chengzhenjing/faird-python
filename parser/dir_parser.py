@@ -1,4 +1,3 @@
-import json
 import pyarrow as pa
 import pyarrow.ipc as ipc
 import os
@@ -30,7 +29,7 @@ class DirParser(BaseParser):
             logger.error("Failed to load data source service.")
 
         files_data = []
-        all_files = data_source_service.list_dataframes_all_files(dataset_name)
+        all_files = data_source_service.list_dataframes("", dataset_name)
         for file_dict in all_files:
             if file_dict["type"] == "dir":
                 continue
@@ -39,7 +38,8 @@ class DirParser(BaseParser):
                 "path": file_dict["path"],
                 "suffix": file_dict["suffix"],
                 "type": file_dict["type"],
-                "size": file_dict["size"]
+                "size": file_dict["size"],
+                "time": file_dict["time"]
             })
 
         # 定义 Arrow 表的 schema
@@ -48,7 +48,8 @@ class DirParser(BaseParser):
             ("path", pa.string()),
             ("suffix", pa.string()),
             ("type", pa.string()),
-            ("size", pa.int64())
+            ("size", pa.int64()),
+            ("time", pa.string())
         ])
         table = pa.Table.from_pydict({key: [file[key] for file in files_data] for key in schema.names}, schema=schema)
 

@@ -101,7 +101,7 @@ class MetaCatMongoService(FairdDatasourceInterface):
             logger.info(f"Error parsing response: {e}")
             return None
 
-    def list_dataframes(self, token: str, username: str, dataset_name: str):
+    def list_dataframes(self, token: str, dataset_name: str):
         try:
             dataset_id = self.datasets[dataset_name]
             root_path = self.config.storage_local_path
@@ -126,53 +126,6 @@ class MetaCatMongoService(FairdDatasourceInterface):
         except Exception as e:
             logger.info(f"Error fetching dataset files from MongoDB: {e}")
             return None
-
-    def _check_permission(self, token: str, dataset_id: str, username: str) -> bool:
-        """
-        检查用户对数据集的访问权限(默认为无)
-        @param dataset_id: 数据集ID
-        @param username: 用户名
-        @return: 是否有权限访问
-        """
-        url = f"{self.metacat_url}/api/fair/checkPermission"
-        headers = {
-            "Authorization": token,
-            "Content-Type": "application/json"
-        }
-        params = {
-            "username": username,
-            "datasetId": dataset_id
-        }
-        try:
-            response = requests.get(url, headers=headers, params=params)
-            response.raise_for_status()
-            return response.json().get("data", {}).get("result", False)
-        except Exception as e:
-            logger.info(f"Error checking permission: {e}")
-            return False
-
-    def list_dataframes_all_files(self, dataset_name: str):
-        try:
-            dataset_id = self.datasets[dataset_name]
-            root_path = self.config.storage_local_path
-            dataset_file_collection = self.mongo_client['metacat']['dataset_file_2025']
-            cursor = dataset_file_collection.find({"datasetId": dataset_id, "type": "file"})
-            dataframes = []
-            for file in cursor:
-                df = {}
-                df['name'] = file['name']
-                df['path'] = file['path']
-                if file['path'].startswith(root_path):
-                    df['path'] = "/" + os.path.relpath(file['path'], root_path)
-                df['size'] = file['size']
-                df['suffix'] = file['suffix']
-                df['type'] = file['type']
-                dataframes.append(df)
-            return dataframes
-        except Exception as e:
-            logger.info(f"Error fetching dataset files from MongoDB: {e}")
-            return None
-
 
 def parse_metadata(raw_data: dict) -> Optional[DatasetMetadata]:
     """解析元数据字段"""
