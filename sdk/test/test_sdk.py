@@ -1,3 +1,5 @@
+import base64
+import hashlib
 import json
 
 from sdk.dacp_client import DacpClient, Principal
@@ -22,48 +24,51 @@ def test_sdk():
     conn = DacpClient.connect(url)
 
     datasets = conn.list_datasets()
-    metadata = conn.get_dataset(datasets[0])
-    dataframes = conn.list_dataframes(datasets[0])
-    dataframes_auth = conn.list_user_auth_dataframes("柴宏雷")
+    metadata = conn.get_dataset(datasets[5])
+    dataframes = conn.list_dataframes(datasets[5])
+    #dataframes_auth = conn.list_user_auth_dataframes("柴宏雷")
 
-
-    dataframe_name = dataframes[1]['dataframeName']
+    # 流式传输
+    #dataframe_name = dataframes[3]['dataframeName']
     #base64_str = conn.get_base64(dataframe_name)
+    #is_same = verify_base64(base64_str, "/Users/yaxuan/Desktop/sharedata/dataset/historical/SD039-SurfOcean_CO2_Atlas/SOCATv2021_Gridded_Dat/SOCATv2021_tracks_gridded_decadal.csv")
 
-    df = conn.open(dataframe_name)
+    # dir parser
+    dir_dataframe_name = dataframes[0]['dataframeName']
+    df = conn.open(dir_dataframe_name)
     #df = conn.open("/Users/yaxuan/Desktop/测试用/2019年中国榆林市沟道信息.csv")
 
-    logger.info(f"表结构: {df.schema} \n")
-    logger.info(f"表大小: {df.shape} \n")
-    logger.info(f"行数: {df.num_rows} \n")  # 或者len(dataframe)
-    logger.info(f"列数: {df.num_cols} \n")
-    logger.info(f"列名: {df.column_names} \n")
-    logger.info(f"数据大小: {df.total_bytes} \n")
+    print(f"表结构: {df.schema} \n")
+    print(f"表大小: {df.shape} \n")
+    print(f"行数: {df.num_rows} \n")  # 或者len(dataframe)
+    print(f"列数: {df.num_cols} \n")
+    print(f"列名: {df.column_names} \n")
+    print(f"数据大小: {df.total_bytes} \n")
 
     data_str = df.to_string(head_rows=5, tail_rows=5, first_cols=3, last_cols=3, display_all=False)
-    logger.info(f"打印dataframe：\n {data_str}\n")  # 或者直接用logger.info(df)
+    print(f"打印dataframe：\n {data_str}\n")  # 或者直接用print()(df)
 
     # 默认1000行
     for chunk in df.get_stream():
-        logger.info(chunk)
-        logger.info(f"Chunk size: {chunk.num_rows}")
+        print(chunk)
+        print(f"Chunk size: {chunk.num_rows}")
 
     # 设置每次读取100行
     for chunk in df.get_stream(max_chunksize=100):
-        logger.info(chunk)
-        logger.info(f"Chunk size: {chunk.num_rows}")
+        print(chunk)
+        print(f"Chunk size: {chunk.num_rows}")
     #
-    # logger.info(f"=== 01.limit, select 在本地计算: === \n {df.collect().limit(3).select("start_p")} \n")
-    # logger.info(f"=== 02.limit, select 在远程计算，仅将处理结果加载到本地: === \n {df.limit(3).select("start_p").collect()} \n")
-    # logger.info(f"=== 03.limit 在远程计算，select 在本地计算: === \n {df.limit(3).collect().select("start_p")} \n")
+    # print()(f"=== 01.limit, select 在本地计算: === \n {df.collect().limit(3).select("start_p")} \n")
+    # print()(f"=== 02.limit, select 在远程计算，仅将处理结果加载到本地: === \n {df.limit(3).select("start_p").collect()} \n")
+    # print()(f"=== 03.limit 在远程计算，select 在本地计算: === \n {df.limit(3).collect().select("start_p")} \n")
 
-    logger.info(f"打印指定列的值: \n {df["start_p"]} \n")
-    logger.info(f"筛选某几列: \n {df.select("start_p", "start_l", "end_l")} \n")
+    print(f"打印指定列的值: \n {df["start_p"]} \n")
+    print(f"筛选某几列: \n {df.select("start_p", "start_l", "end_l")} \n")
 
-    logger.info(f"打印第0行的值: \n {df[0]} \n")
-    logger.info(f"打印第0行、指定列的值: \n {df[0]["start_l"]} \n")
-    logger.info(f"筛选前10行: \n {df.limit(10)} \n")
-    logger.info(f"筛选第2-4行: \n {df.slice(2, 4)} \n")
+    print(f"打印第0行的值: \n {df[0]} \n")
+    print(f"打印第0行、指定列的值: \n {df[0]["start_l"]} \n")
+    print(f"筛选前10行: \n {df.limit(10)} \n")
+    print(f"筛选第2-4行: \n {df.slice(2, 4)} \n")
 
     # 示例 1: 筛选某列值大于 10 的行
     expression = "OBJECTID <= 30"
@@ -83,18 +88,18 @@ def test_sdk():
     # 示例 6: 复杂条件组合
     expression = "((OBJECTID < 10) | (name == 'example')) & (start_p != 0)"
 
-    logger.info(f"条件筛选后的结果: \n {df.filter(expression)} \n")
+    print(f"条件筛选后的结果: \n {df.filter(expression)} \n")
 
     ## 8.1 sum
-    logger.info(f"统计某一数值列的和: {df.sum("start_l")}")
+    print(f"统计某一数值列的和: {df.sum("start_l")}")
     ## 8.2 mean
-    logger.info(f"统计某一数值列的平均值: {df.mean("start_l")}")
+    print(f"统计某一数值列的平均值: {df.mean("start_l")}")
     ## 8.3 min
-    logger.info(f"统计某一数值列的最小值: {df.min("start_l")}")
+    print(f"统计某一数值列的最小值: {df.min("start_l")}")
     ## 8.4 max
-    logger.info(f"统计某一数值列的最大值: {df.max("start_l")}")
+    print(f"统计某一数值列的最大值: {df.max("start_l")}")
 
-    logger.info(f"按照某个列的值升序或者降序: \n {df.sort('start_l', order='descending')}")
+    print(f"按照某个列的值升序或者降序: \n {df.sort('start_l', order='descending')}")
 
     ## 10.1 sql
     sql_str = ("select OBJECTID, start_l, end_l "
@@ -102,9 +107,28 @@ def test_sdk():
                "where OBJECTID <= 30 "
                "order by OBJECTID desc ")
 
-    logger.info(f"sql执行结果: {df.sql(sql_str)}")
+    print(f"sql执行结果: {df.sql(sql_str)}")
 
 
+def calculate_file_hash(file_path, hash_algorithm="md5"):
+    """计算文件的哈希值"""
+    hash_func = hashlib.new(hash_algorithm)
+    with open(file_path, "rb") as f:
+        while chunk := f.read(8192):
+            hash_func.update(chunk)
+    return hash_func.hexdigest()
+
+
+def verify_base64(base64_str, original_file_path, hash_algorithm="md5"):
+    """验证分批返回的 base64 字符串是否与源文件一致"""
+    # 解码 base64 字符串
+    decoded_data = base64.b64decode(base64_str)
+    # 计算解码数据的哈希值
+    decoded_hash = hashlib.new(hash_algorithm, decoded_data).hexdigest()
+    # 计算源文件的哈希值
+    original_hash = calculate_file_hash(original_file_path, hash_algorithm)
+    # 比较哈希值
+    return decoded_hash == original_hash
 
 if __name__ == "__main__":
     test_sdk()

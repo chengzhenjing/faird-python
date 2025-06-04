@@ -274,9 +274,10 @@ class DataFrame(DataFrame):
                 "first_cols": first_cols,
                 "last_cols": last_cols
             }
-            results = ConnectionManager.get_connection().do_action(pa.flight.Action("to_string", json.dumps(ticket).encode("utf-8")))
-            for res in results:
-                return res.body.to_pybytes().decode('utf-8')
+            with ConnectionManager.get_connection() as conn:
+                results = conn.do_action(pa.flight.Action("to_string", json.dumps(ticket).encode("utf-8")))
+                for res in results:
+                    return res.body.to_pybytes().decode('utf-8')
         else:
             arrow_table = self.handle_prev_actions(self.data, self.actions)
             return format_arrow_table(arrow_table, head_rows, tail_rows, first_cols, last_cols, display_all)
