@@ -1,214 +1,195 @@
-import os
-import netCDF4 as nc
-import numpy as np
 import pyarrow as pa
 import pyarrow.ipc as ipc
-import logging
-logger = logging.getLogger(__name__)
-
+import os
 from parser.abstract_parser import BaseParser
+import logging
+import numpy as np
+import netCDF4
 
+logger = logging.getLogger(__name__)
 
 class NCParser(BaseParser):
     """
-    NetCDF file parser implementing the BaseParser interface.
-    支持多维数组（1D, 2D, 3D），支持 object 类型字段，并可正确读写。
+    通用 NC 解析器，支持多变量、多维度等情况。
+    可读取 NC 并转为 Arrow Table，也可从 Arrow Table 写回 NC。
     """
 
     def parse(self, file_path: str) -> pa.Table:
         """
-        Parse a NetCDF (.nc) file into a pyarrow Table.
-
-        Args:
-            file_path (str): Path to the input NetCDF file.
-        Returns:
-            pa.Table: A pyarrow Table object representing the NetCDF data.
+        将 NetCDF 文件解析为 Arrow Table，并缓存为 .arrow 文件后再读取。
+        支持多变量、多维度，自动补齐不同长度为NaN。
+        记录每个变量的shape、dtype、属性和全局属性。
         """
-
-        # 设置缓存路径
         DEFAULT_ARROW_CACHE_PATH = os.path.expanduser("~/.cache/faird/dataframe/nc/")
         os.makedirs(DEFAULT_ARROW_CACHE_PATH, exist_ok=True)
-
-        # 构造缓存文件路径
         arrow_file_name = os.path.basename(file_path).rsplit(".", 1)[0] + ".arrow"
         arrow_file_path = os.path.join(DEFAULT_ARROW_CACHE_PATH, arrow_file_name)
 
-        # 如果缓存存在，直接从缓存加载
-        if os.path.exists(arrow_file_path):
-            logger.info(f"🔁 从缓存加载 {arrow_file_path}")
-            try:
-                with pa.memory_map(arrow_file_path, "r") as source:
-                    result = ipc.open_file(source).read_all()
-                logger.info("✅ 缓存加载成功，返回 Arrow Table")
-                logger.info("   Schema:", result.schema)
-                logger.info("   Type of result:", type(result))
-                return result
-            except Exception as e:
-                logger.info(f"🚨 缓存加载失败，将重新解析: {e}")
-
-        # 打开 NetCDF 文件
-        logger.info(f"📂 正在解析 NetCDF 文件: {file_path}")
-        dataset = nc.Dataset(file_path)
-
-        arrays = []
-        names = []
-
-        # 存储一维维度数据（如 time, lat, lon）
-        dim_vars = {}
-
-        # 第一次遍历：收集所有一维变量作为维度
-        for var_name in dataset.variables:
-            variable = dataset.variables[var_name]
-            if len(variable.shape) == 1:
-                dim_vars[var_name] = variable[:]
-                logger.info(f"   📐 维度变量 '{var_name}' 加载完成，长度: {len(dim_vars[var_name])}")
-
-        # 第二次遍历：处理多维变量并构建数组
-        for var_name in dataset.variables:
-            variable = dataset.variables[var_name]
-            data = variable[:]
-            dtype = data.dtype.name
-
-            # 跳过已处理的一维维度变量
-            if len(data.shape) == 1 and var_name in dim_vars:
-                continue
-
-            # 获取变量的维度名
-            dim_names = variable.dimensions
-            if not dim_names:
-                logger.info(f"⚠️ 变量 '{var_name}' 没有维度信息，跳过")
-                continue
-
-            # 如果是标量或空变量，跳过
-            if len(data.shape) == 0:
-                logger.info(f"⚠️ 变量 '{var_name}' 是标量，跳过")
-                continue
-
-            # 主维度（通常第一个维度为主时间轴等）
-            main_dim_name = dim_names[0]
-            main_dim_size = data.shape[0]
-
-            # 构建广播后的坐标网格
-            coord_grids = []
-
-            for i, dim_name in enumerate(dim_names):
-                if dim_name not in dim_vars:
-                    raise ValueError(f"Dimension '{dim_name}' not found in variables")
-
-                dim_data = dim_vars[dim_name]
-                expand_shape = [1] * len(dim_names)
-                expand_shape[i] = -1
-                expanded = np.broadcast_to(dim_data.reshape(expand_shape), data.shape)
-                coord_grids.append(expanded.flatten())
-
-            # 添加未添加过的维度列
-            for i, dim_name in enumerate(dim_names):
-                if dim_name not in names:
-                    arrays.append(pa.array(coord_grids[i], type=pa.from_numpy_dtype(coord_grids[i].dtype)))
-                    names.append(dim_name)
-                    logger.info(f"   ➕ 添加维度列 '{dim_name}', 长度: {coord_grids[i].shape[0]}")
-
-            # 展平数据并添加到数组中
-            flat_data = data.flatten()
-            if dtype == 'object':
-                if isinstance(flat_data[0], str):
-                    pa_type = pa.string()
-                else:
-                    pa_type = pa.binary()
-                array = pa.array(flat_data, type=pa_type)
-            else:
-                pa_type_class = getattr(pa, dtype, None)
-                if pa_type_class is None:
-                    raise ValueError(f"Unsupported data type: {dtype}")
-                array = pa.array(flat_data, type=pa_type_class())
-
-            arrays.append(array)
-            names.append(var_name)
-            logger.info(f"   ➕ 添加变量 '{var_name}', 数据长度: {flat_data.shape[0]}")
-
-        # 创建 Arrow 表格
-        logger.info("📊 开始构建 Arrow Table...")
         try:
-            table = pa.Table.from_arrays(arrays, names=names)
-            logger.info("✅ Arrow Table 构建成功")
-            logger.info("   Schema:", table.schema)
-            logger.info("   Number of rows:", table.num_rows)
-        except pa.lib.ArrowInvalid as e:
-            logger.info("❌ 构建 Arrow Table 失败: 列长度不一致")
-            for i, arr in enumerate(arrays):
-                logger.info(f"   Column '{names[i]}': length={len(arr)}")
+            if os.path.exists(arrow_file_path):
+                logger.info(f"检测到缓存文件，直接从 {arrow_file_path} 读取 Arrow Table。")
+                with pa.memory_map(arrow_file_path, "r") as source:
+                    return ipc.open_file(source).read_all()
+        except Exception as e:
+            logger.error(f"读取缓存 .arrow 文件失败: {e}")
+
+        try:
+            logger.info(f"开始读取 NetCDF 文件: {file_path}")
+            ds = netCDF4.Dataset(file_path, 'r')
+            var_names = [v for v in ds.variables if ds.variables[v].ndim > 0]
+            arrays_raw = []
+            col_names = []
+            orig_shapes = []
+            dtypes = []
+            var_attrs = {}
+            fill_values = {}
+            orig_lengths = []
+            for v in var_names:
+                arr = ds.variables[v][:]
+                arr_flat = np.array(arr).flatten()
+                arrays_raw.append(arr_flat)
+                col_names.append(v)
+                orig_shapes.append(arr.shape)
+                dtypes.append(str(arr.dtype))
+                orig_lengths.append(len(arr_flat))
+                # 记录变量属性
+                attrs = {k: ds.variables[v].getncattr(k) for k in ds.variables[v].ncattrs()}
+                var_attrs[v] = attrs
+                # 记录缺测值
+                fill_value = attrs.get('_FillValue', None)
+                fill_values[v] = fill_value
+            # 用NaN补齐
+            max_len = max(len(arr) for arr in arrays_raw)
+            pa_arrays = []
+            for arr in arrays_raw:
+                if len(arr) < max_len:
+                    padded = np.full(max_len, np.nan, dtype=np.float64)
+                    padded[:len(arr)] = arr.astype(np.float64)
+                    pa_arrays.append(pa.array(padded))
+                else:
+                    pa_arrays.append(pa.array(arr.astype(np.float64)))
+            table = pa.table(pa_arrays, names=col_names)
+            # 保存元数据
+            meta = {
+                "shapes": str(orig_shapes),
+                "dtypes": str(dtypes),
+                "var_names": str(var_names),
+                "var_attrs": str(var_attrs),
+                "fill_values": str(fill_values),
+                "global_attrs": str({k: ds.getncattr(k) for k in ds.ncattrs()}),
+                "orig_lengths": str(orig_lengths)
+            }
+            table = table.replace_schema_metadata(meta)
+            ds.close()
+        except Exception as e:
+            logger.error(f"解析 NetCDF 文件失败: {e}")
             raise
 
-        # 写入缓存
-        logger.info(f"💾 写入缓存文件: {arrow_file_path}")
         try:
+            logger.info(f"保存 Arrow Table 到 {arrow_file_path}")
             with ipc.new_file(arrow_file_path, table.schema) as writer:
                 writer.write_table(table)
-            logger.info("   ✅ 缓存写入成功")
         except Exception as e:
-            logger.info(f"   ❌ 缓存写入失败: {e}")
+            logger.error(f"保存 .arrow 文件失败: {e}")
             raise
 
-        # 零拷贝读取返回
-        logger.info("🔁 从缓存中加载 Arrow Table 返回")
         try:
+            logger.info(f"从 .arrow 文件 {arrow_file_path} 读取 Arrow Table。")
             with pa.memory_map(arrow_file_path, "r") as source:
-                result = ipc.open_file(source).read_all()
-            logger.info("✅ 成功加载缓存中的 Arrow Table")
-            logger.info("   Schema:", result.schema)
-            logger.info("   Type of result:", type(result))
-            return result
+                return ipc.open_file(source).read_all()
         except Exception as e:
-            logger.info(f"🚨 加载缓存失败: {e}")
+            logger.error(f"读取 .arrow 文件失败: {e}")
             raise
 
     def write(self, table: pa.Table, output_path: str):
         """
-        将 pyarrow.Table 写回 NetCDF 文件，支持多维数组。
-
-        Args:
-            table (pa.Table): 要写入的数据。
-            output_path (str): 输出文件路径。
+        将 Arrow Table 写回 NetCDF 文件。
+        支持变量属性、全局属性、缺测值、原始dtype和shape的还原。
         """
-        with nc.Dataset(output_path, 'w', format='NETCDF4') as dataset:
-            # 创建主维度（行数）
-            row_dim = dataset.createDimension('row', len(table))
+        try:
+            meta = table.schema.metadata or {}
 
-            # 遍历每一列
-            for col_name in table.column_names:
-                col_array = table[col_name]
-
-                # 判断是否为 FixedSizeListArray（即二维或三维结构）
-                if pa.types.is_fixed_size_list(col_array.type):
-                    inner_size = col_array.type.list_size
-                    value_type = col_array.type.value_type.to_pandas_dtype()
-
-                    # 处理二维结构
-                    if pa.types.is_fixed_size_list(col_array.values.type):
-                        outer_size = col_array.values.type.list_size
-                        total_dim = dataset.createDimension(f"{col_name}_dim", inner_size * outer_size)
-                        var = dataset.createVariable(col_name, value_type, ('row', total_dim))
-                        values = col_array.flatten().to_numpy().reshape(-1, outer_size * inner_size)
-                        var[:, :] = values
-
-                    # 处理一维嵌套结构
-                    else:
-                        inner_dim_name = f"{col_name}_dim"
-                        inner_dim = dataset.createDimension(inner_dim_name, inner_size)
-                        var = dataset.createVariable(col_name, value_type, ('row', inner_dim_name))
-                        values = col_array.flatten().to_numpy().reshape(-1, inner_size)
-                        var[:, :] = values
-
-                elif pa.types.is_string(col_array.type) or pa.types.is_binary(col_array.type):
-                    # 字符串或二进制类型（来自原始 object 类型）
-                    var = dataset.createVariable(col_name, str, ('row',))
-                    var[:] = col_array.to_numpy().astype(str)
-
-                elif pa.types.is_primitive(col_array.type):
-                    # 一维基本类型数组
-                    var_type = col_array.type.to_pandas_dtype()
-                    var = dataset.createVariable(col_name, var_type, ('row',))
-                    var[:] = col_array.to_numpy()
-
+            def _meta_eval(val, default):
+                if isinstance(val, bytes):
+                    return eval(val.decode())
+                elif isinstance(val, str):
+                    return eval(val)
                 else:
-                    raise ValueError(f"Unsupported array type: {col_array.type}")
+                    return default
+
+            def get_meta(meta, key, default):
+                if key in meta:
+                    return meta[key]
+                if isinstance(key, str) and key.encode() in meta:
+                    return meta[key.encode()]
+                if isinstance(key, bytes) and key.decode() in meta:
+                    return meta[key.decode()]
+                return default
+
+            shapes = _meta_eval(get_meta(meta, 'shapes', '[]'), [])
+            dtypes = _meta_eval(get_meta(meta, 'dtypes', '[]'), [])
+            var_names = _meta_eval(get_meta(meta, 'var_names', '[]'), [])
+            var_attrs = _meta_eval(get_meta(meta, 'var_attrs', '{}'), {})
+            fill_values = _meta_eval(get_meta(meta, 'fill_values', '{}'), {})
+            global_attrs = _meta_eval(get_meta(meta, 'global_attrs', '{}'), {})
+            orig_lengths = _meta_eval(get_meta(meta, 'orig_lengths', '[]'), [])
+            arrays = [col.to_numpy() for col in table.columns]
+
+            # 检查长度一致性
+            if not (len(var_names) == len(shapes) == len(dtypes) == len(orig_lengths) == len(arrays)):
+                raise ValueError(
+                    f"元数据长度不一致: var_names({len(var_names)}), shapes({len(shapes)}), dtypes({len(dtypes)}), orig_lengths({len(orig_lengths)}), arrays({len(arrays)})"
+                )
+
+            with netCDF4.Dataset(output_path, 'w') as ds:
+                # 为每个变量的每个维度创建唯一的维度名，避免冲突
+                var_dim_names = []
+                for i, name in enumerate(var_names):
+                    shape = shapes[i]
+                    dims = []
+                    for j, dim_len in enumerate(shape):
+                        dim_name = f"{name}_dim{j}"
+                        if dim_name not in ds.dimensions:
+                            ds.createDimension(dim_name, dim_len)
+                        dims.append(dim_name)
+                    var_dim_names.append(tuple(dims))
+                # 写变量
+                for i, name in enumerate(var_names):
+                    shape = shapes[i]
+                    dtype = dtypes[i]
+                    attrs = var_attrs.get(name, {})
+                    fill_value = fill_values.get(name, None)
+                    dims = var_dim_names[i]
+                    arr = arrays[i]
+                    orig_length = orig_lengths[i]
+                    valid = arr[:orig_length]
+                    # 类型还原
+                    np_dtype = np.dtype(dtype)
+                    # NaN转为缺测值（仅对整数型）
+                    if np.issubdtype(np_dtype, np.integer) and fill_value is not None:
+                        valid = np.where(np.isnan(valid), fill_value, valid)
+                        valid = valid.astype(np_dtype)
+                    else:
+                        valid = valid.astype(np_dtype)
+                    # 创建变量
+                    if fill_value is not None:
+                        var = ds.createVariable(name, np_dtype, dims, fill_value=fill_value)
+                    else:
+                        var = ds.createVariable(name, np_dtype, dims)
+                    var[:] = valid.reshape(shape)
+                    # 写变量属性
+                    for k, v in attrs.items():
+                        try:
+                            var.setncattr(k, v)
+                        except Exception:
+                            logger.warning(f"变量 {name} 属性 {k}={v} 写入失败")
+                # 写全局属性
+                for k, v in global_attrs.items():
+                    try:
+                        ds.setncattr(k, v)
+                    except Exception:
+                        logger.warning(f"全局属性 {k}={v} 写入失败")
+            logger.info(f"写入 NetCDF 文件到 {output_path}")
+        except Exception as e:
+            logger.error(f"写入 NetCDF 文件失败: {e}")
+            raise

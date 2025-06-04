@@ -9,3 +9,4 @@ pydantic==2.11.4
 duckdb
 pymongo
 neo4j
+tifffile==2023.4.12
