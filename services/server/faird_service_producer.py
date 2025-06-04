@@ -145,9 +145,14 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         elif action_type == "list_dataframes":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
             token = ticket_data.get("token")
-            username = ticket_data.get("username")
             dataset_name = ticket_data.get("dataset_name")
             dataframes = self.data_source_service.list_dataframes(token, dataset_name)
+            return iter([pa.flight.Result(json.dumps(dataframes).encode())])
+
+        elif action_type == "list_user_auth_dataframes":
+            ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
+            username = ticket_data.get("username")
+            dataframes = self.data_source_service.list_user_auth_dataframes(username)
             return iter([pa.flight.Result(json.dumps(dataframes).encode())])
 
         elif action_type == "open":
