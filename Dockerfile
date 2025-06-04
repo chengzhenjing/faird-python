@@ -1,13 +1,15 @@
-# faird/Dockerfile
-
 ARG PYTHON_VERSION=3.12-slim
 ARG BASE_REGISTRY=docker.io/library/
 
 FROM ${BASE_REGISTRY}python:${PYTHON_VERSION}
 
-# 安装系统依赖（NetCDF C 库 + 其他必要依赖）
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+# 使用 Debian 12（bookworm） 对应的阿里源
+RUN echo "deb http://mirrors.aliyun.com/debian bookworm main contrib non-free\n\
+deb http://mirrors.aliyun.com/debian bookworm-updates main contrib non-free\n\
+deb http://mirrors.aliyun.com/debian-security bookworm-security main contrib non-free" \
+> /etc/apt/sources.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends --fix-missing \
         libnetcdf-dev \
         netcdf-bin \
         libexpat1 \
