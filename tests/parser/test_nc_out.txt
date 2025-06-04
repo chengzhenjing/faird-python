@@ -1,0 +1,30 @@
+INFO:__main__:开始测试真实NC文件,path [D:\test\faird\test_data.nc]
+INFO:__main__:测试真实NC文件 parse 方法: D:\test\faird\test_data.nc
+INFO:parser.nc_parser:NetCDF 文件大小: 283324696 bytes
+INFO:parser.nc_parser:开始读取 NetCDF 文件: D:\test\faird\test_data.nc
+INFO:parser.nc_parser:从 .arrow 文件 C:\Users\HUAWEI-0/.cache/faird/dataframe/nc/test_data.arrow 读取 Arrow Table。
+INFO:__main__:parse耗时: 401.35 秒
+INFO:__main__:Arrow Table 列: ['time', 'lat', 'lon', 'temperature']
+INFO:__main__:Arrow Table 行数: 70850000
+INFO:__main__:Arrow Table schema: time: double
+lat: double
+lon: double
+temperature: double
+-- schema metadata --
+shapes: '[(1093,), (180,), (360,), (1093, 180, 360)]'
+dtypes: '['float64', 'float32', 'float32', 'float32']'
+var_names: '['time', 'lat', 'lon', 'temperature']'
+var_attrs: '{'time': {}, 'lat': {}, 'lon': {}, 'temperature': {}}'
+fill_values: '{'time': None, 'lat': None, 'lon': None, 'temperature': Non' + 2
+global_attrs: '{}'
+orig_lengths: '[1093, 180, 360, 70826400]'
+pyarrow.Table
+time: double
+lat: double
+lon: double
+temperature: double
+----
+time: [[0,1,2,3,4,...,nan,nan,nan,nan,nan],[nan,nan,nan,nan,nan,...,nan,nan,nan,nan,nan],...,[nan,nan,nan,nan,nan,...,nan,nan,nan,nan,nan],[nan,nan,nan,nan,nan,...,nan,nan,nan,nan,nan]]
+lat: [[-90,-88.99441528320312,-87.98883056640625,-86.98323822021484,-85.97765350341797,...,nan,nan,nan,nan,nan],[nan,nan,nan,nan,nan,...,nan,nan,nan,nan,nan],...,[nan,nan,nan,nan,nan,...,nan,nan,nan,nan,nan],[nan,nan,nan,nan,nan,...,nan,nan,nan,nan,nan]]
+lon: [[-180,-178.99720764160156,-177.9944305419922,-176.99163818359375,-175.98886108398438,...,nan,nan,nan,nan,nan],[nan,nan,nan,nan,nan,...,nan,nan,nan,nan,nan],...,[nan,nan,nan,nan,nan,...,nan,nan,nan,nan,nan],[nan,nan,nan,nan,nan,...,nan,nan,nan,nan,nan]]
+temperature: [[0.8727892637252808,0.9982646703720093,0.3309449553489685,0.03709870204329491,0.39098161458969116,...,0.8168836236000061,0.6981552839279175,0.7659589052200317,0.7684323191642761,0.9259957671165466],[0.6599964499473572,0.12591643631458282,0.5767146944999695,0.7808776497840881,0.11968158930540085,...,0.0790623128414154,0.021493548527359962,0.5318014025688171,0.7977508902549744,0.0158238522708416],...,[0.406643807888031,0.5651254057884216,0.9118202328681946,0.5814828872680664,0.8044154047966003,...,0.03587377443909645,0.7146283388137817,0.8813379406929016,0.8774629235267639,0.44558900594711304],[0.3981919288635254,0.632695198059082,0.2866968810558319,0.4018039405345917,0.9719874858856201,...,nan,nan,nan,nan,nan]]

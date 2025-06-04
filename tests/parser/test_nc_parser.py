@@ -7,6 +7,7 @@ import netCDF4
 import tempfile
 import logging
 from parser.nc_parser import NCParser
+import time
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -48,7 +49,10 @@ def test_nc_parser(tmp_path):
     create_test_nc(str(nc_path))
     parser = NCParser()
     logger.info("测试 parse 方法")
+    start_time = time.time()
     table = parser.parse(str(nc_path))
+    elapsed = time.time() - start_time
+    logger.info(f"parse耗时: {elapsed:.2f} 秒")
     assert isinstance(table, pa.Table)
     logger.info(f"Arrow Table 列: {table.column_names}")
     logger.info(f"Arrow Table 行数: {table.num_rows}")
@@ -94,7 +98,10 @@ def test_nc_parser_real_file(nc_file_path, tmp_path, out_nc_path):
     """
     parser = NCParser()
     logger.info(f"测试真实NC文件 parse 方法: {nc_file_path}")
+    start_time = time.time()
     table = parser.parse(str(nc_file_path))
+    elapsed = time.time() - start_time
+    logger.info(f"parse耗时: {elapsed:.2f} 秒")
     assert isinstance(table, pa.Table)
     logger.info(f"Arrow Table 列: {table.column_names}")
     logger.info(f"Arrow Table 行数: {table.num_rows}")

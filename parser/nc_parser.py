@@ -4,26 +4,32 @@ import os
 from parser.abstract_parser import BaseParser
 import logging
 import numpy as np
+import xarray as xr
+import dask.array as da
 import netCDF4
 
 logger = logging.getLogger(__name__)
 
 class NCParser(BaseParser):
-    """
-    通用 NC 解析器，支持多变量、多维度等情况。
-    可读取 NC 并转为 Arrow Table，也可从 Arrow Table 写回 NC。
-    """
-
     def parse(self, file_path: str) -> pa.Table:
         """
-        将 NetCDF 文件解析为 Arrow Table，并缓存为 .arrow 文件后再读取。
-        支持多变量、多维度，自动补齐不同长度为NaN。
-        记录每个变量的shape、dtype、属性和全局属性。
+        用 xarray+dask 流式分块读取超大 NetCDF 文件，避免 OOM。
+        返回合并后的 pa.Table。
         """
         DEFAULT_ARROW_CACHE_PATH = os.path.expanduser("~/.cache/faird/dataframe/nc/")
         os.makedirs(DEFAULT_ARROW_CACHE_PATH, exist_ok=True)
         arrow_file_name = os.path.basename(file_path).rsplit(".", 1)[0] + ".arrow"
         arrow_file_path = os.path.join(DEFAULT_ARROW_CACHE_PATH, arrow_file_name)
+
+        # 根据文件大小动态设置 chunk_size
+        file_size = os.path.getsize(file_path)
+        logger.info(f"NetCDF 文件大小: {file_size} bytes")
+        if file_size < 100 * 1024 * 1024:
+            chunk_size = 100_000
+        elif file_size < 1 * 1024 * 1024 * 1024:
+            chunk_size = 50_000
+        else:
+            chunk_size = 10_000
 
         try:
             if os.path.exists(arrow_file_path):
@@ -34,63 +40,53 @@ class NCParser(BaseParser):
             logger.error(f"读取缓存 .arrow 文件失败: {e}")
 
         try:
-            logger.info(f"开始读取 NetCDF 文件: {file_path}")
-            ds = netCDF4.Dataset(file_path, 'r')
-            var_names = [v for v in ds.variables if ds.variables[v].ndim > 0]
-            arrays_raw = []
-            col_names = []
-            orig_shapes = []
-            dtypes = []
-            var_attrs = {}
-            fill_values = {}
-            orig_lengths = []
-            for v in var_names:
-                arr = ds.variables[v][:]
-                arr_flat = np.array(arr).flatten()
-                arrays_raw.append(arr_flat)
-                col_names.append(v)
-                orig_shapes.append(arr.shape)
-                dtypes.append(str(arr.dtype))
-                orig_lengths.append(len(arr_flat))
-                # 记录变量属性
-                attrs = {k: ds.variables[v].getncattr(k) for k in ds.variables[v].ncattrs()}
-                var_attrs[v] = attrs
-                # 记录缺测值
-                fill_value = attrs.get('_FillValue', None)
-                fill_values[v] = fill_value
-            # 用NaN补齐
-            max_len = max(len(arr) for arr in arrays_raw)
-            pa_arrays = []
-            for arr in arrays_raw:
-                if len(arr) < max_len:
-                    padded = np.full(max_len, np.nan, dtype=np.float64)
-                    padded[:len(arr)] = arr.astype(np.float64)
-                    pa_arrays.append(pa.array(padded))
-                else:
-                    pa_arrays.append(pa.array(arr.astype(np.float64)))
-            table = pa.table(pa_arrays, names=col_names)
-            # 保存元数据
+            logger.info(f"开始用 xarray+dask 读取 NetCDF 文件: {file_path}")
+            ds = xr.open_dataset(file_path, chunks={})
+            var_names = [v for v in ds.variables if ds[v].ndim > 0]
+            shapes = [tuple(ds[v].shape) for v in var_names]
+            dtypes = [str(ds[v].dtype) for v in var_names]
+            var_attrs = {v: dict(ds[v].attrs) for v in var_names}
+            fill_values = {v: var_attrs[v].get('_FillValue', None) for v in var_names}
+            global_attrs = dict(ds.attrs)
+            orig_lengths = [int(np.prod(ds[v].shape)) for v in var_names]
+            max_len = max(orig_lengths)
+
+            # 构造schema
+            schema = pa.schema([pa.field(v, pa.float64()) for v in var_names])
             meta = {
-                "shapes": str(orig_shapes),
+                "shapes": str(shapes),
                 "dtypes": str(dtypes),
                 "var_names": str(var_names),
                 "var_attrs": str(var_attrs),
                 "fill_values": str(fill_values),
-                "global_attrs": str({k: ds.getncattr(k) for k in ds.ncattrs()}),
+                "global_attrs": str(global_attrs),
                 "orig_lengths": str(orig_lengths)
             }
-            table = table.replace_schema_metadata(meta)
+            schema = schema.with_metadata({k: str(v).encode() for k, v in meta.items()})
+
+            # 分块流式写入.arrow文件
+            with ipc.new_file(arrow_file_path, schema) as writer:
+                for start in range(0, max_len, chunk_size):
+                    chunk_arrays = []
+                    for i, v in enumerate(var_names):
+                        darr = ds[v].data  # 可能是 dask array 也可能是 numpy.ndarray
+                        arr_flat = darr.reshape(-1)
+                        if hasattr(arr_flat, "compute"):
+                            arr_chunk = arr_flat[start:start+chunk_size].compute()
+                        else:
+                            arr_chunk = arr_flat[start:start+chunk_size]
+                        # 补齐
+                        if len(arr_chunk) < chunk_size:
+                            padded = np.full(chunk_size, np.nan, dtype=np.float64)
+                            padded[:len(arr_chunk)] = arr_chunk.astype(np.float64)
+                            chunk_arrays.append(pa.array(padded))
+                        else:
+                            chunk_arrays.append(pa.array(arr_chunk.astype(np.float64)))
+                    table = pa.table(chunk_arrays, names=var_names)
+                    writer.write_table(table)
             ds.close()
         except Exception as e:
             logger.error(f"解析 NetCDF 文件失败: {e}")
-            raise
-
-        try:
-            logger.info(f"保存 Arrow Table 到 {arrow_file_path}")
-            with ipc.new_file(arrow_file_path, table.schema) as writer:
-                writer.write_table(table)
-        except Exception as e:
-            logger.error(f"保存 .arrow 文件失败: {e}")
             raise
 
         try:
@@ -179,6 +175,8 @@ class NCParser(BaseParser):
                     var[:] = valid.reshape(shape)
                     # 写变量属性
                     for k, v in attrs.items():
+                        if k == "_FillValue":
+                            continue  # _FillValue 只能在创建变量时设置
                         try:
                             var.setncattr(k, v)
                         except Exception:
