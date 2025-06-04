@@ -87,6 +87,19 @@ class DacpClient:
                 res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
                 return res_json
 
+    def list_user_auth_dataframes(self, username: str) -> List[str]:
+        if username is None or username == "":
+            logger.error("No username provided")
+            return None
+        ticket = {
+            'username': username
+        }
+        with ConnectionManager.get_connection() as conn:
+            results = conn.do_action(pa.flight.Action("list_user_auth_dataframes", json.dumps(ticket).encode('utf-8')))
+            for res in results:
+                res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
+                return res_json
+
     def open(self, dataframe_name: str):
         from sdk.dataframe import DataFrame
         ticket = {

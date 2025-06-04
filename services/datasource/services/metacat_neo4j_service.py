@@ -137,6 +137,52 @@ class MetaCatNeo4jService(FairdDatasourceInterface):
             logger.error(f"Error fetching dataset files from Neo4j: {e}")
             return None
 
+    def list_user_auth_dataframes(self, username: str):
+        try:
+            root_path = self.config.storage_local_path
+            query = ('MATCH (u:me_user {username: "' + username + '"}) '
+                     'OPTIONAL MATCH (u)-[:user_file]->(f1:DatasetFile) '
+                     'WHERE f1.isFile = true OR f1.type = "dir" '
+                     'OPTIONAL MATCH (u)<-[:role_user]-(r:me_role)-[:role_file]->(f2:DatasetFile) '
+                     'WHERE f2.isFile = true OR f2.type = "dir" '
+                     'WITH u,  COLLECT(f1) + COLLECT(f2) AS allFiles '
+                     'UNWIND allFiles AS f '
+                     'RETURN DISTINCT f.datasetId AS datasetId,f.name AS name,f.suffix AS suffix,f.type AS type,f.path AS path,f.size AS size,f.time AS time')
+            dataframes = []
+            with self.neo4j_driver.session() as session:
+                result = session.run(query)
+                for record in result:
+                    # neo4j.time to string
+                    time_value = record.get('time')
+                    if isinstance(time_value, neo4j.time.DateTime):
+                        time_str = time_value.iso_format()
+                    else:
+                        time_str = str(time_value)  # 如果是字符串，直接使用
+
+                    # get dataset_name
+                    dataset_id = record.get('datasetId')
+                    dataset_name = find_key_by_value(self.datasets, dataset_id)
+                    df = {
+                        # 'id': record.get('id'),
+                        'datasetId': record.get('datasetId'),
+                        'name': record.get('name'),
+                        'path': record.get('path'),
+                        'size': record.get('size'),
+                        'suffix': record.get('suffix'),
+                        'type': record.get('type'),
+                        'time': time_str,
+                        'dataframeName': f"{dataset_name}{record['path']}"
+                    }
+                    if df['path'].startswith(root_path):
+                        df['path'] = "/" + os.path.relpath(df['path'], root_path)
+                    dataframes.append(df)
+            return dataframes
+        except Exception as e:
+            logger.error(f"Error fetching dataset files from Neo4j: {e}")
+            return None
+
+
+
 def parse_metadata(raw_data: dict) -> Optional[DatasetMetadata]:
     """解析元数据字段"""
     processed_data = raw_data.copy()
@@ -157,3 +203,9 @@ def parse_metadata(raw_data: dict) -> Optional[DatasetMetadata]:
     except ValidationError as e:
         logger.error(f"元数据解析失败:\n{e.json()}")
         return None
+
+def find_key_by_value(d, value):
+    for key, val in d.items():
+        if val == value:
+            return key
+    return None

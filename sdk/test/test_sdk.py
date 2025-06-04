@@ -18,12 +18,15 @@ def test_sdk():
 
     #conn = DacpClient.connect(url, Principal.oauth("conet", username=username, password=password))
     #conn = DacpClient.connect(url, Principal.oauth("controld", controld_domain_name="controld_domain_name", signature="signature"))
-    conn = DacpClient.connect(url)
     #conn = DacpClient.connect(url, Principal.ANONYMOUS)
+    conn = DacpClient.connect(url)
 
     datasets = conn.list_datasets()
-    metadata = conn.get_dataset(datasets[1])
-    dataframes = conn.list_dataframes(datasets[1])
+    metadata = conn.get_dataset(datasets[0])
+    dataframes = conn.list_dataframes(datasets[0])
+    dataframes_auth = conn.list_user_auth_dataframes("柴宏雷")
+
+
     dataframe_name = dataframes[1]['dataframeName']
     #base64_str = conn.get_base64(dataframe_name)
 
@@ -104,6 +107,4 @@ def test_sdk():
 
 
 if __name__ == "__main__":
-    file_path = "/"
-    arrow_file_name = str(uuid.uuid4()) + ".arrow"
     test_sdk()
