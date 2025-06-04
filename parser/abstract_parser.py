@@ -17,6 +17,20 @@ class BaseParser(ABC):
             pa.Table: A pyarrow Table object.
         """
         pass
+    
+    @abstractmethod
+    def sample(self, file_path:str) -> pa.Table:
+        """
+        Sample the input file and return a pyarrow.Table.
+        This method can be overridden by subclasses to provide sampling functionality.
+        
+        Args:
+            file_path (str): Path to the input file.
+        
+        Returns:
+            pa.Table: A pyarrow Table object containing sampled data.
+        """
+        pass
 
     @abstractmethod
     def write(self, table: pa.Table, output_path: str):

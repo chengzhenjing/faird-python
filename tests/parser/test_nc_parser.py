@@ -117,23 +117,50 @@ def test_nc_parser_real_file(nc_file_path, tmp_path, out_nc_path):
         assert len(ds.variables) > 0
     logger.info("真实NC文件 parse 和 write 方法测试通过")
 
-
+def test_nc_parser_sample(nc_file_path):
+    """
+    测试 NCParser 的 sample 方法，验证采样结果的结构和内容。
+    :param nc_file_path: 本地真实nc文件路径
+    """
+    logger.info(f"测试 NCParser 的 sample 方法, 文件路径: {nc_file_path}")
+    parser = NCParser()
+    table = parser.sample(str(nc_file_path))
+    assert isinstance(table, pa.Table)
+    print("sample Arrow Table 列:", table.column_names)
+    print("sample Arrow Table 行数:", table.num_rows)
+    print("sample Arrow Table schema:", table.schema)
+    print(table)
+    # 可以根据实际文件内容进一步断言采样行数、列名等
+    assert table.num_rows > 0
+    assert len(table.column_names) > 0
+    logger.info("-----------------------------------------------")  
+    
+    
 # 测试函数入口
 if __name__ == "__main__":
-    import pathlib
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmp_path = pathlib.Path(tmpdir)
-        # test_nc_parser(tmp_path)
-        # 替换为你的真实nc文件路径
-        logger.info("开始测试真实NC文件,path [%s]", r"D:\test\faird\test_data.nc")
-        test_nc_parser_real_file(r"D:\test\faird\test_data.nc", tmp_path,"test_data_write.nc")
-        logger.info("开始测试真实NC文件,path [%s]", r"D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_qrtrdeg_gridded_coast_monthly.nc")
-        test_nc_parser_real_file(r"D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_qrtrdeg_gridded_coast_monthly.nc", tmp_path,"SOCATv2021_qrtrdeg_gridded_coast_monthly_write.nc")
-        logger.info("开始测试真实NC文件,path [%s]", r"D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_tracks_gridded_decadal.nc")
-        test_nc_parser_real_file(r"D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_tracks_gridded_decadal.nc", tmp_path,"SOCATv2021_tracks_gridded_decadal_write.nc")
-        logger.info("开始测试真实NC文件,path [%s]", r"D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_tracks_gridded_monthly.nc")
-        test_nc_parser_real_file(r"D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_tracks_gridded_monthly.nc", tmp_path,"SOCATv2021_tracks_gridded_monthly_write.nc")
-        logger.info("开始测试真实NC文件,path [%s]", r"D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_tracks_gridded_yearly.nc")
-        test_nc_parser_real_file(r"D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_tracks_gridded_yearly.nc", tmp_path,"SOCATv2021_tracks_gridded_yearly_write.nc")
-        logger.info("所有测试通过")
+    # import pathlib
+    # os.makedirs("D:/tmp", exist_ok=True)
+    # with tempfile.TemporaryDirectory(dir="D:/tmp") as tmpdir:
+    #     tmp_path = pathlib.Path(tmpdir)
+    #     # test_nc_parser(tmp_path)
+    #     # 替换为你的真实nc文件路径
+    #     logger.info("开始测试真实NC文件,path [%s]", r"D:\test\faird\test_data.nc")
+    #     test_nc_parser_real_file(r"D:\test\faird\test_data.nc", tmp_path,"test_data_write.nc")
+    #     logger.info("开始测试真实NC文件,path [%s]", r"D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_qrtrdeg_gridded_coast_monthly.nc")
+    #     test_nc_parser_real_file(r"D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_qrtrdeg_gridded_coast_monthly.nc", tmp_path,"SOCATv2021_qrtrdeg_gridded_coast_monthly_write.nc")
+    #     logger.info("开始测试真实NC文件,path [%s]", r"D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_tracks_gridded_decadal.nc")
+    #     test_nc_parser_real_file(r"D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_tracks_gridded_decadal.nc", tmp_path,"SOCATv2021_tracks_gridded_decadal_write.nc")
+    #     logger.info("开始测试真实NC文件,path [%s]", r"D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_tracks_gridded_monthly.nc")
+    #     test_nc_parser_real_file(r"D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_tracks_gridded_monthly.nc", tmp_path,"SOCATv2021_tracks_gridded_monthly_write.nc")
+    #     logger.info("开始测试真实NC文件,path [%s]", r"D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_tracks_gridded_yearly.nc")
+    #     test_nc_parser_real_file(r"D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_tracks_gridded_yearly.nc", tmp_path,"SOCATv2021_tracks_gridded_yearly_write.nc")
+    #     logger.info("所有真实NC文件parse测试通过")
+    logger.info("开始测试 NCParser 的 sample 方法")
+    test_nc_parser_sample(r"D:\test\faird\test_data.nc")
+    test_nc_parser_sample(r"D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_qrtrdeg_gridded_coast_monthly.nc")
+    test_nc_parser_sample(r"D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_tracks_gridded_decadal.nc")
+    test_nc_parser_sample(r"D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_tracks_gridded_monthly.nc") 
+    test_nc_parser_sample(r"D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_tracks_gridded_yearly.nc")
+    logger.info("所有采样测试通过")
+    logger.info("测试完成")
         

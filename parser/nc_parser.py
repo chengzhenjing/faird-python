@@ -16,7 +16,7 @@ class NCParser(BaseParser):
         用 xarray+dask 流式分块读取超大 NetCDF 文件，避免 OOM。
         返回合并后的 pa.Table。
         """
-        DEFAULT_ARROW_CACHE_PATH = os.path.expanduser("~/.cache/faird/dataframe/nc/")
+        DEFAULT_ARROW_CACHE_PATH = os.path.join("D:/faird_cache/dataframe/nc/")
         os.makedirs(DEFAULT_ARROW_CACHE_PATH, exist_ok=True)
         arrow_file_name = os.path.basename(file_path).rsplit(".", 1)[0] + ".arrow"
         arrow_file_path = os.path.join(DEFAULT_ARROW_CACHE_PATH, arrow_file_name)
@@ -50,6 +50,7 @@ class NCParser(BaseParser):
             global_attrs = dict(ds.attrs)
             orig_lengths = [int(np.prod(ds[v].shape)) for v in var_names]
             max_len = max(orig_lengths)
+            var_dims = {v: ds[v].dims for v in var_names}  # 记录原始维度名
 
             # 构造schema
             schema = pa.schema([pa.field(v, pa.float64()) for v in var_names])
@@ -60,7 +61,8 @@ class NCParser(BaseParser):
                 "var_attrs": str(var_attrs),
                 "fill_values": str(fill_values),
                 "global_attrs": str(global_attrs),
-                "orig_lengths": str(orig_lengths)
+                "orig_lengths": str(orig_lengths),
+                "var_dims": str(var_dims)
             }
             schema = schema.with_metadata({k: str(v).encode() for k, v in meta.items()})
 
@@ -96,6 +98,45 @@ class NCParser(BaseParser):
         except Exception as e:
             logger.error(f"读取 .arrow 文件失败: {e}")
             raise
+        
+    def sample(self, file_path: str) -> pa.Table:
+        """
+        从 NetCDF 文件中采样数据，返回 Arrow Table。
+        默认每个变量只读取前10个主轴切片（如 time 维度的前10个）。
+        用 nan 补齐所有列为相同长度，避免 ArrowInvalid 错误。
+        """
+        try:
+            ds = xr.open_dataset(file_path)
+            var_names = [v for v in ds.variables if ds[v].ndim > 0]
+            arrays = []
+            col_names = []
+            max_len = 0
+            arr_list = []
+            # 先采样并记录每列长度
+            for v in var_names:
+                var = ds[v]
+                if var.shape[0] > 10:
+                    arr = var.isel({var.dims[0]: slice(0, 10)}).values
+                else:
+                    arr = var.values
+                arr_flat = np.array(arr).flatten()
+                arr_list.append(arr_flat)
+                if len(arr_flat) > max_len:
+                    max_len = len(arr_flat)
+            # 用 nan 补齐所有列
+            for arr_flat in arr_list:
+                if len(arr_flat) < max_len:
+                    padded = np.full(max_len, np.nan, dtype=np.float64)
+                    padded[:len(arr_flat)] = arr_flat.astype(np.float64)
+                    arrays.append(pa.array(padded))
+                else:
+                    arrays.append(pa.array(arr_flat.astype(np.float64)))
+            table = pa.table(arrays, names=var_names)
+            ds.close()
+            return table
+        except Exception as e:
+            logger.error(f"采样 NetCDF 文件失败: {e}")
+            raise
 
     def write(self, table: pa.Table, output_path: str):
         """
@@ -129,6 +170,7 @@ class NCParser(BaseParser):
             fill_values = _meta_eval(get_meta(meta, 'fill_values', '{}'), {})
             global_attrs = _meta_eval(get_meta(meta, 'global_attrs', '{}'), {})
             orig_lengths = _meta_eval(get_meta(meta, 'orig_lengths', '[]'), [])
+            var_dims = _meta_eval(get_meta(meta, 'var_dims', '{}'), {})  # 读取原始维度名
             arrays = [col.to_numpy() for col in table.columns]
 
             # 检查长度一致性
@@ -138,24 +180,22 @@ class NCParser(BaseParser):
                 )
 
             with netCDF4.Dataset(output_path, 'w') as ds:
-                # 为每个变量的每个维度创建唯一的维度名，避免冲突
-                var_dim_names = []
+                # 先创建所有需要的维度（用原始维度名）
+                dims_created = set()
                 for i, name in enumerate(var_names):
+                    dims = var_dims.get(name, [f"{name}_dim{j}" for j in range(len(shapes[i]))])
                     shape = shapes[i]
-                    dims = []
-                    for j, dim_len in enumerate(shape):
-                        dim_name = f"{name}_dim{j}"
+                    for dim_name, dim_len in zip(dims, shape):
                         if dim_name not in ds.dimensions:
                             ds.createDimension(dim_name, dim_len)
-                        dims.append(dim_name)
-                    var_dim_names.append(tuple(dims))
+                        dims_created.add(dim_name)
                 # 写变量
                 for i, name in enumerate(var_names):
                     shape = shapes[i]
                     dtype = dtypes[i]
                     attrs = var_attrs.get(name, {})
                     fill_value = fill_values.get(name, None)
-                    dims = var_dim_names[i]
+                    dims = var_dims.get(name, [f"{name}_dim{j}" for j in range(len(shape))])
                     arr = arrays[i]
                     orig_length = orig_lengths[i]
                     valid = arr[:orig_length]
