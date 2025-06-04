@@ -97,6 +97,16 @@ class DacpClient:
             results = conn.do_action(pa.flight.Action("open", json.dumps(ticket).encode('utf-8')))
             return DataFrame(id=dataframe_name, connection_id=self.__connection_id)
 
+    def get_base64(self, dataframe_name: str) -> str:
+        ticket = {
+            'dataframe_name': dataframe_name
+        }
+        with ConnectionManager.get_connection() as conn:
+            results = conn.do_action(pa.flight.Action("get_base64", json.dumps(ticket).encode('utf-8')))
+            for res in results:
+                base64_str = json.loads(res.body.to_pybytes().decode('utf-8'))
+                return base64_str
+
 class AuthType(Enum):
     OAUTH = "oauth"
     ANONYMOUS = "anonymous"

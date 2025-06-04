@@ -16,16 +16,17 @@ def test_sdk():
     username = "faird-user1"
     password = "user1@cnic.cn"
 
-    conn = DacpClient.connect(url, Principal.oauth("conet", username=username, password=password))
+    #conn = DacpClient.connect(url, Principal.oauth("conet", username=username, password=password))
     #conn = DacpClient.connect(url, Principal.oauth("controld", controld_domain_name="controld_domain_name", signature="signature"))
-    #conn = DacpClient.connect(url)
+    conn = DacpClient.connect(url)
     #conn = DacpClient.connect(url, Principal.ANONYMOUS)
 
     datasets = conn.list_datasets()
-    metadata = conn.get_dataset(datasets[0])
-    dataframes = conn.list_dataframes(datasets[0])
-    dataframe_name = dataframes[6]['dataframeName']
-    #dataframe_name = 'dacp://60.245.194.25:50201/GFS全球预报系统数据（实时更新）/historical/SD039-SurfOcean_CO2_Atlas/SOCATv2021_Gridded_Dat/Instructions_for_Read_SOCATv3_v2021.pdf/2019年中国榆林市沟道信息.csv'
+    metadata = conn.get_dataset(datasets[1])
+    dataframes = conn.list_dataframes(datasets[1])
+    dataframe_name = dataframes[1]['dataframeName']
+    #base64_str = conn.get_base64(dataframe_name)
+
     df = conn.open(dataframe_name)
     #df = conn.open("/Users/yaxuan/Desktop/测试用/2019年中国榆林市沟道信息.csv")
 

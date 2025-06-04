@@ -45,7 +45,7 @@ class MetaCatService(FairdDatasourceInterface):
             response = requests.get(url, headers=headers, params=params)
             response.raise_for_status()  # 检查请求是否成功
             if response.status_code != 200:
-                logger.info(f"Error fetching dataset list: {response.status_code}")
+                logger.error(f"Error fetching dataset list: {response.status_code}")
                 return None
             data = response.json().get("data")
             dataset_list = data.get("datasetIds", [])
@@ -58,13 +58,13 @@ class MetaCatService(FairdDatasourceInterface):
                 self.datasets[name] = dataset['id']
             return ds_names
         except requests.RequestException as e:
-            logger.info(f"Error fetching dataset list: {e}")
+            logger.error(f"Error fetching dataset list: {e}")
         except json.JSONDecodeError as e:
-            logger.info(f"Error decoding JSON response: {e}")
+            logger.error(f"Error decoding JSON response: {e}")
         except KeyError as e:
-            logger.info(f"Error parsing response: {e}")
+            logger.error(f"Error parsing response: {e}")
         except Exception as e:
-            logger.info(f"Unexpected error: {e}")
+            logger.error(f"Unexpected error: {e}")
         return None
 
     def get_dataset_meta(self, token: str, dataset_name: str) -> Optional[DatasetMetadata]:
@@ -78,7 +78,7 @@ class MetaCatService(FairdDatasourceInterface):
         # 获取数据集ID
         dataset_id = self.datasets[dataset_name]
         if dataset_id is None:
-            logger.info(f"dataset {dataset_name} not found in the dataset list.")
+            logger.error(f"dataset {dataset_name} not found in the dataset list.")
             return None
         params = {
             "datasetId": dataset_id
@@ -87,20 +87,20 @@ class MetaCatService(FairdDatasourceInterface):
             response = requests.get(url, headers=headers, params=params)
             response.raise_for_status()  # 检查请求是否成功
             if response.status_code != 200:
-                logger.info(f"Error fetching dataset details: {response.status_code}")
+                logger.error(f"Error fetching dataset details: {response.status_code}")
                 return None
             data = response.json()
             metadata_obj = data.get("data", "{}").get("metadata", {})
             metadata = parse_metadata(metadata_obj)
             return metadata
         except Exception as e:
-            logger.info(f"Error fetching dataset info from metacat: {e}")
+            logger.error(f"Error fetching dataset info from metacat: {e}")
             return None
         except json.JSONDecodeError as e:
-            logger.info(f"Error decoding JSON resonse: {e}")
+            logger.error(f"Error decoding JSON resonse: {e}")
             return None
         except KeyError as e:
-            logger.info(f"Error parsing response: {e}")
+            logger.error(f"Error parsing response: {e}")
             return None
 
     def list_dataframes(self, token: str, dataset_name: str) -> List[str]:
@@ -114,7 +114,7 @@ class MetaCatService(FairdDatasourceInterface):
         # 获取数据集ID
         dataset_id = self.datasets[dataset_name]
         if dataset_id is None:
-            logger.info(f"dataset {dataset_name} not found in the dataset list.")
+            logger.error(f"dataset {dataset_name} not found in the dataset list.")
             return None
         params = {
             "datasetId": dataset_id,
@@ -125,7 +125,7 @@ class MetaCatService(FairdDatasourceInterface):
             response = requests.get(url, headers=headers, params=params)
             response.raise_for_status() # 检查请求是否成功
             if response.status_code != 200:
-                logger.info(f"Error fetching dataset details: {response.status_code}")
+                logger.error(f"Error fetching dataset details: {response.status_code}")
                 return None
             data = response.json()
             datasetFiles = data.get("data", "{}").get("datasetFiles", [])
@@ -134,9 +134,7 @@ class MetaCatService(FairdDatasourceInterface):
             root_path = self.config.storage_local_path
             for file in datasetFiles:
                 df = {}
-                df['id'] = file['id']
                 df['datasetId'] = file['datasetId']
-                df['fId'] = file['fid']
                 df['name'] = file['name']
                 df['path'] = file['path']
                 if file['path'].startswith(root_path):
@@ -148,13 +146,13 @@ class MetaCatService(FairdDatasourceInterface):
                 dataframes.append(df)
             return dataframes
         except Exception as e:
-            logger.info(f"Error fetching dataset info from metacat: {e}")
+            logger.error(f"Error fetching dataset info from metacat: {e}")
             return None
         except json.JSONDecodeError as e:
-            logger.info(f"Error decoding JSON resonse: {e}")
+            logger.error(f"Error decoding JSON resonse: {e}")
             return None
         except KeyError as e:
-            logger.info(f"Error parsing response: {e}")
+            logger.error(f"Error parsing response: {e}")
             return None
     
     def _check_permission(self, token: str, dataset_id: str, username: str) -> bool:
@@ -181,7 +179,7 @@ class MetaCatService(FairdDatasourceInterface):
             response.raise_for_status()
             return response.json().get("data", {}).get("result", False)
         except Exception as e:
-            logger.info(f"Error checking permission: {e}")
+            logger.error(f"Error checking permission: {e}")
             return False
 
 def parse_metadata(raw_data: dict) -> Optional[DatasetMetadata]:
@@ -199,8 +197,8 @@ def parse_metadata(raw_data: dict) -> Optional[DatasetMetadata]:
     # 解析为DatasetMetadata对象
     try:
         dataset_metadata = DatasetMetadata.model_validate(processed_data)
-        logger.info("元数据解析成功:", dataset_metadata)
+        logger.info(f"元数据解析成功: {dataset_metadata}")
         return dataset_metadata
     except ValidationError as e:
-        logger.info(f"元数据解析失败:\n{e.json()}")
+        logger.error(f"元数据解析失败:\n{e.json()}")
         return None
