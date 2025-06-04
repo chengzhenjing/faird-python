@@ -39,7 +39,7 @@ class DirParser(BaseParser):
                 "suffix": file_dict["suffix"],
                 "type": file_dict["type"],
                 "size": file_dict["size"],
-                "time": file_dict["time"]
+                "time": file_dict["time"] if file_dict.__contains__("time") else None
             })
 
         # 定义 Arrow 表的 schema

@@ -115,10 +115,12 @@ class DacpClient:
             'dataframe_name': dataframe_name
         }
         with ConnectionManager.get_connection() as conn:
+            # 接收流式结果
+            base64_chunks = []
             results = conn.do_action(pa.flight.Action("get_base64", json.dumps(ticket).encode('utf-8')))
             for res in results:
-                base64_str = json.loads(res.body.to_pybytes().decode('utf-8'))
-                return base64_str
+                base64_chunks.append(res.body.to_pybytes().decode("utf-8"))
+            return "".join(base64_chunks)
 
 class AuthType(Enum):
     OAUTH = "oauth"

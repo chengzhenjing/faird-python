@@ -126,11 +126,11 @@ class MetaCatNeo4jService(FairdDatasourceInterface):
                         'size': record.get('size'),
                         'suffix': record.get('suffix'),
                         'type': record.get('type'),
-                        'time': time_str,
-                        'dataframeName': f"{dataset_name}{record['path']}"
+                        'time': time_str
                     }
                     if df['path'].startswith(root_path):
                         df['path'] = "/" + os.path.relpath(df['path'], root_path)
+                    df['dataframeName'] = f"{dataset_name}{df['path']}"
                     dataframes.append(df)
             return dataframes
         except Exception as e:
@@ -170,11 +170,11 @@ class MetaCatNeo4jService(FairdDatasourceInterface):
                         'size': record.get('size'),
                         'suffix': record.get('suffix'),
                         'type': record.get('type'),
-                        'time': time_str,
-                        'dataframeName': f"{dataset_name}{record['path']}"
+                        'time': time_str
                     }
                     if df['path'].startswith(root_path):
                         df['path'] = "/" + os.path.relpath(df['path'], root_path)
+                    df['dataframeName'] = f"{dataset_name}{df['path']}"
                     dataframes.append(df)
             return dataframes
         except Exception as e:

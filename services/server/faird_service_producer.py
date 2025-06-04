@@ -170,7 +170,13 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
             dataframe_name = ticket_data.get("dataframe_name")
             base64_str = self.get_base64_action(dataframe_name)
-            return iter([pa.flight.Result(base64_str.encode("utf-8"))])
+
+            # 分块生成器
+            def base64_chunk_generator(base64_str, chunk_size=1024 * 1024):  # 每块1MB
+                for i in range(0, len(base64_str), chunk_size):
+                    yield pa.flight.Result(base64_str[i:i + chunk_size].encode("utf-8"))
+
+            return base64_chunk_generator(base64_str)
 
         elif action_type == "to_string":
             return self.to_string_action(context, action)
