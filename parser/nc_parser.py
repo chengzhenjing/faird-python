@@ -16,7 +16,8 @@ class NCParser(BaseParser):
         用 xarray+dask 流式分块读取超大 NetCDF 文件，避免 OOM。
         返回合并后的 pa.Table。
         """
-        DEFAULT_ARROW_CACHE_PATH = os.path.join("D:/faird_cache/dataframe/nc/")
+        # DEFAULT_ARROW_CACHE_PATH = os.path.join("D:/faird_cache/dataframe/nc/")
+        DEFAULT_ARROW_CACHE_PATH = os.path.expanduser("~/.cache/faird/dataframe/csv/")
         os.makedirs(DEFAULT_ARROW_CACHE_PATH, exist_ok=True)
         arrow_file_name = os.path.basename(file_path).rsplit(".", 1)[0] + ".arrow"
         arrow_file_path = os.path.join(DEFAULT_ARROW_CACHE_PATH, arrow_file_name)
