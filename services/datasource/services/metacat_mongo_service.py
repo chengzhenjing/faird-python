@@ -101,7 +101,7 @@ class MetaCatMongoService(FairdDatasourceInterface):
             logger.info(f"Error parsing response: {e}")
             return None
 
-    def list_dataframes(self, token: str, dataset_name: str):
+    def list_dataframes(self, token: str, dataset_name: str, page: int = None, limit: int = None):
         try:
             dataset_id = self.datasets[dataset_name]
             root_path = self.config.storage_local_path

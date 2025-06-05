@@ -1,3 +1,5 @@
+import math
+
 import pyarrow as pa
 import pyarrow.ipc as ipc
 import os
@@ -22,7 +24,7 @@ class DirParser(BaseParser):
             logger.error("Failed to load data source service.")
 
         files_data = []
-        all_files = data_source_service.list_dataframes("", dataset_name)[:11]
+        all_files = data_source_service.list_dataframes("", dataset_name, 1, 11)
         for file_dict in all_files:
             if file_dict["type"] == "dir":
                 continue
@@ -66,8 +68,21 @@ class DirParser(BaseParser):
         else:
             logger.error("Failed to load data source service.")
 
+        #  分页
+        total_length = data_source_service.get_dataframes_length(dataset_name)
+        if total_length == 0:
+            logger.info("total length is 0")
+            return None
+        limit = 10000
+        total_pages = math.ceil(total_length / limit)
+        all_files = []
+        for page in range(1, total_pages + 1):
+            dataframes = data_source_service.list_dataframes("", dataset_name, page=page, limit=limit)
+            if dataframes:
+                    all_files.extend(dataframes)
+
         files_data = []
-        all_files = data_source_service.list_dataframes("", dataset_name)
+        #all_files = data_source_service.list_dataframes("", dataset_name)
         for file_dict in all_files:
             if file_dict["type"] == "dir":
                 continue

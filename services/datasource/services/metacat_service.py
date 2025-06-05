@@ -103,7 +103,7 @@ class MetaCatService(FairdDatasourceInterface):
             logger.error(f"Error parsing response: {e}")
             return None
 
-    def list_dataframes(self, token: str, dataset_name: str) -> List[str]:
+    def list_dataframes(self, token: str, dataset_name: str, page: int = None, limit: int = None):
         url = f"{self.metacat_url}/api/fair/listDatasetFiles"
         if token is None or token == "":
             token = self.metacat_token
@@ -154,7 +154,7 @@ class MetaCatService(FairdDatasourceInterface):
         except KeyError as e:
             logger.error(f"Error parsing response: {e}")
             return None
-    
+
     def _check_permission(self, token: str, dataset_id: str, username: str) -> bool:
         """
         检查用户对数据集的访问权限(默认为无)

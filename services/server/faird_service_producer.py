@@ -3,6 +3,7 @@ import os
 from urllib.parse import urlparse
 import math
 import pyarrow.flight
+from pandas.io.common import file_exists
 
 from sdk.dataframe import DataFrame
 from services.connection.faird_connection import FairdConnection
@@ -132,8 +133,8 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             token = ticket_data.get("token")
             page = int(ticket_data.get("page"))
             limit = int(ticket_data.get("limit"))
-            result = pa.flight.Result(json.dumps(self.data_source_service.list_dataset(token=token, page=page, limit=limit)).encode())
-            return iter([result])
+            datasets = self.data_source_service.list_dataset(token=token, page=page, limit=limit)
+            return iter([pa.flight.Result(json.dumps(datasets).encode("utf-8"))])
 
         elif action_type == "get_dataset":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
@@ -150,8 +151,19 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
             token = ticket_data.get("token")
             dataset_name = ticket_data.get("dataset_name")
-            dataframes = self.data_source_service.list_dataframes(token, dataset_name)
-            return iter([pa.flight.Result(json.dumps(dataframes).encode())])
+            total_length = self.data_source_service.get_dataframes_length(dataset_name)
+            if total_length == 0:
+                logger.info("total length is 0")
+                return iter([])
+            else:
+                limit = 10000
+                total_pages = math.ceil(total_length / limit)
+                def dataframe_generator():
+                    for page in range(1, total_pages + 1):
+                        dataframes = self.data_source_service.list_dataframes(token, dataset_name, page=page, limit=limit)
+                        if dataframes:
+                            yield pa.flight.Result(json.dumps(dataframes).encode("utf-8"))
+                return dataframe_generator()
 
         elif action_type == "list_user_auth_dataframes":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
@@ -198,11 +210,14 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             return None
 
     def sample_action(self, dataframe_name):
-        parsed_url = urlparse(dataframe_name)
-        dataset_name = f"{parsed_url.scheme}://{parsed_url.netloc}/{parsed_url.path.split('/', 2)[1]}"
-        relative_path = '/' + parsed_url.path.split('/', 2)[2]  # 相对路径
-        file_path = FairdConfigManager.get_config().storage_local_path + relative_path  # 绝对路径
-        file_extension = os.path.splitext(file_path)[1].lower()
+        # parsed_url = urlparse(dataframe_name)
+        # dataset_name = f"{parsed_url.scheme}://{parsed_url.netloc}/{parsed_url.path.split('/', 2)[1]}"
+        # relative_path = '/' + parsed_url.path.split('/', 2)[2]  # 相对路径
+        # file_path = FairdConfigManager.get_config().storage_local_path + relative_path  # 绝对路径
+        # file_extension = os.path.splitext(file_path)[1].lower()
+        dataset_name = 'dacp://0.0.0.0:3101/中尺度涡旋数据集'
+        file_extension = ""
+        file_path = ""
         # 暂时这样适配文件夹类型
         sample_table = None
         if file_extension == "":
@@ -239,11 +254,14 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         return sample_json
 
     def open_action(self, dataframe_name):
-        parsed_url = urlparse(dataframe_name)
-        dataset_name = f"{parsed_url.scheme}://{parsed_url.netloc}/{parsed_url.path.split('/', 2)[1]}"
-        relative_path = '/' + parsed_url.path.split('/', 2)[2]  # 相对路径
-        file_path = FairdConfigManager.get_config().storage_local_path + relative_path  # 绝对路径
-        file_extension = os.path.splitext(file_path)[1].lower()
+        # parsed_url = urlparse(dataframe_name)
+        # dataset_name = f"{parsed_url.scheme}://{parsed_url.netloc}/{parsed_url.path.split('/', 2)[1]}"
+        # relative_path = '/' + parsed_url.path.split('/', 2)[2]  # 相对路径
+        # file_path = FairdConfigManager.get_config().storage_local_path + relative_path  # 绝对路径
+        # file_extension = os.path.splitext(file_path)[1].lower()
+        dataset_name = 'dacp://0.0.0.0:3101/中尺度涡旋数据集'
+        file_extension = ""
+        file_path = ""
         # 暂时这样适配文件夹类型
         if file_extension == "":
             arrow_table = dir_parser.DirParser().parse_dir(file_path, dataset_name)

@@ -83,9 +83,11 @@ class DacpClient:
         }
         with ConnectionManager.get_connection() as conn:
             results = conn.do_action(pa.flight.Action("list_dataframes", json.dumps(ticket).encode('utf-8')))
+            dataframes = []
             for res in results:
                 res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
-                return res_json
+                dataframes.extend(res_json)
+            return dataframes
 
     def list_user_auth_dataframes(self, username: str) -> List[str]:
         if username is None or username == "":
