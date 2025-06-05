@@ -143,7 +143,7 @@ class NCParser(BaseParser):
         """
         从 NetCDF 文件中采样数据，返回 Arrow Table。
         默认每个变量只读取前10个主轴切片（如 time 维度的前10个）。
-        最终所有列补齐为100行（不足补NaN，超出截断），避免 ArrowInvalid 错误。
+        最终所有列补齐为20行（不足补NaN，超出截断），避免 ArrowInvalid 错误。
         并为 schema 添加 metadata。
         """
         try:

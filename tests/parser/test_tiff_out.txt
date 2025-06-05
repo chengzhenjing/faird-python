@@ -1,317 +1,83 @@
 INFO:__main__:手动运行测试
-INFO:__main__:创建测试TIFF文件: C:\Users\HUAWEI-0\AppData\Local\Temp\tmpw0eajmnq\test_multi.tif, shape=(3, 8, 8), dtype=<class 'numpy.uint8'>
-INFO:__main__:测试多波段 parse 方法
-INFO:parser.tif_parser:检测到缓存文件，直接从 C:\Users\HUAWEI-0/.cache/faird/dataframe/tif/test_multi.arrow 读取 Arrow Table
-。
-INFO:__main__:解析的表结构: page1_band1: uint8
-page1_band2: uint8
-page1_band3: uint8
--- schema metadata --
-page1_ImageWidth: '8'
-page1_ImageLength: '8'
-page1_BitsPerSample: '(8, 8, 8)'
-page1_Compression: '1'
-page1_PhotometricInterpretation: '2'
-page1_ImageDescription: '{"shape": [3, 8, 8]}'
-page1_StripOffsets: '(288, 352, 416)'
-page1_SamplesPerPixel: '3'
-page1_RowsPerStrip: '8'
-page1_StripByteCounts: '(64, 64, 64)'
-page1_XResolution: '(1, 1)'
-page1_YResolution: '(1, 1)'
-page1_PlanarConfiguration: '2'
-page1_ResolutionUnit: '1'
-page1_Software: 'tifffile.py'
-shapes: '[(3, 8, 8)]'
-dtypes: '['uint8']'
-INFO:__main__:------------------------
-pyarrow.Table
-page1_band1: uint8
-page1_band2: uint8
-page1_band3: uint8
-----
-page1_band1: [[234,15,142,216,205,...,190,54,126,106,245]]
-page1_band2: [[9,228,240,206,107,...,193,193,120,69,3]]
-page1_band3: [[88,118,41,80,20,...,199,231,236,51,14]]
-INFO:__main__:创建测试TIFF文件: C:\Users\HUAWEI-0\AppData\Local\Temp\tmpw0eajmnq\test_single.tif, shape=(8, 8), dtype=<class 'numpy.uint8'>
-INFO:__main__:测试单波段 parse 方法
-INFO:parser.tif_parser:检测到缓存文件，直接从 C:\Users\HUAWEI-0/.cache/faird/dataframe/tif/test_single.arrow 读取 Arrow Table。
-INFO:__main__:解析的表结构: page1_band1: uint8
--- schema metadata --
-page1_ImageWidth: '8'
-page1_ImageLength: '8'
-page1_BitsPerSample: '8'
-page1_Compression: '1'
-page1_PhotometricInterpretation: '1'
-page1_ImageDescription: '{"shape": [8, 8]}'
-page1_StripOffsets: '(256,)'
-page1_SamplesPerPixel: '1'
-page1_RowsPerStrip: '8'
-page1_StripByteCounts: '(64,)'
-page1_XResolution: '(1, 1)'
-page1_YResolution: '(1, 1)'
-page1_ResolutionUnit: '1'
-page1_Software: 'tifffile.py'
-shapes: '[(8, 8)]'
-dtypes: '['uint8']'
-INFO:__main__:------------------------
-pyarrow.Table
-page1_band1: uint8
-----
-page1_band1: [[152,196,92,121,108,...,243,193,13,101,192]]
-INFO:__main__:创建测试TIFF文件: C:\Users\HUAWEI-0\AppData\Local\Temp\tmpw0eajmnq\test_hwc.tif, shape=(8, 8, 3), dtype=<class 'numpy.uint8'>
-INFO:__main__:测试HWC多波段 parse 方法
-INFO:parser.tif_parser:检测到缓存文件，直接从 C:\Users\HUAWEI-0/.cache/faird/dataframe/tif/test_hwc.arrow 读取 Arrow Table。
-INFO:__main__:解析的表结构: page1_band1: uint8
-page1_band2: uint8
-page1_band3: uint8
--- schema metadata --
-page1_ImageWidth: '8'
-page1_ImageLength: '8'
-page1_BitsPerSample: '(8, 8, 8)'
-page1_Compression: '1'
-page1_PhotometricInterpretation: '2'
-page1_ImageDescription: '{"shape": [8, 8, 3]}'
-page1_StripOffsets: '(272,)'
-page1_SamplesPerPixel: '3'
-page1_RowsPerStrip: '8'
-page1_StripByteCounts: '(192,)'
-page1_XResolution: '(1, 1)'
-page1_YResolution: '(1, 1)'
-page1_PlanarConfiguration: '1'
-page1_ResolutionUnit: '1'
-page1_Software: 'tifffile.py'
-shapes: '[(8, 8, 3)]'
-dtypes: '['uint8']'
-INFO:__main__:------------------------
-pyarrow.Table
-page1_band1: uint8
-page1_band2: uint8
-page1_band3: uint8
-----
-page1_band1: [[50,141,178,69,77,...,126,86,110,237,14]]
-page1_band2: [[248,115,171,226,122,...,193,176,186,72,62]]
-page1_band3: [[237,16,213,8,172,...,170,170,43,104,242]]
-d:\code\rdcn\faird\tests\parsertest\test_tif_parser.py:87: DeprecationWarning: <tifffile.TiffWriter.write> data with shape (3, 6, 6) and dtype 'uint8' are stored as RGB with separate component planes. Future versions will store such data as MINISBLACK in separate pages by default, unless the 'photometric' and 'planarconfig' parameters are specified.
-  tif.write(data2)
-INFO:__main__:测试多页TIFF parse 方法
-INFO:parser.tif_parser:检测到缓存文件，直接从 C:\Users\HUAWEI-0/.cache/faird/dataframe/tif/test_multi_page.arrow 读取 Arrow Table。
-INFO:__main__:解析的表结构: page1_band1: double
-page2_band1: double
-page2_band2: double
-page2_band3: double
--- schema metadata --
-page1_ImageWidth: '8'
-page1_ImageLength: '8'
-page1_BitsPerSample: '8'
-page1_Compression: '1'
-page1_PhotometricInterpretation: '1'
-page1_ImageDescription: '{"shape": [8, 8]}'
-page1_StripOffsets: '(256,)'
-page1_SamplesPerPixel: '1'
-page1_RowsPerStrip: '8'
-page1_StripByteCounts: '(64,)'
-page1_XResolution: '(1, 1)'
-page1_YResolution: '(1, 1)'
-page1_ResolutionUnit: '1'
-page1_Software: 'tifffile.py'
-page2_ImageWidth: '6'
-page2_ImageLength: '6'
-page2_BitsPerSample: '(8, 8, 8)'
-page2_Compression: '1'
-page2_PhotometricInterpretation: '2'
-page2_ImageDescription: '{"shape": [3, 6, 6]}'
-page2_StripOffsets: '(608, 644, 680)'
-page2_SamplesPerPixel: '3'
-page2_RowsPerStrip: '6'
-page2_StripByteCounts: '(36, 36, 36)'
-page2_XResolution: '(1, 1)'
-page2_YResolution: '(1, 1)'
-page2_PlanarConfiguration: '2'
-page2_ResolutionUnit: '1'
-page2_Software: 'tifffile.py'
-shapes: '[(8, 8), (3, 6, 6)]'
-dtypes: '['uint8', 'uint8']'
-orig_lengths: '[64, 36, 36, 36]'
-INFO:__main__:------------------------
-pyarrow.Table
-page1_band1: double
-page2_band1: double
-page2_band2: double
-page2_band3: double
-----
-page1_band1: [[189,160,134,70,58,...,59,172,33,38,89]]
-page2_band1: [[148,113,35,127,188,...,nan,nan,nan,nan,nan]]
-page2_band2: [[92,145,32,170,182,...,nan,nan,nan,nan,nan]]
-page2_band3: [[78,91,40,230,101,...,nan,nan,nan,nan,nan]]
-INFO:__main__:测试高维TIFF parse 方法（应展平）
-INFO:parser.tif_parser:检测到缓存文件，直接从 C:\Users\HUAWEI-0/.cache/faird/dataframe/tif/invalid.arrow 读取 Arrow Table。
-INFO:__main__:高维TIFF解析的表结构: page1_band1: double
-page2_band1: double
-page3_band1: double
-page4_band1: double
--- schema metadata --
-page1_ImageWidth: '2'
-page1_ImageLength: '2'
-page1_BitsPerSample: '8'
-page1_Compression: '1'
-page1_PhotometricInterpretation: '1'
-page1_ImageDescription: '{"shape": [2, 2, 2, 2]}'
-page1_StripOffsets: '(256,)'
-page1_SamplesPerPixel: '1'
-page1_RowsPerStrip: '2'
-page1_StripByteCounts: '(4,)'
-page1_XResolution: '(1, 1)'
-page1_YResolution: '(1, 1)'
-page1_ResolutionUnit: '1'
-page1_Software: 'tifffile.py'
-page2_ImageWidth: '2'
-page2_ImageLength: '2'
-page2_BitsPerSample: '8'
-page2_Compression: '1'
-page2_PhotometricInterpretation: '1'
-page2_StripOffsets: '(260,)'
-page2_SamplesPerPixel: '1'
-page2_RowsPerStrip: '2'
-page2_StripByteCounts: '(4,)'
-page2_XResolution: '(1, 1)'
-page2_YResolution: '(1, 1)'
-page2_ResolutionUnit: '1'
-page3_ImageWidth: '2'
-page3_ImageLength: '2'
-page3_BitsPerSample: '8'
-page3_Compression: '1'
-page3_PhotometricInterpretation: '1'
-page3_StripOffsets: '(264,)'
-page3_SamplesPerPixel: '1'
-page3_RowsPerStrip: '2'
-page3_StripByteCounts: '(4,)'
-page3_XResolution: '(1, 1)'
-page3_YResolution: '(1, 1)'
-page3_ResolutionUnit: '1'
-page4_ImageWidth: '2'
-page4_ImageLength: '2'
-page4_BitsPerSample: '8'
-page4_Compression: '1'
-page4_PhotometricInterpretation: '1'
-page4_StripOffsets: '(268,)'
-page4_SamplesPerPixel: '1'
-page4_RowsPerStrip: '2'
-page4_StripByteCounts: '(4,)'
-page4_XResolution: '(1, 1)'
-page4_YResolution: '(1, 1)'
-page4_ResolutionUnit: '1'
-shapes: '[(2, 2), (2, 2), (2, 2), (2, 2)]'
-dtypes: '['uint8', 'uint8', 'uint8', 'uint8']'
-orig_lengths: '[4, 4, 4, 4]'
-INFO:__main__:------------------------
-pyarrow.Table
-page1_band1: double
-page2_band1: double
-page3_band1: double
-page4_band1: double
-----
-page1_band1: [[148,25,203,154]]
-page2_band1: [[120,251,167,72]]
-page3_band1: [[243,114,49,48]]
-page4_band1: [[219,49,63,82]]
-
+INFO:__main__:开始测试多波段TIFF文件解析和写入,file_path [D:\test\faird\sample.tiff]
 INFO:__main__:测试实际TIFF文件 parse 方法
-INFO:parser.tif_parser:开始读取 TIFF 文件: D:\test\faird\sample.tiff
-INFO:parser.tif_parser:TIFF文件包含 1 页
-INFO:numexpr.utils:Note: NumExpr detected 16 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
-INFO:numexpr.utils:NumExpr defaulting to 8 threads.
-INFO:parser.tif_parser:保存 Arrow Table 到 C:\Users\HUAWEI-0/.cache/faird/dataframe/tif/sample.arrow
-INFO:parser.tif_parser:从 .arrow 文件 C:\Users\HUAWEI-0/.cache/faird/dataframe/tif/sample.arrow 读取 Arrow Table。
-INFO:__main__:实际TIFF解析的表结构: page1_band1: double
+INFO:parser.tif_parser_optimize:检测到缓存文件，直接从 D:/faird_cache/dataframe/nc/sample.arrow 读取 Arrow Table。
+parse Arrow Table 列: ['page1_band1']
+parse Arrow Table 行数: 117782
+parse Arrow Table schema: page1_band1: float
 -- schema metadata --
-page1_ImageWidth: '358'
-page1_ImageLength: '329'
-page1_BitsPerSample: '32'
-page1_Compression: '1'
-page1_PhotometricInterpretation: '1'
-page1_SamplesPerPixel: '1'
-page1_PlanarConfiguration: '1'
-page1_TileWidth: '128'
-page1_TileLength: '128'
-page1_TileOffsets: '(525501, 1213, 66749, 132285, 197821, 263357, 328893,' + 16
-page1_TileByteCounts: '(65536, 65536, 65536, 65536, 65536, 65536, 65536, ' + 13
-page1_SampleFormat: '3'
-page1_ModelPixelScaleTag: '(1000.0, 1000.0, 0.0)'
-page1_SampleFormat: '3'
-page1_ModelPixelScaleTag: '(1000.0, 1000.0, 0.0)'
-page1_ModelTiepointTag: '(0.0, 0.0, 0.0, 189255.9822919611, 4270161.18581' + 10
-page1_GeoKeyDirectoryTag: '(1, 1, 0, 24, 1024, 0, 1, 1, 1025, 0, 1, 1, 10' + 413
-page1_SampleFormat: '3'
-page1_ModelPixelScaleTag: '(1000.0, 1000.0, 0.0)'
-page1_ModelTiepointTag: '(0.0, 0.0, 0.0, 189255.9822919611, 4270161.18581' + 10
-page1_SampleFormat: '3'
-page1_ModelPixelScaleTag: '(1000.0, 1000.0, 0.0)'
-page1_SampleFormat: '3'
-page1_SampleFormat: '3'
-page1_SampleFormat: '3'
-page1_SampleFormat: '3'
-page1_ModelPixelScaleTag: '(1000.0, 1000.0, 0.0)'
-page1_SampleFormat: '3'
-page1_ModelPixelScaleTag: '(1000.0, 1000.0, 0.0)'
-page1_ModelTiepointTag: '(0.0, 0.0, 0.0, 189255.9822919611, 4270161.18581' + 10
-page1_GeoKeyDirectoryTag: '(1, 1, 0, 24, 1024, 0, 1, 1, 1025, 0, 1, 1, 10' + 413
-page1_GeoKeyDirectoryTag: '(1, 1, 0, 24, 1024, 0, 1, 1, 1025, 0, 1, 1, 10' + 413
-page1_GeoDoubleParamsTag: '(25.0, 47.0, 0.0, 105.0, 0.0, 0.0, 0.017453292' + 39
-page1_GeoDoubleParamsTag: '(25.0, 47.0, 0.0, 105.0, 0.0, 0.0, 0.017453292' + 39
-page1_GeoAsciiParamsTag: 'PCS Name = Albers_Conical_Equa_lArea|GCS Name =' + 523
-page1_GDAL_METADATA: '<GDALMetadata>
-page1_GeoAsciiParamsTag: 'PCS Name = Albers_Conical_Equa_lArea|GCS Name =' + 523
-page1_GDAL_METADATA: '<GDALMetadata>
-  <Item name="RepresentationType" sa' + 41
-page1_GDAL_METADATA: '<GDALMetadata>
-  <Item name="RepresentationType" sa' + 41
-page1_GDAL_NODATA: '-3.4028234663852886e+38'
-  <Item name="RepresentationType" sa' + 41
-page1_GDAL_NODATA: '-3.4028234663852886e+38'
 shapes: '[(329, 358)]'
 dtypes: '['float32']'
 orig_lengths: '[117782]'
-shapes: '[(329, 358)]'
-dtypes: '['float32']'
-orig_lengths: '[117782]'
-dtypes: '['float32']'
-orig_lengths: '[117782]'
-INFO:__main__:------------------------
-orig_lengths: '[117782]'
-INFO:__main__:------------------------
+band_names: '['page1_band1']'
 INFO:__main__:------------------------
 pyarrow.Table
+page1_band1: float
+----
+page1_band1: [[-3.4028235e+38,-3.4028235e+38,-3.4028235e+38,-3.4028235e+38,-3.4028235e+38,...,-3.4028235e+38,-3.4028235e+38,-3.4028235e+38,-3.4028235e+38,-3.4028235e+38]]
+INFO:__main__:开始测试写入方法
+INFO:parser.tif_parser_optimize:开始写入 TIFF 文件: D:\tmp\tmpzqu53xm5\sample_write.tiff
+INFO:parser.tif_parser_optimize:写入 TIFF 文件到 D:\tmp\tmpzqu53xm5\sample_write.tiff，共 1 页
+INFO:__main__:多页TIFF写出数据验证
+INFO:__main__:开始测试单波段TIFF文件解析和写入,file_path [D:\test\faird\R-factor.tif]
+INFO:__main__:测试实际TIFF文件 parse 方法
+INFO:parser.tif_parser_optimize:开始解析 TIFF 文件: D:\test\faird\R-factor.tif
+INFO:parser.tif_parser_optimize:TIFF 文件 shape: (4261, 5318), dtype: float32
+INFO:parser.tif_parser_optimize:TIFF 解析完成，列数: 1，每列长度: 22659998，写入缓存 D:/faird_cache/dataframe/nc/R-factor.arrow
+parse Arrow Table 列: ['page1_band1']
+parse Arrow Table 行数: 22659998
+parse Arrow Table schema: page1_band1: float
+-- schema metadata --
+shapes: '[(4261, 5318)]'
+dtypes: '['float32']'
+orig_lengths: '[22659998]'
+band_names: '['page1_band1']'
+INFO:__main__:------------------------
 pyarrow.Table
-page1_band1: double
+page1_band1: float
 ----
-page1_band1: [[-3.4028234663852886e+38,-3.4028234663852886e+38,-3.4028234663852886e+38,-3.4028234663852886e+38,-3.40282346638page1_band1: double
+page1_band1: [[-3.4e+38,-3.4e+38,-3.4e+38,-3.4e+38,-3.4e+38,...,-3.4e+38,-3.4e+38,-3.4e+38,-3.4e+38,-3.4e+38]]
+INFO:__main__:开始测试写入方法
+INFO:parser.tif_parser_optimize:开始写入 TIFF 文件: D:\tmp\tmpzqu53xm5\R-factor_write.tif
+INFO:parser.tif_parser_optimize:写入 TIFF 文件到 D:\tmp\tmpzqu53xm5\R-factor_write.tif，共 1 页
+INFO:__main__:多页TIFF写出数据验证
+INFO:__main__:开始测试HWC多波段TIFF文件解析和写入,file_path [D:\test\faird\k-factorSD1.tif]
+INFO:__main__:测试实际TIFF文件 parse 方法
+INFO:parser.tif_parser_optimize:开始解析 TIFF 文件: D:\test\faird\k-factorSD1.tif
+INFO:parser.tif_parser_optimize:TIFF 文件 shape: (1674, 1758), dtype: float32
+INFO:parser.tif_parser_optimize:TIFF 解析完成，列数: 1，每列长度: 2942892，写入缓存 D:/faird_cache/dataframe/nc/k-factorSD1.arrow
+parse Arrow Table 列: ['page1_band1']
+parse Arrow Table 行数: 2942892
+parse Arrow Table schema: page1_band1: float
+-- schema metadata --
+shapes: '[(1674, 1758)]'
+dtypes: '['float32']'
+orig_lengths: '[2942892]'
+band_names: '['page1_band1']'
+INFO:__main__:------------------------
+pyarrow.Table
+page1_band1: float
 ----
-page1_band1: double
-----
-page1_band1: double
-----
-page1_band1: double
-----
-page1_band1: double
-page1_band1: double
-----
-page1_band1: [[-3.4028234663852886e+38,-3.4028234663852886e+38,-3.4028234663852886e+38,-3.4028234663852886e+38,-3.4028234663852886e+38,...,-3.4028234663852886e+38,-3.4028234663852886e+38,-3.4028234663852886e+38,-3.4028234663852886e+38,-3.4028234663852886e+38]]
-INFO:__main__:全部测试完成
-
+page1_band1: [[0,0,0,0,0,...,0,0,0,0,0]]
+INFO:__main__:开始测试写入方法
+INFO:parser.tif_parser_optimize:开始写入 TIFF 文件: D:\tmp\tmpzqu53xm5\k-factorSD1_write.tif
+INFO:parser.tif_parser_optimize:写入 TIFF 文件到 D:\tmp\tmpzqu53xm5\k-factorSD1_write.tif，共 1 页
+INFO:__main__:多页TIFF写出数据验证
+INFO:__main__:测试实际TIFF文件解析和写入完成
 INFO:__main__:开始测试sample方法
-INFO:parser.tif_parser:开始采样 TIFF 文件: D:\test\faird\sample.tiff
-INFO:parser.tif_parser:第一页 shape: (329, 358), dtype: float32
-INFO:parser.tif_parser:采样二维影像，波段数: 1
-INFO:parser.tif_parser:采样完成，生成 Arrow Table，列: ['page1_band1']，每列采样长度: 100，orig_lengths: [100]
-INFO:__main__:sample方法解析的表结构: page1_band1: double
+INFO:parser.tif_parser_optimize:开始采样 TIFF 文件: D:\test\faird\sample.tiff，采样行数: 20
+INFO:parser.tif_parser_optimize:第一页 shape: (329, 358), dtype: float32
+INFO:parser.tif_parser_optimize:采样二维影像，波段数: 1
+INFO:parser.tif_parser_optimize:采样完成，生成 Arrow Table，列: ['page1_band1']，每列采样长度: 20，orig_lengths: [20]
+sample Arrow Table 列: ['page1_band1']
+sample Arrow Table 行数: 20
+sample Arrow Table schema: page1_band1: double
 -- schema metadata --
 shapes: '[(329, 358)]'
 dtypes: '['float32']'
-orig_lengths: '[100]'
+orig_lengths: '[20]'
 file_type: 'TIFF'
 sample: 'True'
-INFO:__main__:------------------------
 pyarrow.Table
 page1_band1: double
 ----

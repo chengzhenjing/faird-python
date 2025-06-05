@@ -117,15 +117,22 @@ def test_invalid_shape(tmp_path):
     logger.info("------------------------")
     print(table)
 
-def test_real_tif(tif_path):
+def test_real_tif(tif_path, tem_path, out_tif_path):
+    """测试实际的TIFF文件解析和写入"""
     # 这里可以放一个实际的TIFF文件路径进行测试
     parser = TIFParser()
     logger.info("测试实际TIFF文件 parse 方法")
     table = parser.parse(str(tif_path))
     assert isinstance(table, pa.Table)
-    logger.info(f"实际TIFF解析的表结构: {table.schema}")
+    print("parse Arrow Table 列:", table.column_names)
+    print("parse Arrow Table 行数:", table.num_rows)
+    print("parse Arrow Table schema:", table.schema)
     logger.info("------------------------")
     print(table)
+    logger.info("开始测试写入方法")
+    out_tif_path = tem_path / out_tif_path
+    parser.write(table, str(out_tif_path))
+    logger.info("多页TIFF写出数据验证")
     
 def test_tif_sample(tif_path):
     assert os.path.exists(tif_path), f"测试文件不存在: {tif_path}"
@@ -152,16 +159,23 @@ def test_tif_sample(tif_path):
     
 if __name__ == "__main__":
     logger.info("手动运行测试")
-    # import tempfile
-    # with tempfile.TemporaryDirectory() as tmpdir:
-    #     from pathlib import Path
-    #     tmp_path = Path(tmpdir)
+    import pathlib
+    import tempfile
+    os.makedirs("D:/tmp", exist_ok=True)
+    with tempfile.TemporaryDirectory(dir="D:/tmp") as tmpdir:
+        tmp_path = pathlib.Path(tmpdir)
     #     test_parse_and_write_multiband(tmp_path)
     #     test_parse_and_write_singleband(tmp_path)
     #     test_parse_and_write_hwcbands(tmp_path)
     #     test_parse_and_write_multipage(tmp_path)
     #     test_invalid_shape(tmp_path)
-    # test_real_tif("D:\\test\\faird\\sample.tiff")  # 替换为实际的TIFF文件路径
+        logger.info("开始测试多波段TIFF文件解析和写入,file_path [%s]", r"D:\test\faird\sample.tiff")
+        test_real_tif(r"D:\test\faird\sample.tiff", tmp_path, "sample_write.tiff")
+        logger.info("开始测试单波段TIFF文件解析和写入,file_path [%s]", r"D:\test\faird\R-factor.tif")
+        test_real_tif(r"D:\test\faird\R-factor.tif", tmp_path, "R-factor_write.tif")
+        logger.info("开始测试HWC多波段TIFF文件解析和写入,file_path [%s]", r"D:\test\faird\k-factorSD1.tif")
+        test_real_tif(r"D:\test\faird\k-factorSD1.tif", tmp_path, "k-factorSD1_write.tif")
+        logger.info("测试实际TIFF文件解析和写入完成")
     logger.info("开始测试sample方法")
     test_tif_sample(r"D:\test\faird\sample.tiff")  # 替换为实际的TIFF文件路径
     logger.info("全部测试完成")

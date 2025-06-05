@@ -12,3 +12,5 @@ neo4j
 tifffile==2023.4.12
 xarray==2025.4.0
 dask==2025.5.1
+psutil==7.0.0
+imagecodecs==2025.3.30
