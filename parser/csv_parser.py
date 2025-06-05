@@ -13,6 +13,21 @@ class CSVParser(BaseParser):
     CSV file parser implementing the BaseParser interface.
     """
 
+    def sample(self, file_path:str) -> pa.Table:
+        try:
+            logger.info(f"即将读取 CSV 文件: {file_path}")
+            table = csv.read_csv(
+                file_path,
+                read_options=csv.ReadOptions(block_size=1024 * 1024),  # 设置块大小,
+                convert_options=csv.ConvertOptions(),
+                parse_options=csv.ParseOptions()
+            ).slice(0, 10) # 使用 slice 限制行数
+            logger.info(f"成功读取 CSV 文件: {file_path}")
+            return table
+        except Exception as e:
+            logger.error(f"读取 CSV 文件时出错: {e}")
+            raise
+
     def parse(self, file_path: str) -> pa.Table:
         """
         Save the CSV file as a .arrow file and load it into memory as a pyarrow Table using zero-copy.

@@ -1,7 +1,7 @@
 import base64
 import os
 from urllib.parse import urlparse
-
+import math
 import pyarrow.flight
 
 from sdk.dataframe import DataFrame
@@ -162,8 +162,8 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         elif action_type == "sample":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
             dataframe_name = ticket_data.get("dataframe_name")
-            sample = self.sample_action(dataframe_name)
-            return iter([pa.flight.Result(json.dumps(sample).encode())])
+            sample_json = self.sample_action(dataframe_name)
+            return iter([pa.flight.Result(json.dumps(sample_json).encode())])
 
         elif action_type == "open":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
@@ -221,21 +221,22 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
                 raise ValueError(f"Unsupported file extension: {file_extension}")
             parser = parser_class()
             sample_table = parser.sample(file_path)
-        schema_list = []
-        schema_names = sample_table.schema.names
-        schema_type = sample_table.schema.types
-        for idx in range(len(schema_names)):
-            col = {
-                'col_name': schema_names[idx],
-                'col_type': schema_type[idx]
-            }
-            schema_list.append(col)
-        sample_dict = {
-            'schema': schema_list,
-            'schema_metadata': sample_table.schema.metadata,
-            'sample_data': sample_table.to_string()
+
+        # 返回sample_table打印内容
+        schema_names = [field.name for field in sample_table.schema]
+        schema_types = [str(field.type) for field in sample_table.schema]
+        sample_data = {col: sample_table.column(col).slice(0, 10).to_pylist() for col in sample_table.column_names}
+        sample_data = replace_nan(sample_data)
+        # 处理bytes类型序列化
+        metadata_bytes = sample_table.schema.metadata
+        sample_metadata = decode_bytes_keys(metadata_bytes)
+        sample_json = {
+            'schema_names': schema_names,
+            'schema_types': schema_types,
+            'schema_metadata': sample_metadata,
+            'sample_data': sample_data
         }
-        return sample_dict
+        return sample_json
 
     def open_action(self, dataframe_name):
         parsed_url = urlparse(dataframe_name)
@@ -297,3 +298,20 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
 
         table_str = format_arrow_table(arrow_table, head_rows, tail_rows, first_cols, last_cols, display_all)
         return iter([pa.flight.Result(table_str.encode("utf-8"))])
+
+# 将字典中的 bytes 类型键转换为字符串类型
+def decode_bytes_keys(data):
+    if isinstance(data, dict):
+        return {k.decode() if isinstance(k, bytes) else k: decode_bytes_keys(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [decode_bytes_keys(item) for item in data]
+    elif isinstance(data, bytes):
+        return data.decode()
+    return data
+
+def replace_nan(data):
+    if isinstance(data, dict):
+        return {k: replace_nan(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return ['NaN' if isinstance(item, float) and math.isnan(item) else replace_nan(item) for item in data]
+    return data

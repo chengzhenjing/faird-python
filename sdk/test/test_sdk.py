@@ -24,8 +24,8 @@ def test_sdk():
     conn = DacpClient.connect(url)
 
     datasets = conn.list_datasets()
-    metadata = conn.get_dataset(datasets[1])
-    dataframes = conn.list_dataframes(datasets[1])
+    metadata = conn.get_dataset(datasets[12])
+    dataframes = conn.list_dataframes(datasets[12])
     #dataframes_auth = conn.list_user_auth_dataframes("柴宏雷")
 
     # 流式传输
@@ -33,11 +33,22 @@ def test_sdk():
     #base64_str = conn.get_base64(dataframe_name)
     #is_same = verify_base64(base64_str, "/Users/yaxuan/Desktop/sharedata/dataset/historical/SD039-SurfOcean_CO2_Atlas/SOCATv2021_Gridded_Dat/SOCATv2021_tracks_gridded_decadal.csv")
 
-    # dir parser
+    # # dir parser
     dir_dataframe_name = dataframes[0]['dataframeName']
     sample = conn.sample(dir_dataframe_name)
-    df = conn.open(dir_dataframe_name)
-    #df = conn.open("/Users/yaxuan/Desktop/测试用/2019年中国榆林市沟道信息.csv")
+    # df = conn.open(dir_dataframe_name)
+    # df = conn.open("/Users/yaxuan/Desktop/测试用/2019年中国榆林市沟道信息.csv")
+    #
+    # # csv parser
+    csv_dataframe_name = dataframes[3]['dataframeName']
+    sample = conn.sample(csv_dataframe_name)
+    # df = conn.open(csv_dataframe_name)
+
+
+    # nc parser
+    nc_dataframe_name = dataframes[4]['dataframeName']
+    sample = conn.sample(nc_dataframe_name)
+    df = conn.open(nc_dataframe_name)
 
     print(f"表结构: {df.schema} \n")
     print(f"表大小: {df.shape} \n")
