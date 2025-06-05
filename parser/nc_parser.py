@@ -7,6 +7,7 @@ import numpy as np
 import xarray as xr
 import dask.array as da
 import netCDF4
+import cftime
 
 logger = logging.getLogger(__name__)
 
@@ -139,6 +140,8 @@ class NCParser(BaseParser):
     #     except Exception as e:
     #         logger.error(f"采样 NetCDF 文件失败: {e}")
     #         raise
+
+
     def sample(self, file_path: str) -> pa.Table:
         """
         从 NetCDF 文件中采样数据，返回 Arrow Table。
@@ -159,6 +162,10 @@ class NCParser(BaseParser):
                 else:
                     arr = var.values
                 arr_flat = np.array(arr).flatten()
+                # 修正：处理cftime类型
+                if arr_flat.size > 0 and isinstance(arr_flat[0], cftime.datetime):
+                    # 转为自1970-01-01的天数
+                    arr_flat = np.array([(x - cftime.DatetimeGregorian(1970, 1, 1)).days for x in arr_flat], dtype=np.float64)
                 arr_list.append(arr_flat)
             max_len = 20  # 设置最大长度为20行
             # 用 nan 补齐所有列为20行
@@ -196,7 +203,7 @@ class NCParser(BaseParser):
         except Exception as e:
             logger.error(f"采样 NetCDF 文件失败: {e}")
             raise
-
+        
     def write(self, table: pa.Table, output_path: str):
         """
         将 Arrow Table 写回 NetCDF 文件。
