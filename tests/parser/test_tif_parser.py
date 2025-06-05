@@ -142,9 +142,9 @@ def test_tif_sample(tif_path):
     for col in table.columns:
         arr = col.to_numpy()
         assert len(arr) == table.num_rows
-    table_schema = table.schema
-    logger.info(f"sample方法解析的表结构: {table_schema}")
-    logger.info("------------------------")
+    print("sample Arrow Table 列:", table.column_names)
+    print("sample Arrow Table 行数:", table.num_rows)
+    print("sample Arrow Table schema:", table.schema)
     print(table)
     print("sample方法测试通过")
     

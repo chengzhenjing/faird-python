@@ -143,14 +143,13 @@ class NCParser(BaseParser):
         """
         从 NetCDF 文件中采样数据，返回 Arrow Table。
         默认每个变量只读取前10个主轴切片（如 time 维度的前10个）。
-        用 nan 补齐所有列为相同长度，避免 ArrowInvalid 错误。
+        最终所有列补齐为100行（不足补NaN，超出截断），避免 ArrowInvalid 错误。
         并为 schema 添加 metadata。
         """
         try:
             ds = xr.open_dataset(file_path)
             var_names = [v for v in ds.variables if ds[v].ndim > 0]
             arrays = []
-            max_len = 0
             arr_list = []
             # 先采样并记录每列长度
             for v in var_names:
@@ -161,16 +160,15 @@ class NCParser(BaseParser):
                     arr = var.values
                 arr_flat = np.array(arr).flatten()
                 arr_list.append(arr_flat)
-                if len(arr_flat) > max_len:
-                    max_len = len(arr_flat)
-            # 用 nan 补齐所有列
+            max_len = 20  # 设置最大长度为20行
+            # 用 nan 补齐所有列为20行
             for arr_flat in arr_list:
                 if len(arr_flat) < max_len:
                     padded = np.full(max_len, np.nan, dtype=np.float64)
                     padded[:len(arr_flat)] = arr_flat.astype(np.float64)
                     arrays.append(pa.array(padded))
                 else:
-                    arrays.append(pa.array(arr_flat.astype(np.float64)))
+                    arrays.append(pa.array(arr_flat[:max_len].astype(np.float64)))
             # 构造 schema 并添加 metadata
             schema = pa.schema([pa.field(v, pa.float64()) for v in var_names])
             shapes = [tuple(ds[v].shape) for v in var_names]
