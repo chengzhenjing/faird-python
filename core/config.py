@@ -76,6 +76,10 @@ class FairdConfig:
         return self.get('instrument.info')
 
     @property
+    def network_link_info(self):
+        return self.get('network.link.info')
+
+    @property
     def neo4j_url(self):
         return self.get('neo4j_url')
 

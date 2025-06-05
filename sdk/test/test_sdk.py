@@ -24,8 +24,8 @@ def test_sdk():
     conn = DacpClient.connect(url)
 
     datasets = conn.list_datasets()
-    metadata = conn.get_dataset(datasets[5])
-    dataframes = conn.list_dataframes(datasets[5])
+    metadata = conn.get_dataset(datasets[1])
+    dataframes = conn.list_dataframes(datasets[1])
     #dataframes_auth = conn.list_user_auth_dataframes("柴宏雷")
 
     # 流式传输
@@ -35,6 +35,7 @@ def test_sdk():
 
     # dir parser
     dir_dataframe_name = dataframes[0]['dataframeName']
+    sample = conn.sample(dir_dataframe_name)
     df = conn.open(dir_dataframe_name)
     #df = conn.open("/Users/yaxuan/Desktop/测试用/2019年中国榆林市沟道信息.csv")
 

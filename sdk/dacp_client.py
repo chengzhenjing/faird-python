@@ -100,6 +100,16 @@ class DacpClient:
                 res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
                 return res_json
 
+    def sample(self, dataframe_name: str):
+        ticket = {
+            'dataframe_name': dataframe_name
+        }
+        with ConnectionManager.get_connection() as conn:
+            results = conn.do_action(pa.flight.Action("sample", json.dumps(ticket).encode('utf-8')))
+            for res in results:
+                res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
+                return res_json
+
     def open(self, dataframe_name: str):
         from sdk.dataframe import DataFrame
         ticket = {
