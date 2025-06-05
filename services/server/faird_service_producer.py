@@ -123,6 +123,10 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             instrument_info = FairdConfigManager.get_config().instrument_info
             return iter([pa.flight.Result(instrument_info.encode("utf-8"))])
 
+        elif action_type == "get_network_link_info":
+            network_link_info = FairdConfigManager.get_config().network_link_info
+            return iter([pa.flight.Result(network_link_info.encode("utf-8"))])
+
         elif action_type == "list_datasets":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
             token = ticket_data.get("token")
@@ -155,6 +159,12 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             dataframes = self.data_source_service.list_user_auth_dataframes(username)
             return iter([pa.flight.Result(json.dumps(dataframes).encode())])
 
+        elif action_type == "sample":
+            ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
+            dataframe_name = ticket_data.get("dataframe_name")
+            sample = self.sample_action(dataframe_name)
+            return iter([pa.flight.Result(json.dumps(sample).encode())])
+
         elif action_type == "open":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
             connection_id = ticket_data.get('connection_id')
@@ -186,6 +196,46 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
 
         else:
             return None
+
+    def sample_action(self, dataframe_name):
+        parsed_url = urlparse(dataframe_name)
+        dataset_name = f"{parsed_url.scheme}://{parsed_url.netloc}/{parsed_url.path.split('/', 2)[1]}"
+        relative_path = '/' + parsed_url.path.split('/', 2)[2]  # 相对路径
+        file_path = FairdConfigManager.get_config().storage_local_path + relative_path  # 绝对路径
+        file_extension = os.path.splitext(file_path)[1].lower()
+        # 暂时这样适配文件夹类型
+        sample_table = None
+        if file_extension == "":
+            sample_table = dir_parser.DirParser().sample_dir(file_path, dataset_name)
+        else:
+            parser_switch = {
+                ".csv": csv_parser.CSVParser,
+                ".json": None,
+                ".xml": None,
+                ".nc": nc_parser.NCParser,
+                ".tiff": tif_parser.TIFParser,
+                ".tif": tif_parser.TIFParser
+            }
+            parser_class = parser_switch.get(file_extension)
+            if not parser_class:
+                raise ValueError(f"Unsupported file extension: {file_extension}")
+            parser = parser_class()
+            sample_table = parser.sample(file_path)
+        schema_list = []
+        schema_names = sample_table.schema.names
+        schema_type = sample_table.schema.types
+        for idx in range(len(schema_names)):
+            col = {
+                'col_name': schema_names[idx],
+                'col_type': schema_type[idx]
+            }
+            schema_list.append(col)
+        sample_dict = {
+            'schema': schema_list,
+            'schema_metadata': sample_table.schema.metadata,
+            'sample_data': sample_table.to_string()
+        }
+        return sample_dict
 
     def open_action(self, dataframe_name):
         parsed_url = urlparse(dataframe_name)
