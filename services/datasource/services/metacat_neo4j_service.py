@@ -103,15 +103,35 @@ class MetaCatNeo4jService(FairdDatasourceInterface):
             logger.error(f"Error parsing response: {e}")
             return None
 
-    def list_dataframes(self, token: str, dataset_name: str):
+    def get_dataframes_length(self, dataset_name: str) -> int:
+        try:
+            dataset_id = self.datasets[dataset_name]
+            query = ('MATCH (n:DatasetFile {datasetId: "' + dataset_id + '"}) '
+                     'WHERE n.isFile = true OR n.type = "dir" '
+                     'RETURN COUNT(n) AS total_count')
+            with self.neo4j_driver.session() as session:
+                result = session.run(query)
+                record = result.single()
+                if record:
+                    return record.get("total_count", 0)
+                else:
+                    return 0
+        except Exception as e:
+            logger.error(f"Error fetching dataframes length from Neo4j: {e}")
+            return 0
+
+    def list_dataframes(self, token: str, dataset_name: str, page: int = None, limit: int = None):
         try:
             dataset_id = self.datasets[dataset_name]
             root_path = self.config.storage_local_path
-            query = ('MATCH (n:DatasetFile{datasetId:"' + dataset_id + '"}) where n.isFile=true or n.type ="dir" '
-                     'RETURN n.datasetId as datasetId,n.name as name,n.suffix as suffix,n.type as type,n.path as path,n.size as size,n.time as time')
+            query_template = ('MATCH (n:DatasetFile{datasetId:"' + dataset_id + '"}) '
+                     'WHERE n.isFile=true or n.type ="dir" '
+                     'RETURN n.datasetId as datasetId,n.name as name,n.suffix as suffix,n.type as type,n.path as path,n.size as size,n.time as time '
+                     'SKIP $skip LIMIT $limit')
             dataframes = []
+            skip = (page - 1) * limit
             with self.neo4j_driver.session() as session:
-                result = session.run(query)
+                result = session.run(query_template, skip=skip, limit=limit)
                 for record in result:
                     time_value = record.get('time')
                     if isinstance(time_value, neo4j.time.DateTime):
@@ -119,7 +139,6 @@ class MetaCatNeo4jService(FairdDatasourceInterface):
                     else:
                         time_str = str(time_value)  # 如果是字符串，直接使用
                     df = {
-                        # 'id': record.get('id'),
                         'datasetId': record.get('datasetId'),
                         'name': record.get('name'),
                         'path': record.get('path'),

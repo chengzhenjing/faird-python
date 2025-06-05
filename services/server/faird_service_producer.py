@@ -132,8 +132,8 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             token = ticket_data.get("token")
             page = int(ticket_data.get("page"))
             limit = int(ticket_data.get("limit"))
-            result = pa.flight.Result(json.dumps(self.data_source_service.list_dataset(token=token, page=page, limit=limit)).encode())
-            return iter([result])
+            datasets = self.data_source_service.list_dataset(token=token, page=page, limit=limit)
+            return iter([pa.flight.Result(json.dumps(datasets).encode("utf-8"))])
 
         elif action_type == "get_dataset":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
@@ -150,8 +150,19 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
             token = ticket_data.get("token")
             dataset_name = ticket_data.get("dataset_name")
-            dataframes = self.data_source_service.list_dataframes(token, dataset_name)
-            return iter([pa.flight.Result(json.dumps(dataframes).encode())])
+            total_length = self.data_source_service.get_dataframes_length(dataset_name)
+            if total_length == 0:
+                logger.info("total length is 0")
+                return iter([])
+            else:
+                limit = 10000
+                total_pages = math.ceil(total_length / limit)
+                def dataframe_generator():
+                    for page in range(1, total_pages + 1):
+                        dataframes = self.data_source_service.list_dataframes(token, dataset_name, page=page, limit=limit)
+                        if dataframes:
+                            yield pa.flight.Result(json.dumps(dataframes).encode("utf-8"))
+                return dataframe_generator()
 
         elif action_type == "list_user_auth_dataframes":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
