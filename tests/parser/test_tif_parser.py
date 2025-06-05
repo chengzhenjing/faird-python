@@ -127,6 +127,27 @@ def test_real_tif(tif_path):
     logger.info("------------------------")
     print(table)
     
+def test_tif_sample(tif_path):
+    assert os.path.exists(tif_path), f"测试文件不存在: {tif_path}"
+    parser = TIFParser()
+    table = parser.sample(tif_path)
+    print("Arrow Table schema:", table.schema)
+    print("Arrow Table preview:")
+    print(table.to_pandas().head())
+    # 基本断言
+    assert isinstance(table, pa.Table)
+    assert table.num_columns > 0
+    assert table.num_rows > 0
+    # 检查是否有NaN补齐
+    for col in table.columns:
+        arr = col.to_numpy()
+        assert len(arr) == table.num_rows
+    table_schema = table.schema
+    logger.info(f"sample方法解析的表结构: {table_schema}")
+    logger.info("------------------------")
+    print(table)
+    print("sample方法测试通过")
+    
     
     
 if __name__ == "__main__":
@@ -140,5 +161,7 @@ if __name__ == "__main__":
     #     test_parse_and_write_hwcbands(tmp_path)
     #     test_parse_and_write_multipage(tmp_path)
     #     test_invalid_shape(tmp_path)
-    test_real_tif("D:\\test\\faird\\sample.tiff")  # 替换为实际的TIFF文件路径
+    # test_real_tif("D:\\test\\faird\\sample.tiff")  # 替换为实际的TIFF文件路径
+    logger.info("开始测试sample方法")
+    test_tif_sample(r"D:\test\faird\sample.tiff")  # 替换为实际的TIFF文件路径
     logger.info("全部测试完成")

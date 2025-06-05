@@ -298,3 +298,37 @@ page1_band1: double
 ----
 page1_band1: [[-3.4028234663852886e+38,-3.4028234663852886e+38,-3.4028234663852886e+38,-3.4028234663852886e+38,-3.4028234663852886e+38,...,-3.4028234663852886e+38,-3.4028234663852886e+38,-3.4028234663852886e+38,-3.4028234663852886e+38,-3.4028234663852886e+38]]
 INFO:__main__:全部测试完成
+
+INFO:__main__:开始测试sample方法
+INFO:parser.tif_parser:开始采样 TIFF 文件: D:\test\faird\sample.tiff
+INFO:parser.tif_parser:第一页 shape: (329, 358), dtype: float32
+INFO:parser.tif_parser:采样二维影像，波段数: 1
+INFO:parser.tif_parser:采样完成，生成 Arrow Table，列: ['page1_band1']，每列采样长度: 100，orig_lengths: [100]
+Arrow Table schema: page1_band1: double
+-- schema metadata --
+shapes: '[(329, 358)]'
+dtypes: '['float32']'
+orig_lengths: '[100]'
+file_type: 'TIFF'
+sample: 'True'
+Arrow Table preview:
+    page1_band1
+0 -3.402823e+38
+1 -3.402823e+38
+2 -3.402823e+38
+3 -3.402823e+38
+4 -3.402823e+38
+INFO:__main__:sample方法解析的表结构: page1_band1: double
+-- schema metadata --
+shapes: '[(329, 358)]'
+dtypes: '['float32']'
+orig_lengths: '[100]'
+file_type: 'TIFF'
+sample: 'True'
+INFO:__main__:------------------------
+pyarrow.Table
+page1_band1: double
+----
+page1_band1: [[-3.4028234663852886e+38,-3.4028234663852886e+38,-3.4028234663852886e+38,-3.4028234663852886e+38,-3.4028234663852886e+38,...,-3.4028234663852886e+38,-3.4028234663852886e+38,-3.4028234663852886e+38,-3.4028234663852886e+38,-3.4028234663852886e+38]]    
+sample方法测试通过
+INFO:__main__:全部测试完成

@@ -163,3 +163,97 @@ class TIFParser(BaseParser):
         except Exception as e:
             logger.error(f"写入 TIFF 文件失败: {e}")
             raise
+    
+    def sample(self, file_path):
+        """
+        从 TIFF 文件中采样数据，返回 Arrow Table。
+        这里简单实现为读取第一页（或第一波段）前100个像素，自动补齐为相同长度，并添加schema的metadata。
+        """
+        import pyarrow as pa
+        import tifffile
+        import numpy as np
+
+        try:
+            logger.info(f"开始采样 TIFF 文件: {file_path}")
+            with tifffile.TiffFile(file_path) as tif:
+                if len(tif.pages) == 0:
+                    logger.error("TIFF 文件无有效页")
+                    raise ValueError("TIFF 文件无有效页")
+                img = tif.pages[0].asarray()
+                logger.info(f"第一页 shape: {img.shape}, dtype: {img.dtype}")
+                arrays = []
+                names = []
+                shapes = []
+                dtypes = []
+                orig_lengths = []
+                if img.ndim == 2:
+                    arr = img.flatten().astype(np.float64)
+                    arrays.append(arr[:100])
+                    names.append('page1_band1')
+                    shapes.append(img.shape)
+                    dtypes.append(str(img.dtype))
+                    orig_lengths.append(min(100, arr.size))
+                    logger.info("采样二维影像，波段数: 1")
+                elif img.ndim == 3:
+                    # (B, H, W)
+                    if img.shape[0] in [1, 3, 4] and img.shape[0] < img.shape[1] and img.shape[0] < img.shape[2]:
+                        logger.info(f"采样三维影像，按(B, H, W)模式，波段数: {img.shape[0]}")
+                        for b in range(img.shape[0]):
+                            arr = img[b, :, :].flatten().astype(np.float64)
+                            arrays.append(arr[:100])
+                            names.append(f'page1_band{b+1}')
+                            shapes.append(img[b, :, :].shape)
+                            dtypes.append(str(img.dtype))
+                            orig_lengths.append(min(100, arr.size))
+                    # (H, W, B)
+                    elif img.shape[2] in [1, 3, 4] and img.shape[2] < img.shape[0] and img.shape[2] < img.shape[1]:
+                        logger.info(f"采样三维影像，按(H, W, B)模式，波段数: {img.shape[2]}")
+                        for b in range(img.shape[2]):
+                            arr = img[:, :, b].flatten().astype(np.float64)
+                            arrays.append(arr[:100])
+                            names.append(f'page1_band{b+1}')
+                            shapes.append(img[:, :, b].shape)
+                            dtypes.append(str(img.dtype))
+                            orig_lengths.append(min(100, arr.size))
+                    else:
+                        logger.info("采样三维影像，未知排列，直接flatten")
+                        arr = img.flatten().astype(np.float64)
+                        arrays.append(arr[:100])
+                        names.append('page1_flatten')
+                        shapes.append(img.shape)
+                        dtypes.append(str(img.dtype))
+                        orig_lengths.append(min(100, arr.size))
+                else:
+                    logger.info("采样高维影像，直接flatten")
+                    arr = img.flatten().astype(np.float64)
+                    arrays.append(arr[:100])
+                    names.append('page1_flatten')
+                    shapes.append(img.shape)
+                    dtypes.append(str(img.dtype))
+                    orig_lengths.append(min(100, arr.size))
+                # 补齐
+                max_len = max(len(arr) for arr in arrays)
+                pa_arrays = []
+                for arr in arrays:
+                    if len(arr) < max_len:
+                        padded = np.full(max_len, np.nan, dtype=np.float64)
+                        padded[:len(arr)] = arr
+                        pa_arrays.append(pa.array(padded))
+                    else:
+                        pa_arrays.append(pa.array(arr))
+                # 构造schema并添加metadata
+                schema = pa.schema([pa.field(n, pa.float64()) for n in names])
+                meta = {
+                    "shapes": str(shapes),
+                    "dtypes": str(dtypes),
+                    "orig_lengths": str(orig_lengths),
+                    "file_type": "TIFF",
+                    "sample": "True"
+                }
+                schema = schema.with_metadata({k: str(v).encode() for k, v in meta.items()})
+                table = pa.table(pa_arrays, schema=schema)
+                logger.info(f"采样完成，生成 Arrow Table，列: {names}，每列采样长度: {max_len}，orig_lengths: {orig_lengths}")
+                return table
+        except Exception as e:
+            logger.error(f"采样 TIFF 文件失败: {e}")
+            raise
