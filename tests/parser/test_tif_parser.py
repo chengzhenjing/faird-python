@@ -131,9 +131,9 @@ def test_tif_sample(tif_path):
     assert os.path.exists(tif_path), f"测试文件不存在: {tif_path}"
     parser = TIFParser()
     table = parser.sample(tif_path)
-    print("Arrow Table schema:", table.schema)
-    print("Arrow Table preview:")
-    print(table.to_pandas().head())
+    # print("Arrow Table schema:", table.schema)
+    # print("Arrow Table preview:")
+    # print(table.to_pandas().head())
     # 基本断言
     assert isinstance(table, pa.Table)
     assert table.num_columns > 0
