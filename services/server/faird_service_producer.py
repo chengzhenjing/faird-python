@@ -3,7 +3,6 @@ import os
 from urllib.parse import urlparse
 import math
 import pyarrow.flight
-from pandas.io.common import file_exists
 
 from sdk.dataframe import DataFrame
 from services.connection.faird_connection import FairdConnection
@@ -210,14 +209,11 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             return None
 
     def sample_action(self, dataframe_name):
-        # parsed_url = urlparse(dataframe_name)
-        # dataset_name = f"{parsed_url.scheme}://{parsed_url.netloc}/{parsed_url.path.split('/', 2)[1]}"
-        # relative_path = '/' + parsed_url.path.split('/', 2)[2]  # 相对路径
-        # file_path = FairdConfigManager.get_config().storage_local_path + relative_path  # 绝对路径
-        # file_extension = os.path.splitext(file_path)[1].lower()
-        dataset_name = 'dacp://0.0.0.0:3101/中尺度涡旋数据集'
-        file_extension = ""
-        file_path = ""
+        parsed_url = urlparse(dataframe_name)
+        dataset_name = f"{parsed_url.scheme}://{parsed_url.netloc}/{parsed_url.path.split('/', 2)[1]}"
+        relative_path = '/' + parsed_url.path.split('/', 2)[2]  # 相对路径
+        file_path = FairdConfigManager.get_config().storage_local_path + relative_path  # 绝对路径
+        file_extension = os.path.splitext(file_path)[1].lower()
         # 暂时这样适配文件夹类型
         sample_table = None
         if file_extension == "":
@@ -254,14 +250,11 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         return sample_json
 
     def open_action(self, dataframe_name):
-        # parsed_url = urlparse(dataframe_name)
-        # dataset_name = f"{parsed_url.scheme}://{parsed_url.netloc}/{parsed_url.path.split('/', 2)[1]}"
-        # relative_path = '/' + parsed_url.path.split('/', 2)[2]  # 相对路径
-        # file_path = FairdConfigManager.get_config().storage_local_path + relative_path  # 绝对路径
-        # file_extension = os.path.splitext(file_path)[1].lower()
-        dataset_name = 'dacp://0.0.0.0:3101/中尺度涡旋数据集'
-        file_extension = ""
-        file_path = ""
+        parsed_url = urlparse(dataframe_name)
+        dataset_name = f"{parsed_url.scheme}://{parsed_url.netloc}/{parsed_url.path.split('/', 2)[1]}"
+        relative_path = '/' + parsed_url.path.split('/', 2)[2]  # 相对路径
+        file_path = FairdConfigManager.get_config().storage_local_path + relative_path  # 绝对路径
+        file_extension = os.path.splitext(file_path)[1].lower()
         # 暂时这样适配文件夹类型
         if file_extension == "":
             arrow_table = dir_parser.DirParser().parse_dir(file_path, dataset_name)
