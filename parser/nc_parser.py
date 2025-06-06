@@ -208,6 +208,8 @@ class NCParser(BaseParser):
 
         """
         try:
+            # if file_path.startswith("/"):
+            #     file_path = file_path[1:]
             ds = xr.open_dataset(file_path, decode_cf=False)
             var_names = [v for v in ds.variables if ds[v].ndim > 0]
             arrays = []

@@ -27,6 +27,7 @@ from services.server.faird_server import FairdServer
 def main():
     ## Load configuration
     FairdConfigManager.load_config(os.path.join(current_dir, 'faird.conf'))
+    # FairdConfigManager.load_config(os.path.join(current_dir, 'faird-dev.conf'))
     config = FairdConfigManager.get_config()
     if not config:
         logger.error("Failed to load configuration.")

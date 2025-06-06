@@ -260,16 +260,10 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         # 处理bytes类型序列化
         # metadata_bytes = sample_table.schema.metadata
         # sample_metadata = decode_bytes_keys(metadata_bytes)
-        meta = {k.decode(): v.decode() for k, v in sample_table.schema.metadata.items()}
-        # 优先用 parser 的 meta_to_json，如果没有则返回空json
-        if hasattr(parser, "meta_to_json"):
-            meta_json_data = parser.meta_to_json(meta)
-        else:
-            meta_json_data = {}
         sample_json = {
             'schema_names': schema_names,
             'schema_types': schema_types,
-            'schema_metadata': meta_json_data,
+            # 'schema_metadata': meta_json_data,
             'sample_data': sample_data
         }
         return sample_json
