@@ -1,7 +1,7 @@
 # sdk使用方式
 
 ## 1. 安装
-
+版本管理：https://pypi.org/project/faird/#history
 ```bash
 pip install faird
 ```
@@ -13,24 +13,57 @@ from sdk import DataFrame, DacpClient, Principal
 ```
 ### 2.2. 连接faird服务
 ```python
-url = "dacp://localhost:3101"
+url = "dacp://60.245.194.25:50201"
 username = "faird-user1"
 password = "user1@cnic.cn"
 
-conn = DacpClient.connect(url, Principal.oauth("conet", username, password))
+# 方式一：用户名/密码
+conn = DacpClient.connect(url, Principal.oauth("conet", username=username, password=password))
+
+# 方式二：匿名
+conn = DacpClient.connect(url)
+conn = DacpClient.connect(url, Principal.ANONYMOUS)
+
+# 方式三：controld连接
+conn = DacpClient.connect(url, Principal.oauth("controld", controld_domain_name="controld_domain_name", signature="signature"))
 ```
 
-### 2.3. 获取数据目录
+### 2.3. 获取数据集列表
 ```python
 datasets = conn.list_datasets()
-datasets = conn.list_datasets(page=1, limit=1000)
-
-dataframe_ids = conn.list_dataframes(datasets[0].get('name'))
 ```
 
-### 2.4. 打开dataframe
+### 2.4. 获取数据集元信息
 ```python
-df = conn.open(dataframe_ids[0])
+metadata = conn.get_dataset(datasets[0])
+```
+
+### 2.5. 获取数据集下的数据帧列表
+```python
+# 方式一：全量返回
+dataframes = conn.list_dataframes(datasets[1])
+
+# 方式二：流式返回
+for chunk in conn.list_dataframes_stream(datasets[1]):
+  print(f"Chunk size: {len(chunk)}")
+```
+
+### 2.6. 获取数据帧的数据流
+```python
+total_size = 0
+for chunk in conn.get_dataframe_stream(dataframe_name, max_chunksize=1024*1024*5):
+    total_size += len(chunk)
+print(f"total size: {total_size} Bytes")
+```
+
+### 2.7. 获取数据帧的数据样例
+```python
+sample = conn.sample(dataframe_name)
+```
+
+### 2.8. 打开dataframe
+```python
+df = conn.open(dataframe_name)
 ```
 
 ## 3. DataFrame API
