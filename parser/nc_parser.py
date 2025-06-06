@@ -8,6 +8,8 @@ import xarray as xr
 import dask.array as da
 import netCDF4
 import cftime
+import ast
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -276,3 +278,65 @@ class NCParser(BaseParser):
         except Exception as e:
             logger.error(f"采样 NetCDF 文件失败: {e}")
             raise
+        import ast
+    
+    def meta_to_json(self, meta: dict):
+        """
+        将 sample 方法生成的 meta 字典转为适合前端展示的 JSON 格式（变量为列，属性为行）。
+        用法示例
+        meta = {k.decode(): v.decode() for k, v in table.schema.metadata.items()}
+        json_data = meta_to_json(meta)
+        print(json_data)
+        """
+        def safe_eval(val, default):
+            try:
+                return ast.literal_eval(val)
+            except Exception:
+                return default
+    
+        shapes = safe_eval(meta.get('shapes', '[]'), [])
+        dtypes = safe_eval(meta.get('dtypes', '[]'), [])
+        var_names = safe_eval(meta.get('var_names', '[]'), [])
+        var_attrs = safe_eval(meta.get('var_attrs', '{}'), {})
+        fill_values = safe_eval(meta.get('fill_values', '{}'), {})
+        var_dims = safe_eval(meta.get('var_dims', '{}'), {})
+        orig_lengths = safe_eval(meta.get('orig_lengths', '[]'), [])
+        global_attrs = safe_eval(meta.get('global_attrs', '{}'), {})
+    
+        # 组织每个变量的属性
+        data = {}
+        for i, v in enumerate(var_names):
+            data[v] = {
+                "shape": shapes[i] if i < len(shapes) else "",
+                "dtype": dtypes[i] if i < len(dtypes) else "",
+                "var_attrs": var_attrs.get(v, {}),
+                "fill_value": fill_values.get(v, ""),
+                "var_dims": var_dims.get(v, ""),
+                "orig_length": orig_lengths[i] if i < len(orig_lengths) else ""
+            }
+        # 增加全局属性一列
+        data["global_attrs"] = {
+            "shape": "",
+            "dtype": "",
+            "var_attrs": "",
+            "fill_value": "",
+            "var_dims": "",
+            "orig_length": "",
+            "global_attrs": global_attrs
+        }
+    
+        # 行顺序
+        row_order = ["shape", "dtype", "var_attrs", "fill_value", "var_dims", "orig_length", "global_attrs"]
+    
+        # 转为前端友好的json
+        result = {
+            "columns": list(data.keys()),
+            "rows": [
+                {
+                    "attribute": row,
+                    **{col: data[col].get(row, "") for col in data}
+                }
+                for row in row_order
+            ]
+        }
+        return result

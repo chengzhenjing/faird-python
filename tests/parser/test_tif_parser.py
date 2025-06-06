@@ -6,6 +6,7 @@ import pyarrow as pa
 import tifffile
 import logging
 from parser.tif_parser import TIFParser
+import json
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -141,6 +142,10 @@ def test_tif_sample(tif_path):
     # print("Arrow Table schema:", table.schema)
     # print("Arrow Table preview:")
     # print(table.to_pandas().head())
+    # 用法示例
+    meta = {k.decode(): v.decode() for k, v in table.schema.metadata.items()}
+    json_data = parser.meta_to_json(meta)
+    logger.info(f"采样结果的元数据:{json.dumps(json_data)}")
     # 基本断言
     assert isinstance(table, pa.Table)
     assert table.num_columns > 0
@@ -169,13 +174,13 @@ if __name__ == "__main__":
     #     test_parse_and_write_hwcbands(tmp_path)
     #     test_parse_and_write_multipage(tmp_path)
     #     test_invalid_shape(tmp_path)
-        logger.info("开始测试多波段TIFF文件解析和写入,file_path [%s]", r"D:\test\faird\sample.tiff")
-        test_real_tif(r"D:\test\faird\sample.tiff", tmp_path, "sample_write.tiff")
-        logger.info("开始测试单波段TIFF文件解析和写入,file_path [%s]", r"D:\test\faird\R-factor.tif")
-        test_real_tif(r"D:\test\faird\R-factor.tif", tmp_path, "R-factor_write.tif")
-        logger.info("开始测试HWC多波段TIFF文件解析和写入,file_path [%s]", r"D:\test\faird\k-factorSD1.tif")
-        test_real_tif(r"D:\test\faird\k-factorSD1.tif", tmp_path, "k-factorSD1_write.tif")
-        logger.info("测试实际TIFF文件解析和写入完成")
+        # logger.info("开始测试多波段TIFF文件解析和写入,file_path [%s]", r"D:\test\faird\sample.tiff")
+        # test_real_tif(r"D:\test\faird\sample.tiff", tmp_path, "sample_write.tiff")
+        # logger.info("开始测试单波段TIFF文件解析和写入,file_path [%s]", r"D:\test\faird\R-factor.tif")
+        # test_real_tif(r"D:\test\faird\R-factor.tif", tmp_path, "R-factor_write.tif")
+        # logger.info("开始测试HWC多波段TIFF文件解析和写入,file_path [%s]", r"D:\test\faird\k-factorSD1.tif")
+        # test_real_tif(r"D:\test\faird\k-factorSD1.tif", tmp_path, "k-factorSD1_write.tif")
+        # logger.info("测试实际TIFF文件解析和写入完成")
     logger.info("开始测试sample方法")
     test_tif_sample(r"D:\test\faird\sample.tiff")  # 替换为实际的TIFF文件路径
     logger.info("全部测试完成")

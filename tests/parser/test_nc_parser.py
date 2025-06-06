@@ -8,6 +8,7 @@ import tempfile
 import logging
 from parser.nc_parser import NCParser
 import time
+import json
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -125,6 +126,11 @@ def test_nc_parser_sample(nc_file_path):
     logger.info(f"测试 NCParser 的 sample 方法, 文件路径: {nc_file_path}")
     parser = NCParser()
     table = parser.sample(str(nc_file_path))
+    # 用法示例
+    meta = {k.decode(): v.decode() for k, v in table.schema.metadata.items()}
+    json_data = parser.meta_to_json(meta)
+    logger.info(f"采样结果的元数据:{json.dumps(json_data)}")
+    # print(json_data)
     assert isinstance(table, pa.Table)
     print("sample Arrow Table 列:", table.column_names)
     print("sample Arrow Table 行数:", table.num_rows)
@@ -163,6 +169,7 @@ if __name__ == "__main__":
     test_nc_parser_sample(r"D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_tracks_gridded_yearly.nc")
     test_nc_parser_sample(r"D:\test\faird\nc\air.mon.1981-2010.ltm.nc")
     test_nc_parser_sample(r"D:\test\faird\nc\HadSST.3.1.1.0.anomalies.1.nc")
+
     logger.info("所有采样测试通过")
     logger.info("测试完成")
         

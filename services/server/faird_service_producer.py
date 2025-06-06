@@ -239,12 +239,18 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         sample_data = {col: sample_table.column(col).slice(0, 10).to_pylist() for col in sample_table.column_names}
         sample_data = replace_nan(sample_data)
         # 处理bytes类型序列化
-        metadata_bytes = sample_table.schema.metadata
-        sample_metadata = decode_bytes_keys(metadata_bytes)
+        # metadata_bytes = sample_table.schema.metadata
+        # sample_metadata = decode_bytes_keys(metadata_bytes)
+        meta = {k.decode(): v.decode() for k, v in sample_table.schema.metadata.items()}
+        # 优先用 parser 的 meta_to_json，如果没有则返回空json
+        if hasattr(parser, "meta_to_json"):
+            meta_json_data = parser.meta_to_json(meta)
+        else:
+            meta_json_data = {}
         sample_json = {
             'schema_names': schema_names,
             'schema_types': schema_types,
-            'schema_metadata': sample_metadata,
+            'schema_metadata': meta_json_data,
             'sample_data': sample_data
         }
         return sample_json

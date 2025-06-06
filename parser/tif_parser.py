@@ -348,3 +348,42 @@ class TIFParser(BaseParser):
         except Exception as e:
             logger.error(f"采样 TIFF 文件失败: {e}")
             raise
+        
+    # def meta_to_json(self, meta: dict):
+    #     """
+    #     只返回 shape 和 dtype，变量为列，属性为行，适合前端表格展示。波段很少的很难看，只有一列，暂时不提供吧
+    #     """
+    #     import ast
+    #     def safe_eval(val, default):
+    #         try:
+    #             return ast.literal_eval(val)
+    #         except Exception:
+    #             return default
+
+    #     shapes = safe_eval(meta.get('shapes', '[]'), [])
+    #     dtypes = safe_eval(meta.get('dtypes', '[]'), [])
+    #     band_names = safe_eval(meta.get('band_names', '[]'), [])
+    #     # 如果没有band_names就用 band1, band2...
+    #     if not band_names:
+    #         band_names = [f"band{i+1}" for i in range(len(shapes))]
+
+    #     data = {}
+    #     for i, v in enumerate(band_names):
+    #         data[v] = {
+    #             "shape": shapes[i] if i < len(shapes) else "",
+    #             "dtype": dtypes[i] if i < len(dtypes) else ""
+    #         }
+
+    #     row_order = ["shape", "dtype"]
+
+    #     result = {
+    #         "columns": list(data.keys()),
+    #         "rows": [
+    #             {
+    #                 "attribute": row,
+    #                 **{col: data[col].get(row, "") for col in data}
+    #             }
+    #             for row in row_order
+    #         ]
+    #     }
+    #     return result
