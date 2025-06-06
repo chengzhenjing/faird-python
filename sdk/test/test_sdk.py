@@ -27,17 +27,17 @@ def test_sdk():
     metadata = conn.get_dataset(datasets[12])
     dataframes = conn.list_dataframes(datasets[12])
     # 改流式
-    dataframes_chunk = []
-    for chunk in conn.list_dataframes(datasets[1]):
-        dataframes_chunk = chunk
-        print(f"Chunk size: {len(dataframes_chunk)}")
+    for chunk in conn.list_dataframes_stream(datasets[12]):
+        print(f"Chunk size: {len(chunk)}")
 
     #dataframes_auth = conn.list_user_auth_dataframes("柴宏雷")
 
     # 流式传输
     dataframe_name = dataframes[3]['dataframeName']
     base64_str = conn.get_base64(dataframe_name)
-    #is_same = verify_base64(base64_str, "/Users/yaxuan/Desktop/sharedata/dataset/historical/SD039-SurfOcean_CO2_Atlas/SOCATv2021_Gridded_Dat/SOCATv2021_tracks_gridded_decadal.csv")
+    print(f"size: {len(base64_str)}")
+    for chunk in conn.get_base64_stream(dataframe_name):
+        print(f"Chunk size: {len(chunk)}")
 
     # # dir parser
     dir_dataframe_name = dataframes[0]['dataframeName']

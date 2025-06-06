@@ -150,12 +150,13 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
             token = ticket_data.get("token")
             dataset_name = ticket_data.get("dataset_name")
+            max_chunksize = ticket_data.get("max_chunksize")
             total_length = self.data_source_service.get_dataframes_length(dataset_name)
             if total_length == 0:
                 logger.info("total length is 0")
                 return iter([])
             else:
-                limit = 10000
+                limit = max_chunksize
                 total_pages = math.ceil(total_length / limit)
                 def dataframe_generator():
                     for page in range(1, total_pages + 1):
@@ -190,10 +191,10 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         elif action_type == "get_base64":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
             dataframe_name = ticket_data.get("dataframe_name")
+            max_chunksize = ticket_data.get("max_chunksize")
             base64_str = self.get_base64_action(dataframe_name)
-
             # 分块生成器
-            def base64_chunk_generator(base64_str, chunk_size=1024 * 1024):  # 每块1MB
+            def base64_chunk_generator(base64_str, chunk_size=max_chunksize):
                 for i in range(0, len(base64_str), chunk_size):
                     yield pa.flight.Result(base64_str[i:i + chunk_size].encode("utf-8"))
 

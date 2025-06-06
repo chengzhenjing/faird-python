@@ -87,7 +87,22 @@ class DacpClient:
             for res in results:
                 res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
                 dataframes.extend(res_json)
+                print(f"Successfully fetch {len(dataframes)} dataframes")
             return dataframes
+
+    def list_dataframes_stream(self, dataset_name: str, max_chunksize: Optional[int] = 50000):
+        ticket = {
+            'token': self.__token,
+            'username': self.__principal.params.get('username') if self.__principal and self.__principal.params else None,
+            'dataset_name': dataset_name,
+            'max_chunksize': max_chunksize
+        }
+        with ConnectionManager.get_connection() as conn:
+            reader = conn.do_action(pa.flight.Action("list_dataframes", json.dumps(ticket).encode('utf-8')))
+            for chunk in reader:
+                chunk_json = json.loads(chunk.body.to_pybytes().decode('utf-8'))
+                print(f"Successfully fetch {len(chunk_json)} dataframes")
+                yield chunk_json
 
     def list_user_auth_dataframes(self, username: str) -> List[str]:
         if username is None or username == "":
@@ -132,6 +147,18 @@ class DacpClient:
             for res in results:
                 base64_chunks.append(res.body.to_pybytes().decode("utf-8"))
             return "".join(base64_chunks)
+
+    def get_base64_stream(self, dataframe_name: str, max_chunksize: Optional[int] = 1024 * 1024 * 50):
+        ticket = {
+            'dataframe_name': dataframe_name,
+            'max_chunksize': max_chunksize
+        }
+        with ConnectionManager.get_connection() as conn:
+            reader = conn.do_action(pa.flight.Action("get_base64", json.dumps(ticket).encode('utf-8')))
+            for chunk in reader:
+                chunk_str = chunk.body.to_pybytes().decode("utf-8")
+                print(f"Successfully fetch {len(chunk_str)} base64 str")
+                yield chunk_str
 
 class AuthType(Enum):
     OAUTH = "oauth"
