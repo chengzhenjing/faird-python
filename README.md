@@ -23,7 +23,7 @@ conda config --set show_channel_urls yes
 
 **2.1 创建指令（pyarrow19.0.0可用版本为Python 3.9, 3.10, 3.11, 3.12 and 3.13.）**
 
-```conda create --name py312 python=3.12```
+```conda create --name py312 python=3.12.0```
 
 **2.2 激活环境**
 

@@ -12,14 +12,14 @@ logger = logging.getLogger(__name__)
 
 def test_sdk():
 
-    #url = "dacp://60.245.194.25:50201"
+    url = "dacp://60.245.194.25:50201"
     username = "faird-user1"
     password = "user1@cnic.cn"
     #conn = DacpClient.connect(url, Principal.oauth("conet", username=username, password=password))
     #conn = DacpClient.connect(url, Principal.oauth("controld", controld_domain_name="controld_domain_name", signature="signature"))
     #conn = DacpClient.connect(url, Principal.ANONYMOUS)
 
-    url = "dacp://localhost:3101"
+    #url = "dacp://localhost:3101"
     conn = DacpClient.connect(url)
 
     ## !! for local test
@@ -29,27 +29,28 @@ def test_sdk():
     print(sample)
 
     datasets = conn.list_datasets()
-    #has_permission = conn.check_permission(datasets[0], "faird-user1")
-    #metadata = conn.get_dataset(datasets[12])
-    #dataframes = conn.list_dataframes(datasets[1])
+    has_permission = conn.check_permission(datasets[0], "faird-user1")
+    metadata = conn.get_dataset(datasets[12])
 
 
+    dataframes = conn.list_dataframes(datasets[12])
+    # 改流式
+    for chunk in conn.list_dataframes_stream(datasets[12]):
+        print(f"Chunk size: {len(chunk)}")
+
+    dataframe_name = dataframes[3]['dataframeName']
     total_size = 0
     for chunk in conn.get_dataframe_stream(dataframe_name):
         total_size += len(chunk)
     print(f"total size: {total_size} Bytes")
 
-    # # 改流式
-    # for chunk in conn.list_dataframes_stream(datasets[1]):
-    #     print(f"Chunk size: {len(chunk)}")
-
-    # 流式传输
-    #dataframe_name = dataframes[3]['dataframeName']
-
-    # # dir parser
+    # dir sample
     dir_dataframe_name = dataframes[0]['dataframeName']
     sample = conn.sample(dir_dataframe_name)
-    df = conn.open(dir_dataframe_name)
+
+
+
+    # df = conn.open(dir_dataframe_name)
     # df = conn.open("/Users/yaxuan/Desktop/测试用/2019年中国榆林市沟道信息.csv")
     #
     # # csv parser
@@ -62,7 +63,7 @@ def test_sdk():
     #nc_dataframe_name = dataframes[4]['dataframeName']
     #sample = conn.sample(nc_dataframe_name)
     #df = conn.open(nc_dataframe_name)
-
+    df = DataFrame()
     print(f"表结构: {df.schema} \n")
     print(f"表大小: {df.shape} \n")
     print(f"行数: {df.num_rows} \n")  # 或者len(dataframe)
