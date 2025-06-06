@@ -51,7 +51,7 @@ for chunk in conn.list_dataframes_stream(datasets[1]):
 ### 2.6. 获取数据帧的数据流
 ```python
 total_size = 0
-for chunk in conn.get_dataframe_stream(dataframe_name):
+for chunk in conn.get_dataframe_stream(dataframe_name, max_chunksize=1024*1024*5):
     total_size += len(chunk)
 print(f"total size: {total_size} Bytes")
 ```

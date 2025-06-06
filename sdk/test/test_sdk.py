@@ -24,9 +24,9 @@ def test_sdk():
 
     ## !! for local test
     # dataframe_name = "dacp://0.0.0.0:3101/中尺度涡旋数据集/sharedata/dataset/historical/SD039-SurfOcean_CO2_Atlas/SOCATv2021_Gridded_Dat/SOCATv2021_qrtrdeg_gridded_coast_monthly.nc"
-    dataframe_name = r"dacp://0.0.0.0:3101/中尺度涡旋数据集/D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_qrtrdeg_gridded_coast_monthly.nc"
-    sample = conn.sample(dataframe_name)
-    print(sample)
+    # dataframe_name = r"dacp://0.0.0.0:3101/中尺度涡旋数据集/D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_qrtrdeg_gridded_coast_monthly.nc"
+    # sample = conn.sample(dataframe_name)
+    # print(sample)
 
     datasets = conn.list_datasets()
     has_permission = conn.check_permission(datasets[0], "faird-user1")
@@ -40,7 +40,7 @@ def test_sdk():
 
     dataframe_name = dataframes[3]['dataframeName']
     total_size = 0
-    for chunk in conn.get_dataframe_stream(dataframe_name):
+    for chunk in conn.get_dataframe_stream(dataframe_name, max_chunksize=1024*1024*5):
         total_size += len(chunk)
     print(f"total size: {total_size} Bytes")
 
