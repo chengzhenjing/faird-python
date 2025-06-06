@@ -200,6 +200,39 @@ class MetaCatNeo4jService(FairdDatasourceInterface):
             logger.error(f"Error fetching dataset files from Neo4j: {e}")
             return None
 
+    def check_permission(self, dataset_name: str, username: str) -> bool:
+        url = f"{self.metacat_url}/api/fair/checkPermission"
+        headers = {
+            "Authorization": self.metacat_token,
+            "Content-Type": "application/json"
+        }
+        # 获取数据集ID
+        dataset_id = self.datasets[dataset_name]
+        if dataset_id is None:
+            logger.error(f"dataset {dataset_name} not found in the dataset list.")
+            return None
+        params = {
+            "datasetId": dataset_id,
+            "username": username
+        }
+        try:
+            response = requests.get(url, headers=headers, params=params)
+            response.raise_for_status()  # 检查请求是否成功
+            if response.status_code != 200:
+                logger.error(f"Error fetching dataset details: {response.status_code}")
+                return None
+            data = response.json()
+            has_permission = data.get("data", "{}").get("result", default=False)
+            return has_permission
+        except Exception as e:
+            logger.error(f"Error fetching dataset info from metacat: {e}")
+            return False
+        except json.JSONDecodeError as e:
+            logger.error(f"Error decoding JSON resonse: {e}")
+            return False
+        except KeyError as e:
+            logger.error(f"Error parsing response: {e}")
+            return False
 
 
 def parse_metadata(raw_data: dict) -> Optional[DatasetMetadata]:

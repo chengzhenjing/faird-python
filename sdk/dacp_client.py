@@ -79,7 +79,8 @@ class DacpClient:
         ticket = {
             'token': self.__token,
             'username': self.__principal.params.get('username') if self.__principal and self.__principal.params else None,
-            'dataset_name': dataset_name
+            'dataset_name': dataset_name,
+            'max_chunksize': 50000
         }
         with ConnectionManager.get_connection() as conn:
             results = conn.do_action(pa.flight.Action("list_dataframes", json.dumps(ticket).encode('utf-8')))
@@ -87,7 +88,22 @@ class DacpClient:
             for res in results:
                 res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
                 dataframes.extend(res_json)
+                print(f"Successfully fetch {len(dataframes)} dataframes")
             return dataframes
+
+    def list_dataframes_stream(self, dataset_name: str, max_chunksize: Optional[int] = 50000):
+        ticket = {
+            'token': self.__token,
+            'username': self.__principal.params.get('username') if self.__principal and self.__principal.params else None,
+            'dataset_name': dataset_name,
+            'max_chunksize': max_chunksize
+        }
+        with ConnectionManager.get_connection() as conn:
+            reader = conn.do_action(pa.flight.Action("list_dataframes", json.dumps(ticket).encode('utf-8')))
+            for chunk in reader:
+                chunk_json = json.loads(chunk.body.to_pybytes().decode('utf-8'))
+                print(f"Successfully fetch {len(chunk_json)} dataframes")
+                yield chunk_json
 
     def list_user_auth_dataframes(self, username: str) -> List[str]:
         if username is None or username == "":
@@ -101,6 +117,17 @@ class DacpClient:
             for res in results:
                 res_json = json.loads(res.body.to_pybytes().decode('utf-8'))
                 return res_json
+
+    def check_permission(self, dataset_name: str, username: str) -> bool:
+        ticket = {
+            'dataset_name': dataset_name,
+            'username': username
+        }
+        with ConnectionManager.get_connection() as conn:
+            results = conn.do_action(pa.flight.Action("check_permission", json.dumps(ticket).encode('utf-8')))
+            for res in results:
+                res_str = res.body.to_pybytes().decode('utf-8')
+                return res_str.lower() == 'true'
 
     def sample(self, dataframe_name: str):
         ticket = {
@@ -121,17 +148,17 @@ class DacpClient:
             results = conn.do_action(pa.flight.Action("open", json.dumps(ticket).encode('utf-8')))
             return DataFrame(id=dataframe_name, connection_id=self.__connection_id)
 
-    def get_base64(self, dataframe_name: str) -> str:
+    def get_dataframe_stream(self, dataframe_name: str, max_chunksize: Optional[int] = 1024 * 1024 * 5):
         ticket = {
-            'dataframe_name': dataframe_name
+            'dataframe_name': dataframe_name,
+            'max_chunksize': max_chunksize
         }
         with ConnectionManager.get_connection() as conn:
-            # 接收流式结果
-            base64_chunks = []
-            results = conn.do_action(pa.flight.Action("get_base64", json.dumps(ticket).encode('utf-8')))
-            for res in results:
-                base64_chunks.append(res.body.to_pybytes().decode("utf-8"))
-            return "".join(base64_chunks)
+            reader = conn.do_action(pa.flight.Action("get_dataframe_stream", json.dumps(ticket).encode('utf-8')))
+            for chunk in reader:
+                chunk_bytes = chunk.body.to_pybytes()
+                print(f"Successfully fetch {len(chunk_bytes)} Bytes")
+                yield chunk_bytes
 
 class AuthType(Enum):
     OAUTH = "oauth"
