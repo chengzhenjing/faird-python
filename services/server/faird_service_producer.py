@@ -1,4 +1,3 @@
-import base64
 import os
 from urllib.parse import urlparse
 import math
@@ -151,6 +150,8 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             token = ticket_data.get("token")
             dataset_name = ticket_data.get("dataset_name")
             max_chunksize = ticket_data.get("max_chunksize")
+            if max_chunksize is None:
+                max_chunksize = 50000  # 设置默认值
             total_length = self.data_source_service.get_dataframes_length(dataset_name)
             if total_length == 0:
                 logger.info("total length is 0")
@@ -171,6 +172,13 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             dataframes = self.data_source_service.list_user_auth_dataframes(username)
             return iter([pa.flight.Result(json.dumps(dataframes).encode())])
 
+        elif action_type == "check_permission":
+            ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
+            dataset_name = ticket_data.get("dataset_name")
+            username = ticket_data.get("username")
+            has_permission = self.data_source_service.check_permission(dataset_name, username)
+            return iter([pa.flight.Result(str(has_permission).encode("utf-8"))])
+
         elif action_type == "sample":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
             dataframe_name = ticket_data.get("dataframe_name")
@@ -188,17 +196,27 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             conn.dataframes[dataframe_name] = df
             return None
 
-        elif action_type == "get_base64":
+        elif action_type == "get_dataframe_stream":
             ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
             dataframe_name = ticket_data.get("dataframe_name")
             max_chunksize = ticket_data.get("max_chunksize")
-            base64_str = self.get_base64_action(dataframe_name)
+            if max_chunksize is None:
+                max_chunksize = 1024 * 1024 * 5
+            # 获取文件路径
+            parsed_url = urlparse(dataframe_name)
+            relative_path = '/' + parsed_url.path.split('/', 2)[2]  # 相对路径
+            file_path = FairdConfigManager.get_config().storage_local_path + relative_path  # 绝对路径
             # 分块生成器
-            def base64_chunk_generator(base64_str, chunk_size=max_chunksize):
-                for i in range(0, len(base64_str), chunk_size):
-                    yield pa.flight.Result(base64_str[i:i + chunk_size].encode("utf-8"))
-
-            return base64_chunk_generator(base64_str)
+            def file_chunk_generator(file_path, chunk_size=max_chunksize):
+                try:
+                    with open(file_path, "rb") as file:
+                        while chunk := file.read(chunk_size):
+                            yield pa.flight.Result(chunk)
+                except FileNotFoundError:
+                    raise ValueError(f"文件未找到: {file_path}")
+                except Exception as e:
+                    raise ValueError(f"读取文件失败: {str(e)}")
+            return file_chunk_generator(file_path)
 
         elif action_type == "to_string":
             return self.to_string_action(context, action)
@@ -274,24 +292,6 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
         parser = parser_class()
         arrow_table = parser.parse(file_path)
         return DataFrame(id=dataframe_name, data=arrow_table)
-
-    def get_base64_action(self, dataframe_name):
-        parsed_url = urlparse(dataframe_name)
-        dataset_name = f"{parsed_url.scheme}://{parsed_url.netloc}/{parsed_url.path.split('/', 2)[1]}"
-        relative_path = '/' + parsed_url.path.split('/', 2)[2]  # 相对路径
-        file_path = FairdConfigManager.get_config().storage_local_path + relative_path  # 绝对路径
-        # to base64
-        try:
-            # 读取文件内容
-            with open(file_path, "rb") as file:
-                file_data = file.read()
-            # 转换为base64字符串
-            base64_str = base64.b64encode(file_data).decode("utf-8")
-            return base64_str
-        except FileNotFoundError:
-            raise ValueError(f"文件未找到: {file_path}")
-        except Exception as e:
-            raise ValueError(f"读取文件或转换失败: {str(e)}")
 
     def to_string_action(self, context, action):
         params = json.loads(action.body.to_pybytes().decode("utf-8"))

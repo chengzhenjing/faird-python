@@ -12,9 +12,9 @@ logger = logging.getLogger(__name__)
 
 def test_sdk():
 
-    #url = "dacp://localhost:3101"
+    url = "dacp://localhost:3101"
     #url = "dacp://10.0.89.38:3101"
-    url = "dacp://60.245.194.25:50201"
+    #url = "dacp://60.245.194.25:50201"
     username = "faird-user1"
     password = "user1@cnic.cn"
 
@@ -24,20 +24,25 @@ def test_sdk():
     conn = DacpClient.connect(url)
 
     datasets = conn.list_datasets()
-    metadata = conn.get_dataset(datasets[12])
-    dataframes = conn.list_dataframes(datasets[12])
-    # 改流式
-    for chunk in conn.list_dataframes_stream(datasets[12]):
-        print(f"Chunk size: {len(chunk)}")
+
+    #has_permission = conn.check_permission(datasets[0], "faird-user1")
+
+    #metadata = conn.get_dataset(datasets[12])
+    dataframes = conn.list_dataframes(datasets[1])
+    dataframe_name = "dacp://0.0.0.0:3101/中尺度涡旋数据集/sharedata/dataset/historical/SD039-SurfOcean_CO2_Atlas/SOCATv2021_Gridded_Dat/SOCATv2021_qrtrdeg_gridded_coast_monthly.nc"
+    total_size = 0
+    for chunk in conn.get_dataframe_stream(dataframe_name):
+        total_size += len(chunk)
+    print(f"total size: {total_size} Bytes")
+
+    # # 改流式
+    # for chunk in conn.list_dataframes_stream(datasets[1]):
+    #     print(f"Chunk size: {len(chunk)}")
 
     #dataframes_auth = conn.list_user_auth_dataframes("柴宏雷")
 
     # 流式传输
-    dataframe_name = dataframes[3]['dataframeName']
-    base64_str = conn.get_base64(dataframe_name)
-    print(f"size: {len(base64_str)}")
-    for chunk in conn.get_base64_stream(dataframe_name):
-        print(f"Chunk size: {len(chunk)}")
+    #dataframe_name = dataframes[3]['dataframeName']
 
     # # dir parser
     dir_dataframe_name = dataframes[0]['dataframeName']
