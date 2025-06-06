@@ -100,110 +100,7 @@ class NCParser(BaseParser):
         except Exception as e:
             logger.error(f"读取 .arrow 文件失败: {e}")
             raise      
-    # def sample(self, file_path: str) -> pa.Table:
-    #     """
-    #     从 NetCDF 文件中采样数据，返回 Arrow Table。
-    #     默认每个变量只读取前10个主轴切片（如 time 维度的前10个）。
-    #     用 nan 补齐所有列为相同长度，避免 ArrowInvalid 错误。
-    #     schema不包含变量属性、全局属性等元数据。
-    #     仅用于快速预览数据结构，不适合大文件。
-    #     """
-    #     try:
-    #         ds = xr.open_dataset(file_path)
-    #         var_names = [v for v in ds.variables if ds[v].ndim > 0]
-    #         arrays = []
-    #         col_names = []
-    #         max_len = 0
-    #         arr_list = []
-    #         # 先采样并记录每列长度
-    #         for v in var_names:
-    #             var = ds[v]
-    #             if var.shape[0] > 10:
-    #                 arr = var.isel({var.dims[0]: slice(0, 10)}).values
-    #             else:
-    #                 arr = var.values
-    #             arr_flat = np.array(arr).flatten()
-    #             arr_list.append(arr_flat)
-    #             if len(arr_flat) > max_len:
-    #                 max_len = len(arr_flat)
-    #         # 用 nan 补齐所有列
-    #         for arr_flat in arr_list:
-    #             if len(arr_flat) < max_len:
-    #                 padded = np.full(max_len, np.nan, dtype=np.float64)
-    #                 padded[:len(arr_flat)] = arr_flat.astype(np.float64)
-    #                 arrays.append(pa.array(padded))
-    #             else:
-    #                 arrays.append(pa.array(arr_flat.astype(np.float64)))
-    #         table = pa.table(arrays, names=var_names)
-    #         ds.close()
-    #         return table
-    #     except Exception as e:
-    #         logger.error(f"采样 NetCDF 文件失败: {e}")
-    #         raise
-
-
-    def sample(self, file_path: str) -> pa.Table:
-        """
-        从 NetCDF 文件中采样数据，返回 Arrow Table。
-        默认每个变量只读取前10个主轴切片（如 time 维度的前10个）。
-        最终所有列补齐为20行（不足补NaN，超出截断），避免 ArrowInvalid 错误。
-        并为 schema 添加 metadata。
-        """
-        try:
-            ds = xr.open_dataset(file_path)
-            var_names = [v for v in ds.variables if ds[v].ndim > 0]
-            arrays = []
-            arr_list = []
-            # 先采样并记录每列长度
-            for v in var_names:
-                var = ds[v]
-                if var.shape[0] > 10:
-                    arr = var.isel({var.dims[0]: slice(0, 10)}).values
-                else:
-                    arr = var.values
-                arr_flat = np.array(arr).flatten()
-                # 修正：处理cftime类型
-                if arr_flat.size > 0 and isinstance(arr_flat[0], cftime.datetime):
-                    # 转为自1970-01-01的天数
-                    arr_flat = np.array([(x - cftime.DatetimeGregorian(1970, 1, 1)).days for x in arr_flat], dtype=np.float64)
-                arr_list.append(arr_flat)
-            max_len = 20  # 设置最大长度为20行
-            # 用 nan 补齐所有列为20行
-            for arr_flat in arr_list:
-                if len(arr_flat) < max_len:
-                    padded = np.full(max_len, np.nan, dtype=np.float64)
-                    padded[:len(arr_flat)] = arr_flat.astype(np.float64)
-                    arrays.append(pa.array(padded))
-                else:
-                    arrays.append(pa.array(arr_flat[:max_len].astype(np.float64)))
-            # 构造 schema 并添加 metadata
-            schema = pa.schema([pa.field(v, pa.float64()) for v in var_names])
-            shapes = [tuple(ds[v].shape) for v in var_names]
-            dtypes = [str(ds[v].dtype) for v in var_names]
-            var_attrs = {v: dict(ds[v].attrs) for v in var_names}
-            fill_values = {v: var_attrs[v].get('_FillValue', None) for v in var_names}
-            global_attrs = dict(ds.attrs)
-            orig_lengths = [int(np.prod(ds[v].shape)) for v in var_names]
-            var_dims = {v: ds[v].dims for v in var_names}
-            meta = {
-                "shapes": str(shapes),
-                "dtypes": str(dtypes),
-                "var_names": str(var_names),
-                "var_attrs": str(var_attrs),
-                "fill_values": str(fill_values),
-                "global_attrs": str(global_attrs),
-                "orig_lengths": str(orig_lengths),
-                "var_dims": str(var_dims),
-                "sample": "True"
-            }
-            schema = schema.with_metadata({k: str(v).encode() for k, v in meta.items()})
-            table = pa.table(arrays, schema=schema)
-            ds.close()
-            return table
-        except Exception as e:
-            logger.error(f"采样 NetCDF 文件失败: {e}")
-            raise
-        
+         
     def write(self, table: pa.Table, output_path: str):
         """
         将 Arrow Table 写回 NetCDF 文件。
@@ -296,4 +193,86 @@ class NCParser(BaseParser):
             logger.info(f"写入 NetCDF 文件到 {output_path}")
         except Exception as e:
             logger.error(f"写入 NetCDF 文件失败: {e}")
+            raise
+
+    def sample(self, file_path: str) -> pa.Table:
+        """
+        从 NetCDF 文件中采样数据，返回 Arrow Table。
+        默认每个变量只读取前10个主轴切片（如 time 维度的前10个）。
+        更快的 NetCDF 采样方法：边采样边补齐，避免多余拷贝和类型推断。
+        并为 schema 添加 metadata。
+        兼容 _FillValue 和 missing_value 两种缺测值属性。
+        保留原始缺测值（如 -9.96921e+36），不自动转为 np.nan。
+
+        """
+        try:
+            ds = xr.open_dataset(file_path, decode_cf=False)
+            var_names = [v for v in ds.variables if ds[v].ndim > 0]
+            arrays = []
+            field_types = []
+            var_attrs = {v: dict(ds[v].attrs) for v in var_names}
+            def get_fill_value(attrs):
+                for k in attrs:
+                    if k.lower() in ['_fillvalue', 'missing_value']:
+                        return attrs[k]
+                return None
+            fill_values = {v: get_fill_value(var_attrs[v]) for v in var_names}
+            max_len = 20
+            for idx, v in enumerate(var_names):
+                var = ds[v]
+                if var.shape[0] > 10:
+                    arr = var.isel({var.dims[0]: slice(0, 10)}).values
+                else:
+                    arr = var.values
+                arr_flat = arr.flatten() if isinstance(arr, np.ndarray) else np.array(arr).flatten()
+                # 类型推断和补齐
+                if arr_flat.size > 0 and isinstance(arr_flat[0], cftime.datetime):
+                    arr_flat = np.array([(x - cftime.DatetimeGregorian(1970, 1, 1)).days for x in arr_flat], dtype=np.float64)
+                    typ = pa.float64()
+                elif arr_flat.size > 0 and (isinstance(arr_flat[0], (bytes, np.bytes_, str))):
+                    arr_flat = np.array([x.decode() if isinstance(x, (bytes, np.bytes_)) else str(x) for x in arr_flat], dtype=object)
+                    typ = pa.string()
+                else:
+                    typ = pa.float64()
+                field_types.append(typ)
+                if typ == pa.string():
+                    if len(arr_flat) >= max_len:
+                        arrays.append(pa.array(arr_flat[:max_len], type=pa.string()))
+                    else:
+                        padded = np.full(max_len, "", dtype=object)
+                        padded[:len(arr_flat)] = arr_flat
+                        arrays.append(pa.array(padded, type=pa.string()))
+                else:
+                    fill_value = fill_values.get(v, np.nan)
+                    if fill_value is None:
+                        fill_value = np.nan
+                    if len(arr_flat) >= max_len:
+                        arrays.append(pa.array(arr_flat[:max_len].astype(np.float64), type=pa.float64()))
+                    else:
+                        padded = np.full(max_len, fill_value, dtype=np.float64)
+                        padded[:len(arr_flat)] = arr_flat.astype(np.float64)
+                        arrays.append(pa.array(padded, type=pa.float64()))
+            schema = pa.schema([pa.field(v, t) for v, t in zip(var_names, field_types)])
+            shapes = [tuple(ds[v].shape) for v in var_names]
+            dtypes = [str(ds[v].dtype) for v in var_names]
+            global_attrs = dict(ds.attrs)
+            orig_lengths = [int(np.prod(ds[v].shape)) for v in var_names]
+            var_dims = {v: ds[v].dims for v in var_names}
+            meta = {
+                "shapes": str(shapes),
+                "dtypes": str(dtypes),
+                "var_names": str(var_names),
+                "var_attrs": str(var_attrs),
+                "fill_values": str(fill_values),
+                "global_attrs": str(global_attrs),
+                "orig_lengths": str(orig_lengths),
+                "var_dims": str(var_dims),
+                "sample": "True"
+            }
+            schema = schema.with_metadata({k: str(v).encode() for k, v in meta.items()})
+            table = pa.table(arrays, schema=schema)
+            ds.close()
+            return table
+        except Exception as e:
+            logger.error(f"采样 NetCDF 文件失败: {e}")
             raise
