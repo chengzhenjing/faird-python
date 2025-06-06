@@ -12,9 +12,9 @@ logger = logging.getLogger(__name__)
 
 def test_sdk():
 
-    url = "dacp://localhost:3101"
+    #url = "dacp://localhost:3101"
     #url = "dacp://10.0.89.38:3101"
-    #url = "dacp://60.245.194.25:50201"
+    url = "dacp://60.245.194.25:50201"
     username = "faird-user1"
     password = "user1@cnic.cn"
 
@@ -24,8 +24,14 @@ def test_sdk():
     conn = DacpClient.connect(url)
 
     datasets = conn.list_datasets()
-    metadata = conn.get_dataset(datasets[1])
-    dataframes = conn.list_dataframes(datasets[1])
+    metadata = conn.get_dataset(datasets[12])
+    dataframes = conn.list_dataframes(datasets[12])
+    # 改流式
+    dataframes_chunk = []
+    for chunk in conn.list_dataframes(datasets[1]):
+        dataframes_chunk = chunk
+        print(f"Chunk size: {len(dataframes_chunk)}")
+
     #dataframes_auth = conn.list_user_auth_dataframes("柴宏雷")
 
     # 流式传输
