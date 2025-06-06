@@ -245,7 +245,7 @@ class DataFrame(DataFrame):
                 raise ValueError(f"无法识别文件格式，请指定 format 参数，例如 'netcdf', 'csv'")
 
         if format == 'netcdf':
-            from parser.nc_parser import NCParser
+            from parser.nc_parser_1 import NCParser
             NCParser().write(self.data, output_path)
         elif format == 'csv':
             import pyarrow.csv as csv

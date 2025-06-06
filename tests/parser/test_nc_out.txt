@@ -84,5 +84,402 @@ coast_fco2_ave_weighted: [[nan,nan,nan,nan,nan,...,nan,nan,nan,nan,nan],[nan,nan
 coast_fco2_max_unwtd: [[nan,nan,nan,nan,nan,...,nan,nan,nan,nan,nan],[nan,nan,nan,nan,nan,...,nan,nan,nan,nan,nan],...,[nan,nan,nan,nan,nan,...,nan,nan,nan,nan,nan],[nan,nan,nan,nan,nan,...,nan,nan,nan,nan,nan]]
 coast_fco2_min_unwtd: [[nan,nan,nan,nan,nan,...,nan,nan,nan,nan,nan],[nan,nan,nan,nan,nan,...,nan,nan,nan,nan,nan],...,[nan,nan,nan,nan,nan,...,nan,nan,nan,nan,nan],[nan,nan,nan,nan,nan,...,nan,nan,nan,nan,nan]]
 
-测试 NCParser 的 sample 方法, 文件路径: D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_tracks_gridded_monthly.nc
-INFO:__main__:采样结果的元数据:{"columns": ["xlon", "ylat", "tmnth", "tmnth_bnds", "count_ncruise", "fco2_count_nobs", "fco2_ave_weighted", "fco2_ave_unwtd", "fco2_min_unwtd", "fco2_max_unwtd", "fco2_std_weighted", "fco2_std_unwtd", "sst_count_nobs", "sst_ave_weighted", "sst_ave_unwtd", "sst_min_unwtd", "sst_max_unwtd", "sst_std_weighted", "sst_std_unwtd", "salinity_count_nobs", "salinity_ave_weighted", "salinity_ave_unwtd", "salinity_min_unwtd", "salinity_max_unwtd", "salinity_std_weighted", "salinity_std_unwtd", "lat_offset_unwtd", "lon_offset_unwtd", "global_attrs"], "rows": [{"attribute": "shape", "xlon": [360], "ylat": [180], "tmnth": [612], "tmnth_bnds": [612, 2], "count_ncruise": [612, 180, 360], "fco2_count_nobs": [612, 180, 360], "fco2_ave_weighted": [612, 180, 360], "fco2_ave_unwtd": [612, 180, 360], "fco2_min_unwtd": [612, 180, 360], "fco2_max_unwtd": [612, 180, 360], "fco2_std_weighted": [612, 180, 360], "fco2_std_unwtd": [612, 180, 360], "sst_count_nobs": [612, 180, 360], "sst_ave_weighted": [612, 180, 360], "sst_ave_unwtd": [612, 180, 360], "sst_min_unwtd": [612, 180, 360], "sst_max_unwtd": [612, 180, 360], "sst_std_weighted": [612, 180, 360], "sst_std_unwtd": [612, 180, 360], "salinity_count_nobs": [612, 180, 360], "salinity_ave_weighted": [612, 180, 360], "salinity_ave_unwtd": [612, 180, 360], "salinity_min_unwtd": [612, 180, 360], "salinity_max_unwtd": [612, 180, 360], "salinity_std_weighted": [612, 180, 360], "salinity_std_unwtd": [612, 180, 360], "lat_offset_unwtd": [612, 180, 360], "lon_offset_unwtd": [612, 180, 360], "global_attrs": ""}, {"attribute": "dtype", "xlon": "float64", "ylat": "float64", "tmnth": "float64", "tmnth_bnds": "float64", "count_ncruise": "int32", "fco2_count_nobs": "int32", "fco2_ave_weighted": "float32", "fco2_ave_unwtd": "float32", "fco2_min_unwtd": "float32", "fco2_max_unwtd": "float32", "fco2_std_weighted": "float32", "fco2_std_unwtd": "float32", "sst_count_nobs": "int32", "sst_ave_weighted": "float32", "sst_ave_unwtd": "float32", "sst_min_unwtd": "float32", "sst_max_unwtd": "float32", "sst_std_weighted": "float32", "sst_std_unwtd": "float32", "salinity_count_nobs": "int32", "salinity_ave_weighted": "float32", "salinity_ave_unwtd": "float32", "salinity_min_unwtd": "float32", "salinity_max_unwtd": "float32", "salinity_std_weighted": "float32", "salinity_std_unwtd": "float32", "lat_offset_unwtd": "float32", "lon_offset_unwtd": "float32", "global_attrs": ""}, {"attribute": "var_attrs", "xlon": {}, "ylat": {}, "tmnth": {}, "tmnth_bnds": {}, "count_ncruise": {}, "fco2_count_nobs": {}, "fco2_ave_weighted": {}, "fco2_ave_unwtd": {}, "fco2_min_unwtd": {}, "fco2_max_unwtd": {}, "fco2_std_weighted": {}, "fco2_std_unwtd": {}, "sst_count_nobs": {}, "sst_ave_weighted": {}, "sst_ave_unwtd": {}, "sst_min_unwtd": {}, "sst_max_unwtd": {}, "sst_std_weighted": {}, "sst_std_unwtd": {}, "salinity_count_nobs": {}, "salinity_ave_weighted": {}, "salinity_ave_unwtd": {}, "salinity_min_unwtd": {}, "salinity_max_unwtd": {}, "salinity_std_weighted": {}, "salinity_std_unwtd": {}, "lat_offset_unwtd": {}, "lon_offset_unwtd": {}, "global_attrs": ""}, {"attribute": "fill_value", "xlon": "", "ylat": "", "tmnth": "", "tmnth_bnds": "", "count_ncruise": "", "fco2_count_nobs": "", "fco2_ave_weighted": "", "fco2_ave_unwtd": "", "fco2_min_unwtd": "", "fco2_max_unwtd": "", "fco2_std_weighted": "", "fco2_std_unwtd": "", "sst_count_nobs": "", "sst_ave_weighted": "", "sst_ave_unwtd": "", "sst_min_unwtd": "", "sst_max_unwtd": "", "sst_std_weighted": "", "sst_std_unwtd": "", "salinity_count_nobs": "", "salinity_ave_weighted": "", "salinity_ave_unwtd": "", "salinity_min_unwtd": "", "salinity_max_unwtd": "", "salinity_std_weighted": "", "salinity_std_unwtd": "", "lat_offset_unwtd": "", "lon_offset_unwtd": "", "global_attrs": ""}, {"attribute": "var_dims", "xlon": ["xlon"], "ylat": ["ylat"], "tmnth": ["tmnth"], "tmnth_bnds": ["tmnth", "bnds"], "count_ncruise": ["tmnth", "ylat", "xlon"], "fco2_count_nobs": ["tmnth", "ylat", "xlon"], "fco2_ave_weighted": ["tmnth", "ylat", "xlon"], "fco2_ave_unwtd": ["tmnth", "ylat", "xlon"], "fco2_min_unwtd": ["tmnth", "ylat", "xlon"], "fco2_max_unwtd": ["tmnth", "ylat", "xlon"], "fco2_std_weighted": ["tmnth", "ylat", "xlon"], "fco2_std_unwtd": ["tmnth", "ylat", "xlon"], "sst_count_nobs": ["tmnth", "ylat", "xlon"], "sst_ave_weighted": ["tmnth", "ylat", "xlon"], "sst_ave_unwtd": ["tmnth", "ylat", "xlon"], "sst_min_unwtd": ["tmnth", "ylat", "xlon"], "sst_max_unwtd": ["tmnth", "ylat", "xlon"], "sst_std_weighted": ["tmnth", "ylat", "xlon"], "sst_std_unwtd": ["tmnth", "ylat", "xlon"], "salinity_count_nobs": ["tmnth", "ylat", "xlon"], "salinity_ave_weighted": ["tmnth", "ylat", "xlon"], "salinity_ave_unwtd": ["tmnth", "ylat", "xlon"], "salinity_min_unwtd": ["tmnth", "ylat", "xlon"], "salinity_max_unwtd": ["tmnth", "ylat", "xlon"], "salinity_std_weighted": ["tmnth", "ylat", "xlon"], "salinity_std_unwtd": ["tmnth", "ylat", "xlon"], "lat_offset_unwtd": ["tmnth", "ylat", "xlon"], "lon_offset_unwtd": ["tmnth", "ylat", "xlon"], "global_attrs": ""}, {"attribute": "orig_length", "xlon": 360, "ylat": 180, "tmnth": 612, "tmnth_bnds": 1224, "count_ncruise": 39657600, "fco2_count_nobs": 39657600, "fco2_ave_weighted": 39657600, "fco2_ave_unwtd": 39657600, "fco2_min_unwtd": 39657600, "fco2_max_unwtd": 39657600, "fco2_std_weighted": 39657600, "fco2_std_unwtd": 39657600, "sst_count_nobs": 39657600, "sst_ave_weighted": 39657600, "sst_ave_unwtd": 39657600, "sst_min_unwtd": 39657600, "sst_max_unwtd": 39657600, "sst_std_weighted": 39657600, "sst_std_unwtd": 39657600, "salinity_count_nobs": 39657600, "salinity_ave_weighted": 39657600, "salinity_ave_unwtd": 39657600, "salinity_min_unwtd": 39657600, "salinity_max_unwtd": 39657600, "salinity_std_weighted": 39657600, "salinity_std_unwtd": 39657600, "lat_offset_unwtd": 39657600, "lon_offset_unwtd": 39657600, "global_attrs": ""}, {"attribute": "global_attrs", "xlon": "", "ylat": "", "tmnth": "", "tmnth_bnds": "", "count_ncruise": "", "fco2_count_nobs": "", "fco2_ave_weighted": "", "fco2_ave_unwtd": "", "fco2_min_unwtd": "", "fco2_max_unwtd": "", "fco2_std_weighted": "", "fco2_std_unwtd": "", "sst_count_nobs": "", "sst_ave_weighted": "", "sst_ave_unwtd": "", "sst_min_unwtd": "", "sst_max_unwtd": "", "sst_std_weighted": "", "sst_std_unwtd": "", "salinity_count_nobs": "", "salinity_ave_weighted": "", "salinity_ave_unwtd": "", "salinity_min_unwtd": "", "salinity_max_unwtd": "", "salinity_std_weighted": "", "salinity_std_unwtd": "", "lat_offset_unwtd": "", "lon_offset_unwtd": "", "global_attrs": {"history": "FERRET V7.62  25-May-21", "Conventions": "CF-1.6", "SOCAT_Notes": "SOCAT gridded v2021 26-May-2021", "title": "SOCAT gridded v2021 Monthly 1x1 degree gridded dataset", "summary": "Surface Ocean Carbon Atlas (SOCAT) Gridded (binned) SOCAT observations, with a spatial \ngrid of 1x1 degree and monthly in time. The gridded fields are computed using only SOCAT \ndatasets with QC flags of A through D and SOCAT data points flagged with WOCE flag values of 2.", "references": "http://www.socat.info/", "caution": "NO INTERPOLATION WAS PERFORMED. SIGNIFICANT BIASES ARE PRESENT IN THESE GRIDDED RESULTS DUE TO THE \nARBITRARY AND SPARSE LOCATIONS OF DATA VALUES IN BOTH SPACE AND TIME."}}]}
+INFO:__main__:开始测试 NCParser 的 sample 方法
+INFO:__main__:测试 NCParser 的 sample 方法, 文件路径: D:\test\faird\test_data.nc
+sample Arrow Table 列: ['time', 'lat', 'lon', 'temperature']
+sample Arrow Table 行数: 20
+sample Arrow Table schema: time: double
+lat: double
+lon: double
+temperature: double
+-- schema metadata --
+shapes: '[(1093,), (180,), (360,), (1093, 180, 360)]'
+dtypes: '['float64', 'float32', 'float32', 'float32']'
+var_names: '['time', 'lat', 'lon', 'temperature']'
+var_attrs: '{'time': {}, 'lat': {}, 'lon': {}, 'temperature': {}}'
+fill_values: '{'time': None, 'lat': None, 'lon': None, 'temperature': Non' + 2
+global_attrs: '{}'
+orig_lengths: '[1093, 180, 360, 70826400]'
+var_dims: '{'time': ('time',), 'lat': ('lat',), 'lon': ('lon',), 'tempera' + 30
+sample: 'True'
+pyarrow.Table
+time: double
+lat: double
+lon: double
+temperature: double
+----
+time: [[0,1,2,3,4,...,nan,nan,nan,nan,nan]]
+lat: [[-90,-88.99441528320312,-87.98883056640625,-86.98323822021484,-85.97765350341797,...,nan,nan,nan,nan,nan]]
+lon: [[-180,-178.99720764160156,-177.9944305419922,-176.99163818359375,-175.98886108398438,...,nan,nan,nan,nan,nan]]
+temperature: [[0.8727892637252808,0.9982646703720093,0.3309449553489685,0.03709870204329491,0.39098161458969116,...,0.34292471408843994,0.32127872109413147,0.6338303685188293,0.8116521239280701,0.008107500150799751]]
+INFO:__main__:-----------------------------------------------
+INFO:__main__:测试 NCParser 的 sample 方法, 文件路径: D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_qrtrdeg_gridded_coast_monthly.nc
+sample Arrow Table 列: ['xlon', 'ylat', 'tmnth', 'tmnth_bnds', 'coast_count_ncruise', 'coast_fco2_count_nobs', 'coast_fco2_ave_unwtd', 'coast_fco2_ave_weighted', 'coast_fco2_max_unwtd', 'coast_fco2_min_unwtd', 'coast_fco2_std_unwtd', 'coast_fco2_std_weighted', 'coast_sst_count_nobs', 'coast_sst_ave_unwtd', 'coast_sst_ave_weighted', 'coast_sst_max_unwtd', 'coast_sst_min_unwtd', 'coast_sst_std_unwtd', 'coast_sst_std_weighted', 'coast_salinity_count_nobs', 'coast_salinity_ave_unwtd', 'coast_salinity_ave_weighted', 'coast_salinity_max_unwtd', 'coast_salinity_min_unwtd', 'coast_salinity_std_unwtd', 'coast_salinity_std_weighted', 'coast_lat_offset_unwtd', 'coast_lon_offset_unwtd']     
+sample Arrow Table 行数: 20
+sample Arrow Table schema: xlon: double
+ylat: double
+tmnth: double
+tmnth_bnds: double
+coast_count_ncruise: double
+coast_fco2_count_nobs: double
+coast_fco2_ave_unwtd: double
+coast_fco2_ave_weighted: double
+coast_fco2_max_unwtd: double
+coast_fco2_min_unwtd: double
+coast_fco2_std_unwtd: double
+coast_fco2_std_weighted: double
+coast_sst_count_nobs: double
+coast_sst_ave_unwtd: double
+coast_sst_ave_weighted: double
+coast_sst_max_unwtd: double
+coast_sst_min_unwtd: double
+coast_sst_std_unwtd: double
+coast_sst_std_weighted: double
+coast_salinity_count_nobs: double
+coast_salinity_ave_unwtd: double
+coast_salinity_ave_weighted: double
+coast_salinity_max_unwtd: double
+coast_salinity_min_unwtd: double
+coast_salinity_std_unwtd: double
+coast_salinity_std_weighted: double
+coast_lat_offset_unwtd: double
+coast_lon_offset_unwtd: double
+-- schema metadata --
+shapes: '[(1440,), (720,), (612,), (612, 2), (612, 720, 1440), (612, 720,' + 403
+dtypes: '['float64', 'float64', 'float64', 'float64', 'float32', 'float32' + 244
+var_names: '['xlon', 'ylat', 'tmnth', 'tmnth_bnds', 'coast_count_ncruise'' + 599
+var_attrs: '{'xlon': {'units': 'degrees_east', 'point_spacing': 'even', '' + 8896
+fill_values: '{'xlon': None, 'ylat': None, 'tmnth': None, 'tmnth_bnds': N' + 1105
+global_attrs: '{'history': 'FERRET V7.62 (optimized) 26-May-21', 'Convent' + 855
+orig_lengths: '[1440, 720, 612, 1224, 634521600, 634521600, 634521600, 63' + 228
+var_dims: '{'xlon': ('xlon',), 'ylat': ('ylat',), 'tmnth': ('tmnth',), 't' + 1299
+sample: 'True'
+pyarrow.Table
+xlon: double
+ylat: double
+tmnth: double
+tmnth_bnds: double
+coast_count_ncruise: double
+coast_fco2_count_nobs: double
+coast_fco2_ave_unwtd: double
+coast_fco2_ave_weighted: double
+coast_fco2_max_unwtd: double
+coast_fco2_min_unwtd: double
+coast_fco2_std_unwtd: double
+coast_fco2_std_weighted: double
+coast_sst_count_nobs: double
+coast_sst_ave_unwtd: double
+coast_sst_ave_weighted: double
+coast_sst_max_unwtd: double
+coast_sst_min_unwtd: double
+coast_sst_std_unwtd: double
+coast_sst_std_weighted: double
+coast_salinity_count_nobs: double
+coast_salinity_ave_unwtd: double
+coast_salinity_ave_weighted: double
+coast_salinity_max_unwtd: double
+coast_salinity_min_unwtd: double
+coast_salinity_std_unwtd: double
+coast_salinity_std_weighted: double
+coast_lat_offset_unwtd: double
+coast_lon_offset_unwtd: double
+----
+xlon: [[-179.875,-179.625,-179.375,-179.125,-178.875,...,nan,nan,nan,nan,nan]]
+ylat: [[-89.875,-89.625,-89.375,-89.125,-88.875,...,nan,nan,nan,nan,nan]]
+tmnth: [[15.5,45,74.5,105,135.5,...,nan,nan,nan,nan,nan]]
+tmnth_bnds: [[0,31,31,59,59,...,243,243,273,273,304]]
+coast_count_ncruise: [[0,0,0,0,0,...,0,0,0,0,0]]
+coast_fco2_count_nobs: [[0,0,0,0,0,...,0,0,0,0,0]]
+coast_fco2_ave_unwtd: [[-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,...,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33]]
+coast_fco2_ave_weighted: [[-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,...,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33]]
+coast_fco2_max_unwtd: [[-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,...,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33]]
+coast_fco2_min_unwtd: [[-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,...,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33]]
+...
+INFO:__main__:-----------------------------------------------
+INFO:__main__:测试 NCParser 的 sample 方法, 文件路径: D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_tracks_gridded_decadal.nc
+sample Arrow Table 列: ['xlon', 'ylat', 'tdecade', 'tdecade_bnds', 'count_ncruise_decade', 'fco2_count_nobs_decade', 'fco2_ave_weighted_decade', 'fco2_ave_unwtd_decade', 'fco2_min_unwtd_decade', 'fco2_max_unwtd_decade', 'sst_count_nobs_decade', 'sst_ave_weighted_decade', 'sst_ave_unwtd_decade', 'sst_min_unwtd_decade', 'sst_max_unwtd_decade', 'salinity_count_nobs_decade', 'salinity_ave_weighted_decade', 'salinity_ave_unwtd_decade', 'salinity_min_unwtd_decade', 'salinity_max_unwtd_decade']
+sample Arrow Table 行数: 20
+sample Arrow Table schema: xlon: double
+ylat: double
+tdecade: double
+tdecade_bnds: double
+count_ncruise_decade: double
+fco2_count_nobs_decade: double
+fco2_ave_weighted_decade: double
+fco2_ave_unwtd_decade: double
+fco2_min_unwtd_decade: double
+fco2_max_unwtd_decade: double
+sst_count_nobs_decade: double
+sst_ave_weighted_decade: double
+sst_ave_unwtd_decade: double
+sst_min_unwtd_decade: double
+sst_max_unwtd_decade: double
+salinity_count_nobs_decade: double
+salinity_ave_weighted_decade: double
+salinity_ave_unwtd_decade: double
+salinity_min_unwtd_decade: double
+salinity_max_unwtd_decade: double
+-- schema metadata --
+shapes: '[(360,), (180,), (5,), (5, 2), (5, 180, 360), (5, 180, 360), (5,' + 206
+dtypes: '['float64', 'float64', 'float64', 'float64', 'int32', 'int32', '' + 148
+var_names: '['xlon', 'ylat', 'tdecade', 'tdecade_bnds', 'count_ncruise_de' + 408
+var_attrs: '{'xlon': {'units': 'degrees_east', 'point_spacing': 'even', '' + 5001
+fill_values: '{'xlon': None, 'ylat': None, 'tdecade': None, 'tdecade_bnds' + 742
+global_attrs: '{'history': 'FERRET V7.62 (optimized) 25-May-21', 'Convent' + 935
+orig_lengths: '[360, 180, 5, 10, 324000, 324000, 324000, 324000, 324000, ' + 87
+var_dims: '{'xlon': ('xlon',), 'ylat': ('ylat',), 'tdecade': ('tdecade',)' + 928
+sample: 'True'
+pyarrow.Table
+xlon: double
+ylat: double
+tdecade: double
+tdecade_bnds: double
+count_ncruise_decade: double
+fco2_count_nobs_decade: double
+fco2_ave_weighted_decade: double
+fco2_ave_unwtd_decade: double
+fco2_min_unwtd_decade: double
+fco2_max_unwtd_decade: double
+sst_count_nobs_decade: double
+sst_ave_weighted_decade: double
+sst_ave_unwtd_decade: double
+sst_min_unwtd_decade: double
+sst_max_unwtd_decade: double
+salinity_count_nobs_decade: double
+salinity_ave_weighted_decade: double
+salinity_ave_unwtd_decade: double
+salinity_min_unwtd_decade: double
+salinity_max_unwtd_decade: double
+----
+xlon: [[-179.5,-178.5,-177.5,-176.5,-175.5,...,nan,nan,nan,nan,nan]]
+ylat: [[-89.5,-88.5,-87.5,-86.5,-85.5,...,nan,nan,nan,nan,nan]]
+tdecade: [[27393,31045.5,34698,38350.5,42003,...,nan,nan,nan,nan,nan]]
+tdecade_bnds: [[25567,29219,29219,32872,32872,...,nan,nan,nan,nan,nan]]
+count_ncruise_decade: [[0,0,0,0,0,...,0,0,0,0,0]]
+fco2_count_nobs_decade: [[0,0,0,0,0,...,0,0,0,0,0]]
+fco2_ave_weighted_decade: [[-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,...,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33]]
+fco2_ave_unwtd_decade: [[-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,...,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33]]
+fco2_min_unwtd_decade: [[-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,...,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33]]
+fco2_max_unwtd_decade: [[-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,...,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33]]
+...
+INFO:__main__:-----------------------------------------------
+INFO:__main__:测试 NCParser 的 sample 方法, 文件路径: D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_tracks_gridded_monthly.nc
+sample Arrow Table 列: ['xlon', 'ylat', 'tmnth', 'tmnth_bnds', 'count_ncruise', 'fco2_count_nobs', 'fco2_ave_weighted', 'fco2_ave_unwtd', 'fco2_min_unwtd', 'fco2_max_unwtd', 'fco2_std_weighted', 'fco2_std_unwtd', 'sst_count_nobs', 'sst_ave_weighted', 'sst_ave_unwtd', 'sst_min_unwtd', 'sst_max_unwtd', 'sst_std_weighted', 'sst_std_unwtd', 'salinity_count_nobs', 'salinity_ave_weighted', 'salinity_ave_unwtd', 'salinity_min_unwtd', 'salinity_max_unwtd', 'salinity_std_weighted', 'salinity_std_unwtd', 'lat_offset_unwtd', 'lon_offset_unwtd']
+sample Arrow Table 行数: 20
+sample Arrow Table schema: xlon: double
+ylat: double
+tmnth: double
+tmnth_bnds: double
+count_ncruise: double
+fco2_count_nobs: double
+fco2_ave_weighted: double
+fco2_ave_unwtd: double
+fco2_min_unwtd: double
+fco2_max_unwtd: double
+fco2_std_weighted: double
+fco2_std_unwtd: double
+sst_count_nobs: double
+sst_ave_weighted: double
+sst_ave_unwtd: double
+sst_min_unwtd: double
+sst_max_unwtd: double
+sst_std_weighted: double
+sst_std_unwtd: double
+salinity_count_nobs: double
+salinity_ave_weighted: double
+salinity_ave_unwtd: double
+salinity_min_unwtd: double
+salinity_max_unwtd: double
+salinity_std_weighted: double
+salinity_std_unwtd: double
+lat_offset_unwtd: double
+lon_offset_unwtd: double
+-- schema metadata --
+shapes: '[(360,), (180,), (612,), (612, 2), (612, 180, 360), (612, 180, 3' + 378
+dtypes: '['float64', 'float64', 'float64', 'float64', 'int32', 'int32', '' + 236
+var_names: '['xlon', 'ylat', 'tmnth', 'tmnth_bnds', 'count_ncruise', 'fco' + 455
+var_attrs: '{'xlon': {'units': 'degrees_east', 'point_spacing': 'even', '' + 7891
+fill_values: '{'xlon': None, 'ylat': None, 'tmnth': None, 'tmnth_bnds': N' + 949
+global_attrs: '{'history': 'FERRET V7.62  25-May-21', 'Conventions': 'CF-' + 637
+orig_lengths: '[360, 180, 612, 1224, 39657600, 39657600, 39657600, 396576' + 203
+var_dims: '{'xlon': ('xlon',), 'ylat': ('ylat',), 'tmnth': ('tmnth',), 't' + 1155
+sample: 'True'
+pyarrow.Table
+xlon: double
+ylat: double
+tmnth: double
+tmnth_bnds: double
+count_ncruise: double
+fco2_count_nobs: double
+fco2_ave_weighted: double
+fco2_ave_unwtd: double
+fco2_min_unwtd: double
+fco2_max_unwtd: double
+fco2_std_weighted: double
+fco2_std_unwtd: double
+sst_count_nobs: double
+sst_ave_weighted: double
+sst_ave_unwtd: double
+sst_min_unwtd: double
+sst_max_unwtd: double
+sst_std_weighted: double
+sst_std_unwtd: double
+salinity_count_nobs: double
+salinity_ave_weighted: double
+salinity_ave_unwtd: double
+salinity_min_unwtd: double
+salinity_max_unwtd: double
+salinity_std_weighted: double
+salinity_std_unwtd: double
+lat_offset_unwtd: double
+lon_offset_unwtd: double
+----
+xlon: [[-179.5,-178.5,-177.5,-176.5,-175.5,...,nan,nan,nan,nan,nan]]
+ylat: [[-89.5,-88.5,-87.5,-86.5,-85.5,...,nan,nan,nan,nan,nan]]
+tmnth: [[15.5,45,74.5,105,135.5,...,nan,nan,nan,nan,nan]]
+tmnth_bnds: [[0,31,31,59,59,...,243,243,273,273,304]]
+count_ncruise: [[0,0,0,0,0,...,0,0,0,0,0]]
+fco2_count_nobs: [[0,0,0,0,0,...,0,0,0,0,0]]
+fco2_ave_weighted: [[-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,...,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33]]
+fco2_ave_unwtd: [[-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,...,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33]]
+fco2_min_unwtd: [[-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,...,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33]]
+fco2_max_unwtd: [[-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,...,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33]]
+...
+INFO:__main__:-----------------------------------------------
+INFO:__main__:测试 NCParser 的 sample 方法, 文件路径: D:\test\faird\SOCATv2021_Gridded_Dat\SOCATv2021_tracks_gridded_yearly.nc
+sample Arrow Table 列: ['xlon', 'ylat', 'tyear', 'tyear_bnds', 'count_ncruise_year', 'fco2_count_nobs_year', 'fco2_ave_weighted_year', 'fco2_ave_unwtd_year', 'fco2_min_unwtd_year', 'fco2_max_unwtd_year', 'sst_count_nobs_year', 'sst_ave_weighted_year', 'sst_ave_unwtd_year', 'sst_min_unwtd_year', 'sst_max_unwtd_year', 'salinity_count_nobs_year', 'salinity_ave_weighted_year', 'salinity_ave_unwtd_year', 'salinity_min_unwtd_year', 'salinity_max_unwtd_year']
+sample Arrow Table 行数: 20
+sample Arrow Table schema: xlon: double
+ylat: double
+tyear: double
+tyear_bnds: double
+count_ncruise_year: double
+fco2_count_nobs_year: double
+fco2_ave_weighted_year: double
+fco2_ave_unwtd_year: double
+fco2_min_unwtd_year: double
+fco2_max_unwtd_year: double
+sst_count_nobs_year: double
+sst_ave_weighted_year: double
+sst_ave_unwtd_year: double
+sst_min_unwtd_year: double
+sst_max_unwtd_year: double
+salinity_count_nobs_year: double
+salinity_ave_weighted_year: double
+salinity_ave_unwtd_year: double
+salinity_min_unwtd_year: double
+salinity_max_unwtd_year: double
+-- schema metadata --
+shapes: '[(360,), (180,), (52,), (52, 2), (52, 180, 360), (52, 180, 360),' + 224
+dtypes: '['float64', 'float64', 'float64', 'float64', 'int32', 'int32', '' + 148
+var_names: '['xlon', 'ylat', 'tyear', 'tyear_bnds', 'count_ncruise_year',' + 372
+var_attrs: '{'xlon': {'units': 'degrees_east', 'point_spacing': 'even', '' + 5140
+fill_values: '{'xlon': None, 'ylat': None, 'tyear': None, 'tyear_bnds': N' + 706
+global_attrs: '{'history': 'FERRET V7.62 (optimized) 25-May-21', 'Convent' + 830
+orig_lengths: '[360, 180, 52, 104, 3369600, 3369600, 3369600, 3369600, 33' + 105
+var_dims: '{'xlon': ('xlon',), 'ylat': ('ylat',), 'tyear': ('tyear',), 't' + 856
+sample: 'True'
+pyarrow.Table
+xlon: double
+ylat: double
+tyear: double
+tyear_bnds: double
+count_ncruise_year: double
+fco2_count_nobs_year: double
+fco2_ave_weighted_year: double
+fco2_ave_unwtd_year: double
+fco2_min_unwtd_year: double
+fco2_max_unwtd_year: double
+sst_count_nobs_year: double
+sst_ave_weighted_year: double
+sst_ave_unwtd_year: double
+sst_min_unwtd_year: double
+sst_max_unwtd_year: double
+salinity_count_nobs_year: double
+salinity_ave_weighted_year: double
+salinity_ave_unwtd_year: double
+salinity_min_unwtd_year: double
+salinity_max_unwtd_year: double
+----
+xlon: [[-179.5,-178.5,-177.5,-176.5,-175.5,...,nan,nan,nan,nan,nan]]
+ylat: [[-89.5,-88.5,-87.5,-86.5,-85.5,...,nan,nan,nan,nan,nan]]
+tyear: [[182.5,547.5,913,1278.5,1643.5,...,nan,nan,nan,nan,nan]]
+tyear_bnds: [[0,365,365,730,730,...,2922,2922,3287,3287,3652]]
+count_ncruise_year: [[0,0,0,0,0,...,0,0,0,0,0]]
+fco2_count_nobs_year: [[0,0,0,0,0,...,0,0,0,0,0]]
+fco2_ave_weighted_year: [[-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,...,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33]]
+fco2_ave_unwtd_year: [[-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,...,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33]]
+fco2_min_unwtd_year: [[-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,...,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33]]
+fco2_max_unwtd_year: [[-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,...,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33,-9.999999790214768e+33]]
+...
+INFO:__main__:-----------------------------------------------
+INFO:__main__:测试 NCParser 的 sample 方法, 文件路径: D:\test\faird\nc\air.mon.1981-2010.ltm.nc
+sample Arrow Table 列: ['lat', 'lon', 'time', 'climatology_bounds', 'air', 'valid_yr_count']
+sample Arrow Table 行数: 20
+sample Arrow Table schema: lat: double
+lon: double
+time: double
+climatology_bounds: double
+air: double
+valid_yr_count: double
+-- schema metadata --
+shapes: '[(360,), (720,), (12,), (12, 2), (12, 360, 720), (12, 360, 720)]'
+dtypes: '['float32', 'float32', 'float64', 'float64', 'float32', 'int16']'
+var_names: '['lat', 'lon', 'time', 'climatology_bounds', 'air', 'valid_yr' + 8
+var_attrs: '{'lat': {'actual_range': array([ 89.75, -89.75], dtype=float3' + 1626
+fill_values: '{'lat': None, 'lon': None, 'time': None, 'climatology_bound' + 77
+global_attrs: '{'history': 'Created 2012/12/17 by doMonthLTM', 'title': '' + 447
+orig_lengths: '[360, 720, 12, 24, 3110400, 3110400]'
+var_dims: '{'lat': ('lat',), 'lon': ('lon',), 'time': ('time',), 'climato' + 105
+sample: 'True'
+pyarrow.Table
+lat: double
+lon: double
+time: double
+climatology_bounds: double
+air: double
+valid_yr_count: double
+----
+lat: [[89.75,89.25,88.75,88.25,87.75,...,nan,nan,nan,nan,nan]]
+lon: [[0.25,0.75,1.25,1.75,2.25,...,nan,nan,nan,nan,nan]]
+time: [[-15769752,-15769008,-15768336,-15767592,-15766872,...,nan,nan,nan,nan,nan]]
+climatology_bounds: [[710040,964248,710784,964992,711456,...,969336,715872,970080,716592,970800]]
+air: [[-9.969209968386869e+36,-9.969209968386869e+36,-9.969209968386869e+36,-9.969209968386869e+36,-9.969209968386869e+36,...,-9.969209968386869e+36,-9.969209968386869e+36,-9.969209968386869e+36,-9.969209968386869e+36,-9.969209968386869e+36]]
+valid_yr_count: [[0,0,0,0,0,...,0,0,0,0,0]]
+INFO:__main__:-----------------------------------------------
+INFO:__main__:测试 NCParser 的 sample 方法, 文件路径: D:\test\faird\nc\HadSST.3.1.1.0.anomalies.1.nc
+sample Arrow Table 列: ['time', 'time_bnds', 'latitude', 'longitude', 'field_status', 'sst']
+sample Arrow Table 行数: 20
+sample Arrow Table schema: time: double
+time_bnds: double
+latitude: double
+longitude: double
+field_status: string
+sst: double
+-- schema metadata --
+shapes: '[(2049,), (2049, 2), (36,), (72,), (2049, 1), (2049, 36, 72)]'
+dtypes: '['float32', 'float32', 'float32', 'float32', '|S1', 'float32']'
+var_names: '['time', 'time_bnds', 'latitude', 'longitude', 'field_status'' + 8
+var_attrs: '{'time': {'units': 'days since 1850-1-1 0:0:0', 'calendar': '' + 474
+fill_values: '{'time': None, 'time_bnds': None, 'latitude': None, 'longit' + 60
+global_attrs: '{'Title': 'Monthly 5 degree version of HadSST.3.1.1.0 - si' + 549
+orig_lengths: '[2049, 4098, 36, 72, 2049, 5311008]'
+var_dims: '{'time': ('time',), 'time_bnds': ('time', 'nv'), 'latitude': (' + 140
+sample: 'True'
+pyarrow.Table
+time: double
+time_bnds: double
+latitude: double
+longitude: double
+field_status: string
+sst: double
+----
+time: [[15.499994277954102,44.99999237060547,74.49999237060547,104.99999237060547,135.5,...,nan,nan,nan,nan,nan]]
+time_bnds: [[0,30.999988555908203,31,58.9999885559082,59,...,242.99998474121094,243,273,273,304]]
+latitude: [[87.5,82.5,77.5,72.5,67.5,...,nan,nan,nan,nan,nan]]
+longitude: [[-177.5,-172.5,-167.5,-162.5,-157.5,...,nan,nan,nan,nan,nan]]
+field_status: [["f","f","f","f","f",...,"","","","",""]]
+sst: [[-1.0000000150474662e+30,-1.0000000150474662e+30,-1.0000000150474662e+30,-1.0000000150474662e+30,-1.0000000150474662e+30,...,-1.0000000150474662e+30,-1.0000000150474662e+30,-1.0000000150474662e+30,-1.0000000150474662e+30,-1.0000000150474662e+30]]
+INFO:__main__:-----------------------------------------------
+INFO:__main__:所有采样测试通过
+INFO:__main__:测试完成

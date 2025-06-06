@@ -110,7 +110,10 @@ def test_nc_parser_real_file(nc_file_path, tmp_path, out_nc_path):
     print(table)
     # 测试 write 方法
     out_nc_path = tmp_path / out_nc_path
+    write_start_time = time.time()
     parser.write(table, str(out_nc_path))
+    write_elapsed = time.time() - write_start_time
+    logger.info(f"write耗时: {write_elapsed:.2f} 秒")
     # 验证写回的NC文件内容是否能正常打开
     with netCDF4.Dataset(str(out_nc_path), 'r') as ds:
         logger.info(f"写回NC文件变量: {list(ds.variables.keys())}")
@@ -126,10 +129,10 @@ def test_nc_parser_sample(nc_file_path):
     logger.info(f"测试 NCParser 的 sample 方法, 文件路径: {nc_file_path}")
     parser = NCParser()
     table = parser.sample(str(nc_file_path))
-    # 用法示例
-    meta = {k.decode(): v.decode() for k, v in table.schema.metadata.items()}
-    json_data = parser.meta_to_json(meta)
-    logger.info(f"采样结果的元数据:{json.dumps(json_data)}")
+    # # 用法示例
+    # meta = {k.decode(): v.decode() for k, v in table.schema.metadata.items()}
+    # json_data = parser.meta_to_json(meta)
+    # logger.info(f"采样结果的元数据:{json.dumps(json_data)}")
     # print(json_data)
     assert isinstance(table, pa.Table)
     print("sample Arrow Table 列:", table.column_names)

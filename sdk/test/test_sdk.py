@@ -155,5 +155,22 @@ def verify_base64(base64_str, original_file_path, hash_algorithm="md5"):
     # 比较哈希值
     return decoded_hash == original_hash
 
+def test_download_file_stream():
+    """
+    TODO 测试通过Flight流式下载服务器文件并保存到本地
+    """
+    url = "dacp://localhost:3101"
+    conn = DacpClient.connect(url)
+    # 你可以根据实际情况选择dataframe_name和file_type
+    dataframe_name = "faird://dataset_name/dataframe_name"
+    file_type = "tif"
+    local_save_path = "downloaded_from_server.tif"
+
+    print(f"开始流式下载 {dataframe_name} 文件类型 {file_type} 到本地 {local_save_path}")
+    with open(local_save_path, "wb") as f:
+        for chunk in conn.download_file_stream(dataframe_name, file_type=file_type):
+            f.write(chunk)
+    print(f"下载完成，已保存到 {local_save_path}")
+
 if __name__ == "__main__":
     test_sdk()

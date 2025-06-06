@@ -2,7 +2,7 @@ from typing import Optional, List
 
 from local_sdk.dataframe import DataFrame
 from parser import csv_parser
-from parser import  nc_parser
+from parser import  nc_parser_1
 from parser import  tif_parser
 import os
 import configparser
@@ -104,7 +104,7 @@ def open(dataframe_id: str) -> DataFrame:
         ".csv": csv_parser.CSVParser,
         ".json": None,
         ".xml": None,
-        ".nc": nc_parser.NCParser,
+        ".nc": nc_parser_1.NCParser,
         ".tiff": tif_parser.TIFParser,
         ".tif": tif_parser.TIFParser,
 

@@ -159,7 +159,7 @@ class DacpClient:
                 chunk_bytes = chunk.body.to_pybytes()
                 print(f"Successfully fetch {len(chunk_bytes)} Bytes")
                 yield chunk_bytes
-
+                
 class AuthType(Enum):
     OAUTH = "oauth"
     ANONYMOUS = "anonymous"
