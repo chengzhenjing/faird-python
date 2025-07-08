@@ -71,7 +71,11 @@ def do_sql(arrow_table, sql_str):
 
 def handle_prev_actions(arrow_table, prev_actions):
     for action in prev_actions:
-        action_type, params = action
+        if isinstance(action, dict):
+            action_type, params = next(iter(action.items()))
+        else:
+            action_type, params = action
+
         if action_type == "limit":
             arrow_table = do_limit(arrow_table, params.get("rowNum"))
         elif action_type == "slice":

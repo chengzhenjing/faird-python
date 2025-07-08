@@ -159,23 +159,23 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             auth_type = ticket_data.get('auth_type')
             if auth_type == "oauth":
                 token = connect_server_with_oauth(ticket_data.get('type'), ticket_data.get('username'), ticket_data.get('password'))
-                conn = FairdConnection(clientIp=ticket_data.get('clientIp'), username=ticket_data.get('username'), token=token)
+                conn = FairdConnection(clientIp=ticket_data.get('clientIp'), clientType="client", username=ticket_data.get('username'), token=token)
                 self.connections[conn.connectionID] = conn
                 return iter([pa.flight.Result(json.dumps({"token": token, "connectionID": conn.connectionID}).encode("utf-8"))])
             elif auth_type == "controld":
                 verified = connect_server_with_controld(ticket_data.get('controld_domain_name'), ticket_data.get('signature'))
                 if verified:
-                    conn = FairdConnection(clientIp=ticket_data.get('clientIp'))
+                    conn = FairdConnection(clientIp=ticket_data.get('clientIp'), clientType="controld")
                     self.connections[conn.connectionID] = conn
                     return iter([pa.flight.Result(json.dumps({"connectionID": conn.connectionID}).encode("utf-8"))])
                 else:
                     return iter([pa.flight.Result(json.dumps({"errorMsg": "connect verification error"}).encode("utf-8"))])
             elif auth_type == "anonymous":
-                conn = FairdConnection(clientIp=ticket_data.get('clientIp'))
+                conn = FairdConnection(clientIp=ticket_data.get('clientIp'), clientType="client")
                 self.connections[conn.connectionID] = conn
                 return iter([pa.flight.Result(json.dumps({"connectionID": conn.connectionID}).encode("utf-8"))])
             else:
-                conn = FairdConnection(clientIp=ticket_data.get('clientIp'))
+                conn = FairdConnection(clientIp=ticket_data.get('clientIp'), clientType="client")
                 self.connections[conn.connectionID] = conn
                 return iter([pa.flight.Result(json.dumps({"connectionID": conn.connectionID}).encode("utf-8"))])
 
@@ -187,7 +187,20 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
             return iter([pa.flight.Result(instrument_info.encode("utf-8"))])
 
         elif action_type == "get_network_link_info":
+            ticket_data = json.loads(action.body.to_pybytes().decode("utf-8"))
+            connection_id = ticket_data.get("connection_id")
+            conn = self.connections.get(connection_id)
             network_link_info = FairdConfigManager.get_config().network_link_info
+            network_link_info_list = json.loads(network_link_info)
+            if conn:
+                client_info = {
+                    "index": -1,
+                    "name": "client",
+                    "type": conn.clientType,
+                    "ip": conn.clientIp
+                }
+                network_link_info_list.append(client_info)
+                network_link_info = json.dumps(network_link_info_list)
             return iter([pa.flight.Result(network_link_info.encode("utf-8"))])
 
         elif action_type == "list_datasets":

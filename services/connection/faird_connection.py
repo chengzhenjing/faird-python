@@ -8,13 +8,15 @@ from services.types.thread_safe_dict import ThreadSafeDict
 class FairdConnection:
     connectionID: str
     clientIp: Optional[str]
+    clientType: Optional[str]
     username: Optional[str]
     token: Optional[str]
     dataframes: ThreadSafeDict  # FlightDescriptor -> FairdDataFrame
 
-    def __init__(self, clientIp: Optional[str] = None, username: Optional[str] = None, token: Optional[str] = None):
+    def __init__(self, clientIp: Optional[str] = None, clientType: Optional[str] = None, username: Optional[str] = None, token: Optional[str] = None):
         self.connectionID = str(uuid.uuid4())
         self.clientIp = clientIp
+        self.clientType = clientType
         self.username = username
         self.token = token
         self.dataframes = ThreadSafeDict()
