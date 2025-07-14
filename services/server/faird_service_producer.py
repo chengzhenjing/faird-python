@@ -2,6 +2,7 @@ import os
 from urllib.parse import urlparse
 import math
 import pyarrow.flight
+import psutil
 
 from sdk.dataframe import DataFrame
 from services.connection.faird_connection import FairdConnection
@@ -320,6 +321,44 @@ class FairdServiceProducer(pa.flight.FlightServerBase):
 
         elif action_type.startswith("compute_"):
             return handle_compute_actions(self.connections, action)
+
+        elif action_type == "get_node_resources":
+            # 获取 CPU 信息
+            cpu_count = psutil.cpu_count(logical=True)
+            cpu_percent = psutil.cpu_percent(interval=1)
+
+            # 获取内存信息
+            memory_info = psutil.virtual_memory()
+            total_memory = memory_info.total
+            used_memory = memory_info.used
+            memory_percent = memory_info.percent
+
+            # 获取存储信息
+            disk_info = psutil.disk_usage('/')
+            total_disk = disk_info.total
+            used_disk = disk_info.used
+            disk_percent = disk_info.percent
+
+            # 构造资源信息字典
+            resources = {
+                "cpu": {
+                    "count": cpu_count,
+                    "percent": cpu_percent
+                },
+                "memory": {
+                    "total": total_memory,
+                    "used": used_memory,
+                    "percent": memory_percent
+                },
+                "disk": {
+                    "total": total_disk,
+                    "used": used_disk,
+                    "percent": disk_percent
+                }
+            }
+
+            # 返回资源信息
+            return iter([pa.flight.Result(json.dumps(resources).encode("utf-8"))])
 
         else:
             return None

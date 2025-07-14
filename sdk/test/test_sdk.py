@@ -25,14 +25,14 @@ def test_sdk():
     # for blob in blob_reader:
     #     print(f"blob size: {len(blob)} bytes")
 
-    # url = "dacp://60.245.194.25:50201"
-    url = "dacp://localhost:3101"
+    url = "dacp://60.245.194.25:50201"
+    #url = "dacp://localhost:3101"
     username = "faird-user1"
     password = "user1@cnic.cn"
-    conn = DacpClient.connect(url, Principal.oauth("conet", username=username, password=password))
+    conn = DacpClient.connect(url)
 
-    #datasets = conn.list_datasets()
-    #dataframes = conn.list_dataframes(datasets[1]) # 这个数据集下有3个文件（dataframe）
+    datasets = conn.list_datasets()
+    dataframes = conn.list_dataframes(datasets[1]) # 这个数据集下有3个文件（dataframe）
     #dataframe_name = dataframes[0]['dataframeName'] # 这个是第一个dataframe，dir类型，有3行，每一行是一个文件，最后一列是blob
     #dataframe_name = "dacp://0.0.0.0:3101/中尺度涡旋数据集/sharedata/dataset/historical/SD039-SurfOcean_CO2_Atlas/SOCATv2021_Gridded_Dat"
     dataframe_name = "dacp://0.0.0.0:3101/中尺度涡旋数据集/sharedata/dataset/historical/SD039-SurfOcean_CO2_Atlas/SOCATv2021_Gridded_Dat/SOCATv2021_tracks_gridded_decadal.csv"
