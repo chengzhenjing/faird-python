@@ -16,3 +16,4 @@ psutil==7.0.0
 imagecodecs==2025.3.30
 gmssl==3.2.2
 cryptography
+psutil
