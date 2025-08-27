@@ -1,7 +1,8 @@
-from parser.csv_parser import CSVParser
-from parser.nc_parser import NCParser
-from parser.tif_parser import TIFParser
-from parser.default_parser import DefaultParser  # 用于 .arrow
+from dfwriter.csv_writer import CSVWriter
+from dfwriter.default_writer import DefaultWriter
+from dfwriter.nc_writer import NCWriter
+from dfwriter.tif_writer import TIFWriter
+
 
 class DfWriter:
     # 1. 创建一个类级别的注册表，用于存储格式名称和处理类的映射
@@ -27,11 +28,11 @@ class DfWriter:
     def register_default_formats(cls):
         """一个辅助方法，用于注册所有内置格式，避免重复代码"""
         if not cls._format_registry:  # 只在第一次初始化时注册
-            cls.register_format("csv", CSVParser)
-            cls.register_format("nc", NCParser)
-            cls.register_format("tif", TIFParser)
-            cls.register_format("tiff", TIFParser)
-            cls.register_format("arrow", DefaultParser)
+            cls.register_format("csv", CSVWriter)
+            cls.register_format("nc", NCWriter)
+            cls.register_format("tif", TIFWriter)
+            cls.register_format("tiff", TIFWriter)
+            cls.register_format("arrow", DefaultWriter)
 
     def output(self, target):
         self.output_target = target
