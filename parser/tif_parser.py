@@ -15,7 +15,6 @@ class TIFParser(BaseParser):
         """
         try:
             DEFAULT_ARROW_CACHE_PATH = os.path.expanduser("~/.cache/faird/dataframe/tif/")
-            # DEFAULT_ARROW_CACHE_PATH = os.path.join("D:/faird_cache/dataframe/tif/")
             os.makedirs(DEFAULT_ARROW_CACHE_PATH, exist_ok=True)
             arrow_file_name = os.path.basename(file_path).rsplit(".", 1)[0] + ".arrow"
             arrow_file_path = os.path.join(DEFAULT_ARROW_CACHE_PATH, arrow_file_name)
@@ -28,95 +27,61 @@ class TIFParser(BaseParser):
                     logger.warning(f"读取缓存 .arrow 文件失败，将重新解析TIFF: {e}")
 
             logger.info(f"开始解析 TIFF 文件: {file_path}")
-            try:
-                images = tifffile.imread(file_path)
-            except Exception as e:
-                logger.error(f"TIFF 文件读取失败: {e}")
-                raise
-            logger.info(f"TIFF 文件 shape: {images.shape}, dtype: {images.dtype}")
-            # 支持多页
-            if images.ndim == 2:
-                images = [images]
-            elif images.ndim == 3:
-                # (pages, H, W) 或 (H, W, bands)
-                if images.shape[0] in [1, 3, 4] and images.shape[0] < images.shape[1] and images.shape[0] < images.shape[2]:
-                    images = [images]
-                elif images.shape[2] in [1, 3, 4] and images.shape[2] < images.shape[0] and images.shape[2] < images.shape[1]:
-                    images = [images]
-                else:
-                    # 多页
-                    images = [img for img in images]
-            elif images.ndim == 4:
-                # (pages, bands, H, W) 或 (pages, H, W, bands)
-                images = [img for img in images]
-            else:
-                images = [images]
 
             pa_arrays_raw = []
             band_names = []
             orig_lengths = []
             pa_types = []
-            shapes = []
+            page_shapes = []  # <--- 新增：存储每个原始页面的完整shape
             dtypes = []
 
-            for idx, img in enumerate(images):
-                try:
-                    dtype = img.dtype
-                    shape = img.shape
-                    if img.ndim == 2:
-                        arr = img.flatten()
-                        pa_arrays_raw.append(pa.array(arr, type=pa.from_numpy_dtype(dtype)))
-                        pa_types.append(pa.from_numpy_dtype(dtype))
-                        band_names.append(f'page{idx+1}_band1')
-                        orig_lengths.append(arr.size)
-                        shapes.append(shape)
-                        dtypes.append(str(dtype))
-                    elif img.ndim == 3:
-                        # (B, H, W)
-                        if img.shape[0] in [1, 3, 4] and img.shape[0] < img.shape[1] and img.shape[0] < img.shape[2]:
-                            for b in range(img.shape[0]):
-                                arr = img[b, :, :].flatten()
-                                pa_arrays_raw.append(pa.array(arr, type=pa.from_numpy_dtype(dtype)))
-                                pa_types.append(pa.from_numpy_dtype(dtype))
-                                band_names.append(f'page{idx+1}_band{b+1}')
-                                orig_lengths.append(arr.size)
-                                shapes.append((1, img.shape[1], img.shape[2]))
-                                dtypes.append(str(dtype))
-                        # (H, W, B)
-                        elif img.shape[2] in [1, 3, 4] and img.shape[2] < img.shape[0] and img.shape[2] < img.shape[1]:
-                            for b in range(img.shape[2]):
-                                arr = img[:, :, b].flatten()
-                                pa_arrays_raw.append(pa.array(arr, type=pa.from_numpy_dtype(dtype)))
-                                pa_types.append(pa.from_numpy_dtype(dtype))
-                                band_names.append(f'page{idx+1}_band{b+1}')
-                                orig_lengths.append(arr.size)
-                                shapes.append((img.shape[0], img.shape[1], 1))
-                                dtypes.append(str(dtype))
-                        else:
-                            arr = img.flatten()
-                            pa_arrays_raw.append(pa.array(arr, type=pa.from_numpy_dtype(dtype)))
-                            pa_types.append(pa.from_numpy_dtype(dtype))
-                            band_names.append(f'page{idx+1}_flatten')
-                            orig_lengths.append(arr.size)
-                            shapes.append(shape)
-                            dtypes.append(str(dtype))
-                    else:
-                        arr = img.flatten()
-                        pa_arrays_raw.append(pa.array(arr, type=pa.from_numpy_dtype(dtype)))
-                        pa_types.append(pa.from_numpy_dtype(dtype))
-                        band_names.append(f'page{idx+1}_flatten')
-                        orig_lengths.append(arr.size)
-                        shapes.append(shape)
-                        dtypes.append(str(dtype))
-                except Exception as e:
-                    logger.error(f"处理第{idx+1}页/波段时异常: {e}")
-                    raise
+            # --- 修复核心：使用 TiffFile 逐页读取并检查元数据标签 ---
+            with tifffile.TiffFile(file_path) as tif:
+                for idx, page in enumerate(tif.pages):
+                    try:
+                        img = page.asarray()
+                        dtype = img.dtype
+                        pa_type = pa.from_numpy_dtype(dtype)
 
-            try:
-                max_len = max(len(arr) for arr in pa_arrays_raw)
-            except Exception as e:
-                logger.error(f"计算最大长度异常: {e}")
-                raise
+                        # 记录该页的完整、原始的形状，这是还原的关键
+                        page_shapes.append(img.shape)
+                        dtypes.append(str(dtype))
+
+                        # SamplesPerPixel: 每像素样本数，即波段数
+                        samples_per_pixel = page.tags.get('SamplesPerPixel', 1).value
+
+                        if samples_per_pixel == 1:  # 单波段/灰度图
+                            arr = img.flatten()
+                            pa_arrays_raw.append(pa.array(arr, type=pa_type))
+                            pa_types.append(pa_type)
+                            band_names.append(f'page{idx + 1}_band1')
+                            orig_lengths.append(arr.size)
+                        else:  # 多波段
+                            # PlanarConfiguration: 1=Chunky(H,W,B), 2=Planar(B,H,W)
+                            planar_config = page.tags.get('PlanarConfiguration', 1).value
+
+                            # Chunky/Interleaved format (H, W, Bands)
+                            if planar_config == 1:
+                                for b in range(samples_per_pixel):
+                                    arr = img[:, :, b].flatten()
+                                    pa_arrays_raw.append(pa.array(arr, type=pa_type))
+                                    pa_types.append(pa_type)
+                                    band_names.append(f'page{idx + 1}_band{b + 1}')
+                                    orig_lengths.append(arr.size)
+                            # Planar format (Bands, H, W)
+                            elif planar_config == 2:
+                                for b in range(samples_per_pixel):
+                                    arr = img[b, :, :].flatten()
+                                    pa_arrays_raw.append(pa.array(arr, type=pa_type))
+                                    pa_types.append(pa_type)
+                                    band_names.append(f'page{idx + 1}_band{b + 1}')
+                                    orig_lengths.append(arr.size)
+                    except Exception as e:
+                        logger.error(f"处理第{idx + 1}页时异常: {e}")
+                        raise
+
+            # --- 之后的 padding 逻辑保持不变 ---
+            max_len = max(len(arr) for arr in pa_arrays_raw) if pa_arrays_raw else 0
 
             pa_arrays = []
             for arr, typ in zip(pa_arrays_raw, pa_types):
@@ -135,7 +100,7 @@ class TIFParser(BaseParser):
                     raise
 
             meta = {
-                "shapes": str(shapes),
+                "page_shapes": str(page_shapes),  # 使用新的 page_shapes
                 "dtypes": str(dtypes),
                 "orig_lengths": str(orig_lengths),
                 "band_names": str(band_names)
@@ -145,7 +110,8 @@ class TIFParser(BaseParser):
                     {k: str(v).encode() for k, v in meta.items()}
                 )
                 table = pa.table(pa_arrays, schema=schema)
-                logger.info(f"TIFF 解析完成，列数: {len(table.column_names)}，每列长度: {max_len}，写入缓存 {arrow_file_path}")
+                logger.info(
+                    f"TIFF 解析完成，列数: {len(table.column_names)}，每列长度: {max_len}，写入缓存 {arrow_file_path}")
                 with ipc.new_file(arrow_file_path, schema) as writer:
                     writer.write_table(table)
                 # 再从.arrow读取返回
@@ -156,89 +122,6 @@ class TIFParser(BaseParser):
                 raise
         except Exception as e:
             logger.error(f"TIFF 解析失败: {e}")
-            raise
-
-    def write(self, table: pa.Table, output_path: str):
-        """
-        将 Arrow Table 写入 TIFF 文件。
-        支持多页、多波段、多shape的还原（需依赖metadata）。
-        写回时自动去除NaN补齐部分，只用有效数据还原 shape。
-        """
-        try:
-            logger.info(f"开始写入 TIFF 文件: {output_path}")
-            meta = table.schema.metadata or {}
-            # 还原shape、dtype、原始长度
-            try:
-                shapes = eval(meta.get(b'shapes', b'[]').decode() if isinstance(meta.get(b'shapes', b''), bytes) else meta.get('shapes', '[]'))
-                dtypes = eval(meta.get(b'dtypes', b'[]').decode() if isinstance(meta.get(b'dtypes', b''), bytes) else meta.get('dtypes', '[]'))
-                orig_lengths = eval(meta.get(b'orig_lengths', b'[]').decode() if isinstance(meta.get(b'orig_lengths', b''), bytes) else meta.get('orig_lengths', '[]'))
-                band_names = eval(meta.get(b'band_names', b'[]').decode() if isinstance(meta.get(b'band_names', b''), bytes) else meta.get('band_names', '[]'))
-            except Exception as e:
-                logger.error(f"元数据解析异常: {e}")
-                raise
-            try:
-                arrays = [col.to_numpy() for col in table.columns]
-            except Exception as e:
-                logger.error(f"Arrow Table 转 numpy 异常: {e}")
-                raise
-            images = []
-            arr_idx = 0
-            i = 0
-            try:
-                while i < len(shapes):
-                    shape = shapes[i]
-                    dtype = np.dtype(dtypes[i])
-                    if len(shape) == 2:
-                        valid = arrays[arr_idx][:orig_lengths[arr_idx]]
-                        img = valid.reshape(shape).astype(dtype)
-                        images.append(img)
-                        arr_idx += 1
-                        i += 1
-                    elif len(shape) == 3:
-                        # 判断是 (B, H, W) 还是 (H, W, B)
-                        if shape[0] in [1, 3, 4] and shape[0] < shape[1] and shape[0] < shape[2]:
-                            bands = shape[0]
-                            band_imgs = []
-                            for b in range(bands):
-                                valid = arrays[arr_idx][:orig_lengths[arr_idx]]
-                                band_imgs.append(valid.reshape((shape[1], shape[2])).astype(dtype))
-                                arr_idx += 1
-                                i += 1
-                            img = np.stack(band_imgs, axis=0)
-                            images.append(img)
-                        elif shape[2] in [1, 3, 4] and shape[2] < shape[0] and shape[2] < shape[1]:
-                            bands = shape[2]
-                            band_imgs = []
-                            for b in range(bands):
-                                valid = arrays[arr_idx][:orig_lengths[arr_idx]]
-                                band_imgs.append(valid.reshape((shape[0], shape[1])).astype(dtype))
-                                arr_idx += 1
-                                i += 1
-                            img = np.stack(band_imgs, axis=-1)
-                            images.append(img)
-                        else:
-                            valid = arrays[arr_idx][:orig_lengths[arr_idx]]
-                            img = valid.reshape(shape).astype(dtype)
-                            images.append(img)
-                            arr_idx += 1
-                            i += 1
-                    else:
-                        valid = arrays[arr_idx][:orig_lengths[arr_idx]]
-                        img = valid.reshape(shape).astype(dtype)
-                        images.append(img)
-                        arr_idx += 1
-                        i += 1
-            except Exception as e:
-                logger.error(f"TIFF 还原 numpy 数据异常: {e}")
-                raise
-            try:
-                tifffile.imwrite(output_path, images if len(images) > 1 else images[0])
-                logger.info(f"写入 TIFF 文件到 {output_path}，共 {len(images)} 页")
-            except Exception as e:
-                logger.error(f"写入 TIFF 文件异常: {e}")
-                raise
-        except Exception as e:
-            logger.error(f"写入 TIFF 文件失败: {e}")
             raise
 
     def sample(self, file_path):

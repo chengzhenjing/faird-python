@@ -31,17 +31,6 @@ class BaseParser(ABC):
             pa.Table: A pyarrow Table object containing sampled data.
         """
         pass
-
-    @abstractmethod
-    def write(self, table: pa.Table, output_path: str):
-        """
-        Write the pyarrow.Table back to the original file format.
-
-        Args:
-            table (pa.Table): The Arrow Table to write.
-            output_path (str): Output file path.
-        """
-        pass
     
     @abstractmethod
     def count(self, file_path: str) -> int:
