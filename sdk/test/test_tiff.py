@@ -1,74 +1,104 @@
 import numpy as np
 import rasterio
 from rasterio.transform import from_origin
+from tifffile import tifffile
+
+from dfwriter.dfwriter import DfWriter
+from parser.tif_parser import TIFParser
 from sdk.dacp_client import DacpClient, Principal
 from utils.logger_utils import get_logger
 logger = get_logger(__name__)
 
-SERVER_URL = "dacp://localhost:3101"
-USERNAME = "user1@cnic.cn"
-TENANT = "conet"
-CLIENT_ID = "faird-user1"
 
-INPUT_TIFF_PATH = "/Users/zhouziang/Documents/test-data/tif/sample.tiff"
-OUTPUT_TIFF_PATH = "/Users/zhouziang/Documents/test-data/tif/test_data_output.tif"
+def compare_tiffs_pixel_perfect(file1_path: str, file2_path: str) -> bool:
+    """
+    比较两个TIFF文件的像素数据和核心结构是否完全一致。
 
+    比较项:
+    1. 页面数量
+    2. 每一页的形状 (shape)
+    3. 每一页的数据类型 (dtype)
+    4. 每一页的像素值
 
-
-
-
-def test_tiff_file():
-
-
-    # 1. 连接服务并加载数据
-    conn = DacpClient.connect(SERVER_URL, Principal.oauth(TENANT))
-    logger.info("正在加载 DataFrame...")
-    df = conn.open(INPUT_TIFF_PATH)
-    if df is None:
-        logger.info("加载失败：faird.open 返回 None。请检查 parser 或文件路径。")
-        return
-    logger.info("DataFrame 加载成功")
-
-    # 2. 写出 TIFF 文件
-    logger.info(f"正在使用 df.write(...) 转换文件到: {OUTPUT_TIFF_PATH}")
+    返回:
+    - True: 如果所有比较项都一致。
+    - False: 如果有任何不一致，并打印出第一个发现的差异点。
+    """
     try:
-        df.write(OUTPUT_TIFF_PATH, INPUT_TIFF_PATH)
-        logger.info(f"成功从df转换为文件: {OUTPUT_TIFF_PATH}")
+        with tifffile.TiffFile(file1_path) as tif1, tifffile.TiffFile(file2_path) as tif2:
+            # 1. 比较页面数量
+            if len(tif1.pages) != len(tif2.pages):
+                print(f"差异: 页面数量不一致。")
+                print(f"  - '{file1_path}': {len(tif1.pages)} 页")
+                print(f"  - '{file2_path}': {len(tif2.pages)} 页")
+                return False
+
+            # 2. 逐页比较
+            for i, (page1, page2) in enumerate(zip(tif1.pages, tif2.pages)):
+                # 2a. 比较形状 (shape)
+                if page1.shape != page2.shape:
+                    print(f"差异: 第 {i + 1} 页的形状不一致。")
+                    print(f"  - '{file1_path}': {page1.shape}")
+                    print(f"  - '{file2_path}': {page2.shape}")
+                    return False
+
+                # 2b. 比较数据类型 (dtype)
+                if page1.dtype != page2.dtype:
+                    print(f"差异: 第 {i + 1} 页的数据类型不一致。")
+                    print(f"  - '{file1_path}': {page1.dtype}")
+                    print(f"  - '{file2_path}': {page2.dtype}")
+                    return False
+
+                # 2c. 比较像素值
+                # asarray() 将页面数据加载到 numpy 数组中
+                arr1 = page1.asarray()
+                arr2 = page2.asarray()
+
+                # 使用 numpy.array_equal 进行高效且精确的比较
+                if not np.array_equal(arr1, arr2):
+                    print(f"差异: 第 {i + 1} 页的像素值不一致。")
+                    # 可选：打印出差异的详细信息
+                    diff_indices = np.where(arr1 != arr2)
+                    print(f"  - 在位置 {diff_indices[0][0], ...} 处发现第一个差异值:")
+                    print(f"    '{file1_path}': {arr1[diff_indices][0]}")
+                    print(f"    '{file2_path}': {arr2[diff_indices][0]}")
+                    return False
+
+            print("文件在像素数据和核心结构上完全一致。")
+            return True
+
     except Exception as e:
-        logger.info(f"转换文件失败: {e}")
-        return
-
-    # # 3. 验证转换前后一致性
-    # if compare_tiff_files(INPUT_TIFF_PATH, OUTPUT_TIFF_PATH):
-    #     logger.info("TIFF 文件转换前后内容一致")
-    # else:
-    #     logger.info("TIFF 文件存在差异，请检查转换过程")
-
-
-def compare_tiff_files(original_path, output_path):
-    """
-    比较两个 TIFF 文件是否一致：
-    - 元信息（尺寸、投影、变换矩阵）
-    - 像素数据
-    """
-    with rasterio.open(original_path) as src1, rasterio.open(output_path) as src2:
-
-        # 比较元数据
-        if src1.meta != src2.meta:
-            logger.info("元数据不一致")
-            return False
-
-        # 比较数据
-        data1 = src1.read()
-        data2 = src2.read()
-
-        if not np.array_equal(data1, data2):
-            logger.info("像素数据不一致")
-            return False
-
-    logger.info("所有检查项通过，TIFF 文件完整一致")
-    return True
-
+        print(f"比较过程中发生错误: {e}")
+        return False
 
 if __name__ == "__main__":
-    test_tiff_file()
+    parser = TIFParser()
+    # table = parser.parse("D:/data/geotiff/Landsat8_Ortho_BestPixel.tif")
+    table = parser.parse("/Users/zjcheng/Downloads/file_example_TIFF_1MB.tiff")
+    print(table)
+    print(table.schema)
+    print(table.schema.metadata)
+    print(f"行数: {table.num_rows}, 列数: {table.num_columns}")
+    print(f"列名: {table.column_names}")
+    print(f"数据大小: {table.nbytes} bytes")
+    # print(f"打印前5行，每列前3个值:\n {table.to_string(head_rows=5, first_cols=3, display_all=False)}")
+    print(f"打印所有数据:\n {table.to_string()}")
+
+    sample_table = parser.sample("/Users/zjcheng/Downloads/file_example_TIFF_1MB.tiff")
+    print(sample_table)
+    print(sample_table.schema)
+    print(sample_table.schema.metadata)
+    print(f"行数: {sample_table.num_rows}, 列数: {sample_table.num_columns}")
+    print(f"列名: {sample_table.column_names}")
+    print(f"数据大小: {sample_table.nbytes} bytes")
+    # print(f"打印前5行，每列前3个值:\n {sample_table.to_string(head_rows=5, first_cols=3, display_all=False)}")
+    print(f"打印所有数据:\n {sample_table.to_string()}")
+
+    count = parser.count("/Users/zjcheng/Downloads/file_example_TIFF_1MB.tiff")
+    print(f"统计行数: {count}")
+
+    dfwriter = DfWriter()
+    dfwriter.output("/Users/zjcheng/Downloads/file_example_TIFF_1MB_new.tiff").format("tiff").write_table(table)
+
+    are_they_same = compare_tiffs_pixel_perfect("/Users/zjcheng/Downloads/file_example_TIFF_1MB.tiff", "/Users/zjcheng/Downloads/file_example_TIFF_1MB_new.tiff")
+    print(f"比较结果: {'一致' if are_they_same else '不一致'}")
